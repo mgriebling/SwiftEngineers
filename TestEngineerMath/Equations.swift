@@ -32,6 +32,42 @@ class Equations {
 		return coef
 	}
 	
+	static func curveFit (x: Vector, y: Vector, order: Int) -> Vector? {
+		let size = order + 1
+		var xData = [Double](count: 2*order+1, repeatedValue: 0)
+		var yData = [Double](count: size, repeatedValue: 0)
+		var b = x
+		var c = y
+
+		// compute the sums of all orders of x
+		xData[0] = Double(x.count)
+		for i in 1...2*order {
+			xData[i] = b.sum()
+			b = b.mul(x)
+		}
+		
+		// compute the sums of all orders of y
+		for i in 0...order {
+			yData[i] = c.sum()
+			c = c.mul(x)
+		}
+		
+		// create a matrix holding the correct orders
+		var matrix = [Double](count: size*size, repeatedValue: 0)
+		for i in 0...order {
+			for j in 0...order {
+				matrix[i*size+j] = xData[i+j]
+			}
+		}
+		
+		// compute the curve-fitting coefficients by solving these equations
+		var m = Matrix(matrix, numberOfRows: size)
+		if let result = solveUsingCramersRule(m, y: Vector(yData)) { // Matrix.solveLinear1(matrix, n: yData) {
+			return result
+		}
+		return nil
+	}
+	
 	static func solveUsingGaussianElimination (a: Matrix, y: Vector) -> Vector? {
 		let n = y.count-1
 		var b = a

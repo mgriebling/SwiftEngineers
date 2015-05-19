@@ -42,6 +42,22 @@ class Vector : Printable {
 		}
 	}
 	
+	func mul (v: Vector) -> Vector {
+		return Vector(Vector.mul(vector, w: v.vector))
+	}
+	
+	func square () -> Vector {
+		return Vector(Vector.square(vector))
+	}
+	
+	func sum () -> Double {
+		return Vector.sum(vector)
+	}
+	
+	func sumSquared () -> Double {
+		return Vector.sumSquared(vector)
+	}
+	
 	static func add (v: [Double], w: Double) -> [Double] {
 		var result = [Double](count: v.count, repeatedValue: 0)
 		var lw = w
@@ -246,7 +262,6 @@ class Matrix {
 		var error : __CLPK_integer = 0
 		var N = __CLPK_integer(sqrt(Double(m.count)))
 		var pivots = [__CLPK_integer](count: Int(N), repeatedValue: 0)
-		var workspace = [Double](count: Int(N), repeatedValue: 0)
 		var tmp = m
 		
 		dgetrf_(&N, &N, &tmp, &N, &pivots, &error)
@@ -260,6 +275,43 @@ class Matrix {
 		
 		// Return the correct sign
 		return neg ? -result : result
+	}
+	
+	static func solveLinear1 (m: [Double], n: [Double]) -> [Double]? {
+		var a = m
+		var b = n
+		var TRANS: CChar = 0x4E  // "N"
+		var NRHS: __CLPK_integer = 1
+		var N = __CLPK_integer(sqrt(Double(m.count)))
+		var pivots = [__CLPK_integer](count: Int(N), repeatedValue: 0)
+		var error : __CLPK_integer = 0
+		
+		// compute the LU factorization
+		dgetrf_(&N, &N, &a, &N, &pivots, &error)
+		if error != 0 { return nil }
+		
+		// solve the equations
+		dgetrs_(&TRANS, &N, &NRHS, &a, &N, &pivots, &b, &N, &error)
+		if error != 0 { return nil }
+		return b
+	}
+	
+	static func solveLinear2 (m: [Double], n: [Double]) -> [Double]? {
+		var a = m
+		var b = n
+		var NRHS: __CLPK_integer = 1
+		var N = __CLPK_integer(sqrt(Double(m.count)))
+		var pivots = [__CLPK_integer](count: Int(N), repeatedValue: 0)
+		var error : __CLPK_integer = 0
+		
+		// compute the LU factorization
+//		dgetrf_(&N, &N, &a, &N, &pivots, &error)
+//		if error != 0 { return nil }
+		
+		// solve the equations
+		dgesv_(&N, &NRHS, &a, &N, &pivots, &b, &N, &error)
+		if error != 0 { return nil }
+		return b
 	}
 }
 
