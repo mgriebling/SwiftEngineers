@@ -30,10 +30,11 @@ class ViewController: UIViewController {
 //		if let answer = Matrix.solveLinear2([10, -3,  5, -7,  2, -1, 0,  6,  5], n: [7, 4, 6]) {
 //			println("Solution 2 = \(answer)")
 //		}
-		if let coefs = Equations.curveFit(Vector([0, 0.5, 1.0, 1.5, 2.0, 2.5]),
-											y: Vector([0.0674, -0.9156, 1.6253, 3.0377, 3.3535, 7.9409]), order: 2) {
-			println("Curve fit = \(coefs)")
-		}
+//		if let coefs = Equations.curveFit(Vector([0, 0.5, 1.0, 1.5, 2.0, 2.5]),
+//											y: Vector([0.0674, -0.9156, 1.6253, 3.0377, 3.3535, 7.9409]), order: 2) {
+//			println("Curve fit = \(coefs)")
+//		}
+		let x = BigReal(10)
 	}
 
 	override func didReceiveMemoryWarning() {

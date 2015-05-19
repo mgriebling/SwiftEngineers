@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2F9292911B0BB45F00C9F93D /* BigNumbers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F9292901B0BB45F00C9F93D /* BigNumbers.swift */; };
 		474808801B0A09AA008510D0 /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4748087F1B0A09AA008510D0 /* Equations.swift */; };
 		47A29A391B08E3F6000A7C87 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A381B08E3F6000A7C87 /* AppDelegate.swift */; };
 		47A29A3B1B08E3F6000A7C87 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A3A1B08E3F6000A7C87 /* ViewController.swift */; };
@@ -28,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2F9292901B0BB45F00C9F93D /* BigNumbers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigNumbers.swift; sourceTree = "<group>"; };
 		4748087F1B0A09AA008510D0 /* Equations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Equations.swift; sourceTree = "<group>"; };
 		47A29A331B08E3F6000A7C87 /* TestEngineerMath.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestEngineerMath.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		47A29A371B08E3F6000A7C87 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -89,6 +91,7 @@
 				47A29A361B08E3F6000A7C87 /* Supporting Files */,
 				47A29A581B08E417000A7C87 /* MatrixVector.swift */,
 				4748087F1B0A09AA008510D0 /* Equations.swift */,
+				2F9292901B0BB45F00C9F93D /* BigNumbers.swift */,
 			);
 			path = TestEngineerMath;
 			sourceTree = "<group>";
@@ -220,6 +223,7 @@
 			files = (
 				47A29A3B1B08E3F6000A7C87 /* ViewController.swift in Sources */,
 				47A29A391B08E3F6000A7C87 /* AppDelegate.swift in Sources */,
+				2F9292911B0BB45F00C9F93D /* BigNumbers.swift in Sources */,
 				47A29A591B08E417000A7C87 /* MatrixVector.swift in Sources */,
 				474808801B0A09AA008510D0 /* Equations.swift in Sources */,
 			);
