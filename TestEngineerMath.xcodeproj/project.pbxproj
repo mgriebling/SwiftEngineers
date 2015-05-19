@@ -7,12 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		474808801B0A09AA008510D0 /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4748087F1B0A09AA008510D0 /* Equations.swift */; };
 		47A29A391B08E3F6000A7C87 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A381B08E3F6000A7C87 /* AppDelegate.swift */; };
 		47A29A3B1B08E3F6000A7C87 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A3A1B08E3F6000A7C87 /* ViewController.swift */; };
 		47A29A3E1B08E3F6000A7C87 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 47A29A3C1B08E3F6000A7C87 /* Main.storyboard */; };
 		47A29A401B08E3F6000A7C87 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 47A29A3F1B08E3F6000A7C87 /* Images.xcassets */; };
 		47A29A431B08E3F6000A7C87 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 47A29A411B08E3F6000A7C87 /* LaunchScreen.xib */; };
 		47A29A4F1B08E3F6000A7C87 /* TestEngineerMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A4E1B08E3F6000A7C87 /* TestEngineerMathTests.swift */; };
+		47A29A591B08E417000A7C87 /* MatrixVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A581B08E417000A7C87 /* MatrixVector.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4748087F1B0A09AA008510D0 /* Equations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Equations.swift; sourceTree = "<group>"; };
 		47A29A331B08E3F6000A7C87 /* TestEngineerMath.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestEngineerMath.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		47A29A371B08E3F6000A7C87 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		47A29A381B08E3F6000A7C87 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -36,6 +39,7 @@
 		47A29A481B08E3F6000A7C87 /* TestEngineerMathTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TestEngineerMathTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		47A29A4D1B08E3F6000A7C87 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		47A29A4E1B08E3F6000A7C87 /* TestEngineerMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestEngineerMathTests.swift; sourceTree = "<group>"; };
+		47A29A581B08E417000A7C87 /* MatrixVector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatrixVector.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +87,8 @@
 				47A29A3F1B08E3F6000A7C87 /* Images.xcassets */,
 				47A29A411B08E3F6000A7C87 /* LaunchScreen.xib */,
 				47A29A361B08E3F6000A7C87 /* Supporting Files */,
+				47A29A581B08E417000A7C87 /* MatrixVector.swift */,
+				4748087F1B0A09AA008510D0 /* Equations.swift */,
 			);
 			path = TestEngineerMath;
 			sourceTree = "<group>";
@@ -214,6 +220,8 @@
 			files = (
 				47A29A3B1B08E3F6000A7C87 /* ViewController.swift in Sources */,
 				47A29A391B08E3F6000A7C87 /* AppDelegate.swift in Sources */,
+				47A29A591B08E417000A7C87 /* MatrixVector.swift in Sources */,
+				474808801B0A09AA008510D0 /* Equations.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,6 +419,7 @@
 				47A29A541B08E3F6000A7C87 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		47A29A551B08E3F6000A7C87 /* Build configuration list for PBXNativeTarget "TestEngineerMathTests" */ = {
 			isa = XCConfigurationList;
@@ -419,6 +428,7 @@
 				47A29A571B08E3F6000A7C87 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
