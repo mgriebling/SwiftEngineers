@@ -23,24 +23,24 @@ struct BigReal {
 		let (num, exp) = frexp(d)
 		exponent = exp
 		let int0 = Int(num * fradix)
-		let n0 = num * fradix - Double(int0)
-		let int1 = Int(n0 * fradix)
-		let n1 = n0 * fradix - Double(int1)
-		let int2 = Int(n1 * fradix)
-		let n2 = n1 * fradix - Double(int2)
 		if int0 != 0 {
 			number.append(int0); exponent -= BigReal.Bits
+			let n0 = num * fradix - Double(int0)
+			let int1 = Int(n0 * fradix)
 			if int1 != 0 {
 				number.append(int1); exponent -= BigReal.Bits
-				if int2 != 0 {
-					number.append(int2); exponent -= BigReal.Bits
-				}
 			}
+			normalize()
 		}
 	}
 	
-	func normalize () {
-		
+	mutating func normalize () {
+		if var n = number.last {
+			while n & 1 == 0 {
+				n >>= 1; exponent++
+			}
+			self.number[self.number.count-1] = n
+		}
 	}
 	
 	// conversions to basic types

@@ -35,6 +35,7 @@ class ViewController: UIViewController {
 //			println("Curve fit = \(coefs)")
 //		}
 		let x = BigReal(0.1)
+		var y : qd
 	}
 
 	override func didReceiveMemoryWarning() {
