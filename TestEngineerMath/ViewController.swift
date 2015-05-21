@@ -35,6 +35,9 @@ class ViewController: UIViewController {
 //			println("Curve fit = \(coefs)")
 //		}
 		let x = BigReal(0.1)
+		let y = BigReal(-10)
+		let z = BigReal("1234.5678")
+		println("x = \(x.double), y = \(y.double), z = \(z.double)")
 	}
 
 	override func didReceiveMemoryWarning() {
