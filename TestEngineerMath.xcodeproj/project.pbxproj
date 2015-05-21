@@ -7,15 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2F12C20B1B0D2752001F008C /* bits.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C2061B0D2752001F008C /* bits.cpp */; };
-		2F12C20C1B0D2752001F008C /* c_dd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C2071B0D2752001F008C /* c_dd.cpp */; };
-		2F12C20D1B0D2752001F008C /* c_qd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C2081B0D2752001F008C /* c_qd.cpp */; };
-		2F12C20E1B0D2752001F008C /* dd_const.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C2091B0D2752001F008C /* dd_const.cpp */; };
-		2F12C20F1B0D2752001F008C /* dd_real.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C20A1B0D2752001F008C /* dd_real.cpp */; };
-		2F12C2141B0D2763001F008C /* qd_const.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C2101B0D2763001F008C /* qd_const.cpp */; };
-		2F12C2151B0D2763001F008C /* qd_real.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C2111B0D2763001F008C /* qd_real.cpp */; };
-		2F12C2161B0D2763001F008C /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2F12C2121B0D2763001F008C /* util.cpp */; };
-		2F12C2211B0D2788001F008C /* qd_config.h.in in Resources */ = {isa = PBXBuildFile; fileRef = 2F12C21E1B0D2788001F008C /* qd_config.h.in */; };
 		2F9292911B0BB45F00C9F93D /* BigNumbers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F9292901B0BB45F00C9F93D /* BigNumbers.swift */; };
 		474808801B0A09AA008510D0 /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4748087F1B0A09AA008510D0 /* Equations.swift */; };
 		47A29A391B08E3F6000A7C87 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A381B08E3F6000A7C87 /* AppDelegate.swift */; };
@@ -40,25 +31,6 @@
 
 /* Begin PBXFileReference section */
 		2F12C2051B0D2752001F008C /* TestEngineerMath-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TestEngineerMath-Bridging-Header.h"; sourceTree = "<group>"; };
-		2F12C2061B0D2752001F008C /* bits.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bits.cpp; sourceTree = "<group>"; };
-		2F12C2071B0D2752001F008C /* c_dd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = c_dd.cpp; sourceTree = "<group>"; };
-		2F12C2081B0D2752001F008C /* c_qd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = c_qd.cpp; sourceTree = "<group>"; };
-		2F12C2091B0D2752001F008C /* dd_const.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dd_const.cpp; sourceTree = "<group>"; };
-		2F12C20A1B0D2752001F008C /* dd_real.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = dd_real.cpp; sourceTree = "<group>"; };
-		2F12C2101B0D2763001F008C /* qd_const.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = qd_const.cpp; sourceTree = "<group>"; };
-		2F12C2111B0D2763001F008C /* qd_real.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = qd_real.cpp; sourceTree = "<group>"; };
-		2F12C2121B0D2763001F008C /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = util.cpp; sourceTree = "<group>"; };
-		2F12C2131B0D2763001F008C /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
-		2F12C2171B0D2788001F008C /* bits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bits.h; sourceTree = "<group>"; };
-		2F12C2181B0D2788001F008C /* c_dd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = c_dd.h; sourceTree = "<group>"; };
-		2F12C2191B0D2788001F008C /* c_qd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = c_qd.h; sourceTree = "<group>"; };
-		2F12C21A1B0D2788001F008C /* dd_inline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dd_inline.h; sourceTree = "<group>"; };
-		2F12C21B1B0D2788001F008C /* dd_real.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dd_real.h; sourceTree = "<group>"; };
-		2F12C21C1B0D2788001F008C /* fpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fpu.h; sourceTree = "<group>"; };
-		2F12C21D1B0D2788001F008C /* inline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = inline.h; sourceTree = "<group>"; };
-		2F12C21E1B0D2788001F008C /* qd_config.h.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = qd_config.h.in; sourceTree = "<group>"; };
-		2F12C21F1B0D2788001F008C /* qd_inline.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qd_inline.h; sourceTree = "<group>"; };
-		2F12C2201B0D2788001F008C /* qd_real.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = qd_real.h; sourceTree = "<group>"; };
 		2F9292901B0BB45F00C9F93D /* BigNumbers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigNumbers.swift; sourceTree = "<group>"; };
 		4748087F1B0A09AA008510D0 /* Equations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Equations.swift; sourceTree = "<group>"; };
 		47A29A331B08E3F6000A7C87 /* TestEngineerMath.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TestEngineerMath.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -73,6 +45,7 @@
 		47A29A4E1B08E3F6000A7C87 /* TestEngineerMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestEngineerMathTests.swift; sourceTree = "<group>"; };
 		47A29A581B08E417000A7C87 /* MatrixVector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatrixVector.swift; sourceTree = "<group>"; };
 		47A4C2221B0C9AB2009C8FD8 /* complex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = complex.swift; sourceTree = "<group>"; };
+		47F71A231B0DF27F00AF43D9 /* libqd.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libqd.a; path = ../../../../../../usr/local/lib/libqd.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +69,7 @@
 		47A29A2A1B08E3F6000A7C87 = {
 			isa = PBXGroup;
 			children = (
+				47F71A231B0DF27F00AF43D9 /* libqd.a */,
 				47A29A351B08E3F6000A7C87 /* TestEngineerMath */,
 				47A29A4B1B08E3F6000A7C87 /* TestEngineerMathTests */,
 				47A29A341B08E3F6000A7C87 /* Products */,
@@ -124,25 +98,6 @@
 				4748087F1B0A09AA008510D0 /* Equations.swift */,
 				2F9292901B0BB45F00C9F93D /* BigNumbers.swift */,
 				47A4C2221B0C9AB2009C8FD8 /* complex.swift */,
-				2F12C2061B0D2752001F008C /* bits.cpp */,
-				2F12C2071B0D2752001F008C /* c_dd.cpp */,
-				2F12C2081B0D2752001F008C /* c_qd.cpp */,
-				2F12C2091B0D2752001F008C /* dd_const.cpp */,
-				2F12C20A1B0D2752001F008C /* dd_real.cpp */,
-				2F12C2101B0D2763001F008C /* qd_const.cpp */,
-				2F12C2111B0D2763001F008C /* qd_real.cpp */,
-				2F12C2121B0D2763001F008C /* util.cpp */,
-				2F12C2131B0D2763001F008C /* util.h */,
-				2F12C2171B0D2788001F008C /* bits.h */,
-				2F12C2181B0D2788001F008C /* c_dd.h */,
-				2F12C2191B0D2788001F008C /* c_qd.h */,
-				2F12C21A1B0D2788001F008C /* dd_inline.h */,
-				2F12C21B1B0D2788001F008C /* dd_real.h */,
-				2F12C21C1B0D2788001F008C /* fpu.h */,
-				2F12C21D1B0D2788001F008C /* inline.h */,
-				2F12C21E1B0D2788001F008C /* qd_config.h.in */,
-				2F12C21F1B0D2788001F008C /* qd_inline.h */,
-				2F12C2201B0D2788001F008C /* qd_real.h */,
 				2F12C2051B0D2752001F008C /* TestEngineerMath-Bridging-Header.h */,
 			);
 			path = TestEngineerMath;
@@ -256,7 +211,6 @@
 				47A29A3E1B08E3F6000A7C87 /* Main.storyboard in Resources */,
 				47A29A431B08E3F6000A7C87 /* LaunchScreen.xib in Resources */,
 				47A29A401B08E3F6000A7C87 /* Images.xcassets in Resources */,
-				2F12C2211B0D2788001F008C /* qd_config.h.in in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,17 +228,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F12C2141B0D2763001F008C /* qd_const.cpp in Sources */,
 				47A4C2231B0C9AB2009C8FD8 /* complex.swift in Sources */,
 				47A29A3B1B08E3F6000A7C87 /* ViewController.swift in Sources */,
-				2F12C20D1B0D2752001F008C /* c_qd.cpp in Sources */,
 				47A29A391B08E3F6000A7C87 /* AppDelegate.swift in Sources */,
-				2F12C20C1B0D2752001F008C /* c_dd.cpp in Sources */,
-				2F12C20E1B0D2752001F008C /* dd_const.cpp in Sources */,
-				2F12C20B1B0D2752001F008C /* bits.cpp in Sources */,
-				2F12C20F1B0D2752001F008C /* dd_real.cpp in Sources */,
-				2F12C2161B0D2763001F008C /* util.cpp in Sources */,
-				2F12C2151B0D2763001F008C /* qd_real.cpp in Sources */,
 				2F9292911B0BB45F00C9F93D /* BigNumbers.swift in Sources */,
 				47A29A591B08E417000A7C87 /* MatrixVector.swift in Sources */,
 				474808801B0A09AA008510D0 /* Equations.swift in Sources */,
@@ -416,6 +362,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = TestEngineerMath/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -429,6 +377,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libstdc++";
 				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = TestEngineerMath/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
