@@ -40,7 +40,8 @@
 	mp_exp_t exp;
 	mpf_get_str(cstr, &exp, 10, 50, number);
 	str = [NSMutableString stringWithUTF8String:cstr];
-	if (str.length <= exp) { return [NSString stringWithFormat:@"%@e%li", str, exp]; }
+	if (exp < 0 || exp > 100) { return [NSString stringWithFormat:@"0.%@e%li", str, exp]; }
+	if (str.length < exp) { str = [NSMutableString stringWithString:[str stringByPaddingToLength:exp+1 withString:@"0" startingAtIndex:0]]; }
 	[str insertString:@"." atIndex:exp];
 	return str;
 }
@@ -71,6 +72,41 @@
 + (void) div: (mpf_t)x toNumber: (mpf_t)y giving: (mpf_t*)result {
 	mpf_init(*result);
 	mpf_div(*result, x, y);
+}
+
++ (void) sqrt: (mpf_t)x giving: (mpf_t*)result {
+	mpf_init(*result);
+	mpf_sqrt(*result, x);
+}
+
++ (void) negate: (mpf_t)x giving: (mpf_t*)result {
+	mpf_init(*result);
+	mpf_neg(*result, x);
+}
+
++ (void) abs: (mpf_t)x giving: (mpf_t*)result {
+	mpf_init(*result);
+	mpf_abs(*result, x);
+}
+
++ (void) ipower:(mpf_t)x toPower:(NSInteger)power giving: (mpf_t*)result {
+	mpf_init(*result);
+	if (power >= 0) {
+		mpf_pow_ui(*result, x, power);
+	} else {
+		mpf_pow_ui(*result, x, -power);
+		mpf_ui_div(*result, 1, *result);
+	}
+}
+
++ (NSComparisonResult)cmp:(mpf_t)x toNumber:(mpf_t)y {
+	NSInteger result = mpf_cmp(x, y);
+	if (result < 0) {
+		return NSOrderedAscending;
+	} else if (result > 0) {
+		return NSOrderedDescending;
+	}
+	return NSOrderedSame;
 }
 
 @end

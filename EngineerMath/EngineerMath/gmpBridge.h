@@ -24,5 +24,10 @@
 + (void) sub: (mpf_t)x toNumber: (mpf_t)y giving: (mpf_t*)result;
 + (void) mul: (mpf_t)x toNumber: (mpf_t)y giving: (mpf_t*)result;
 + (void) div: (mpf_t)x toNumber: (mpf_t)y giving: (mpf_t*)result;
++ (void) sqrt: (mpf_t)x giving: (mpf_t*)result;
++ (void) negate: (mpf_t)x giving: (mpf_t*)result;
++ (void) abs: (mpf_t)x giving: (mpf_t*)result;
++ (void) ipower:(mpf_t)x toPower:(NSInteger)power giving: (mpf_t*)result;
++ (NSComparisonResult) cmp:(mpf_t)x toNumber:(mpf_t)y;
 
 @end

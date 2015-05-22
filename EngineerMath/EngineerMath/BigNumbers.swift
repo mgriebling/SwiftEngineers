@@ -18,14 +18,26 @@ extension String {
 	}
 }
 
-public class BigReal : Printable {
+public class BigReal : Printable, Comparable, Equatable, Hashable {
 	
 	private var number = mpf_t()	// signed extended floating-point number
+	
+	public static var bitSize: Int {
+		set (newSize) {
+			gmp.setBitSize(newSize)
+		}
+		get {
+			return gmp.getBitSize()
+		}
+	}
 
 	public var description : String {
-		let str = gmp.getStringFrom(&number)
-		if str.hasPrefix(".") { return "0" + str }
+		let str = gmp.getStringFrom(&number).stringByTrimmingTrailingCharactersInSet(NSCharacterSet(charactersInString: "0"))
 		return str.stringByTrimmingTrailingCharactersInSet(NSCharacterSet(charactersInString: "."))
+	}
+	
+	public var hashValue : Int {
+		return self.integer
 	}
 	
 	public init() {
@@ -81,22 +93,38 @@ public class BigReal : Printable {
 		gmp.div(&number, toNumber: &n.number, giving: &temp)
 		return BigReal(temp)
 	}
+	
+	public func cmp (n: BigReal) -> NSComparisonResult {
+		return gmp.cmp(&number, toNumber: &n.number)
+	}
+	
+	public func ipower (n: Int) -> BigReal {
+		var temp = mpf_t()
+		gmp.ipower(&number, toPower: n, giving: &temp)
+		return BigReal(temp)
+	}
 }
 
-func + (lhs: BigReal, rhs: BigReal) -> BigReal {
-	return lhs.add(rhs)
-}
+public func + (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.add(rhs) }
+public func + (lhs: BigReal, rhs: Double) -> BigReal { return lhs.add(BigReal(rhs)) }
+public func + (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).add(rhs) }
 
-func - (lhs: BigReal, rhs: BigReal) -> BigReal {
-	return lhs.sub(rhs)
-}
+public func - (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.sub(rhs) }
+public func - (lhs: BigReal, rhs: Double) -> BigReal { return lhs.sub(BigReal(rhs)) }
+public func - (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).sub(rhs) }
 
-func * (lhs: BigReal, rhs: BigReal) -> BigReal {
-	return lhs.mul(rhs)
-}
+public func * (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.mul(rhs) }
+public func * (lhs: BigReal, rhs: Double) -> BigReal { return lhs.mul(BigReal(rhs)) }
+public func * (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).mul(rhs) }
 
-func / (lhs: BigReal, rhs: BigReal) -> BigReal {
-	return lhs.div(rhs)
-}
+public func / (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.div(rhs) }
+public func / (lhs: BigReal, rhs: Double) -> BigReal { return lhs.div(BigReal(rhs)) }
+public func / (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).div(rhs) }
 
+public func ** (lhs: BigReal, rhs: Int) -> BigReal { return lhs.ipower(rhs) }
+public func ** (lhs: Double, rhs: Int) -> BigReal { return BigReal(lhs).ipower(rhs) }
+public func ** (lhs: Int, rhs: Int) -> BigReal { return BigReal(lhs).ipower(rhs) }
+
+public func == (lhs: BigReal, rhs: BigReal) -> Bool { return lhs.cmp(rhs) == .OrderedSame }
+public func < (lhs: BigReal, rhs: BigReal) -> Bool { return lhs.cmp(rhs) == .OrderedAscending }
 
