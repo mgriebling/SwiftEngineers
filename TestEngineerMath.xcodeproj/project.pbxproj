@@ -18,6 +18,7 @@
 		47A29A4F1B08E3F6000A7C87 /* TestEngineerMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A4E1B08E3F6000A7C87 /* TestEngineerMathTests.swift */; };
 		47A29A591B08E417000A7C87 /* MatrixVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A29A581B08E417000A7C87 /* MatrixVector.swift */; };
 		47A4C2231B0C9AB2009C8FD8 /* complex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47A4C2221B0C9AB2009C8FD8 /* complex.swift */; };
+		47CF8D751B0F32B500FA6CBE /* gmp-man-6.0.0a.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 47CF8D741B0F32B500FA6CBE /* gmp-man-6.0.0a.pdf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,7 @@
 		47A29A4E1B08E3F6000A7C87 /* TestEngineerMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestEngineerMathTests.swift; sourceTree = "<group>"; };
 		47A29A581B08E417000A7C87 /* MatrixVector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatrixVector.swift; sourceTree = "<group>"; };
 		47A4C2221B0C9AB2009C8FD8 /* complex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = complex.swift; sourceTree = "<group>"; };
+		47CF8D741B0F32B500FA6CBE /* gmp-man-6.0.0a.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "gmp-man-6.0.0a.pdf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +111,7 @@
 		47A29A361B08E3F6000A7C87 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				47CF8D741B0F32B500FA6CBE /* gmp-man-6.0.0a.pdf */,
 				47A29A371B08E3F6000A7C87 /* Info.plist */,
 			);
 			name = "Supporting Files";
@@ -214,6 +217,7 @@
 				47A29A3E1B08E3F6000A7C87 /* Main.storyboard in Resources */,
 				47A29A431B08E3F6000A7C87 /* LaunchScreen.xib in Resources */,
 				47A29A401B08E3F6000A7C87 /* Images.xcassets in Resources */,
+				47CF8D751B0F32B500FA6CBE /* gmp-man-6.0.0a.pdf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -36,8 +36,8 @@ class ViewController: UIViewController {
 //		}
 		let x = BigReal(0.1)
 		let y = BigReal(-10)
-		let z = BigReal("1234.5678")
-		println("x = \(x.double), y = \(y.double), z = \(z.double)")
+		let z = BigReal("1E100")
+		println("x = \(x), y = \(y), z = \(z)")
 	}
 
 	override func didReceiveMemoryWarning() {
