@@ -8,29 +8,61 @@
 
 import Foundation
 
-struct BigReal : Printable {
+class BigReal : Printable {
+	// Note: needs to be a class so the mpz memory can be released via deinit
 	var exponent: Int = 0	// base 2 exponent
 	var number = mpz_t()	// signed integer number
 	
 	var description : String {
 		var str = ""
+		var work = ""
 		var copy = number
+		var rem = mpz_t()
 		
 		func addDigit() {
 			let digit = mpz_tdiv_q_ui(&copy, &copy, 10)
-			str = "\(digit)" + str
+			work = "\(digit)" + work
 		}
 		
-		if isNegative() { mpz_abs(&copy, &copy) }
-		if exponent < 0 { mpz_cdiv_q_2exp(&copy, &copy, UInt(-exponent)) } // TBD
-		else { mpz_mul_2exp(&copy, &copy, UInt(exponent)) }
+		let pre = getRawString(copy)
+		let bits = mpz_sizeinbase(&copy, 2)
+		if isNegative() { str = "-"; mpz_abs(&copy, &copy) }
+		mpz_init2(&rem, UInt(bits))
+		if exponent < 0 {
+			var scale = UInt(-exponent)
+			let exp10 = Double(scale) * log(2.0) / log(10.0) + 5  // add extra digits
+			var n = mpz_t()
+			mpz_init2(&n, scale+10)
+			mpz_ui_pow_ui(&n, UInt(10), UInt(exp10))
+			mpz_tdiv_r_2exp(&rem, &copy, scale)
+			mpz_mul(&rem, &rem, &n)
+			mpz_tdiv_q_2exp(&rem, &rem, scale)
+			mpz_tdiv_q_2exp(&copy, &copy, scale)
+			mpz_clear(&n)
+		} else {
+			mpz_mul_2exp(&copy, &copy, UInt(exponent))
+		}
+		let post = getRawString(copy)
+		let rpost = getRawString(rem)
 		
 		// get predecimal digits
 		while mpz_cmp_ui(&copy, 0) > 0 { addDigit() }
+		
+		// get postdecimal digits
+		if work.isEmpty { work = "0" }
+		mpz_set(&copy, &rem)
+		str += work + "."; work = ""
+		while mpz_cmp_ui(&copy, 0) > 0 { addDigit() }
 
-		// add sign if negative
-		if isNegative() { str = "-" + str }
-		return str
+		// clean up
+		mpz_clear(&copy); mpz_clear(&rem)
+		return str + work
+	}
+	
+	private func getRawString (var num: mpz_t) -> String {
+		var cstr = [CChar](count: 1024, repeatedValue: 0)
+		mpz_get_str(&cstr, 10, &num)
+		return NSString(CString: cstr, encoding: NSASCIIStringEncoding) as! String
 	}
 	
 	static let Bits : UInt = 30
@@ -62,7 +94,6 @@ struct BigReal : Printable {
 			}
 			normalize()
 		}
-
 	}
 	
 	init (_ uint: UInt) {
@@ -129,12 +160,13 @@ struct BigReal : Printable {
 			} else {
 				mpz_mul(&number, &number, &n)
 			}
+			mpz_clear(&n)
 			normalize()
 			if negative { mpz_neg(&number, &number) }
 		}
 	}
 	
-	mutating func normalize () {
+	 func normalize () {
 		while mpz_tstbit (&number, 0) == 0 {
 			mpz_cdiv_q_2exp(&number, &number, 1)
 			exponent++
@@ -142,8 +174,7 @@ struct BigReal : Printable {
 	}
 	
 	func isNegative () -> Bool {
-		var work = number
-		return mpz_cmp_ui(&work, 0) < 0
+		return mpz_cmp_ui(&number, 0) < 0
 	}
 	
 	// conversions to basic types
@@ -157,19 +188,23 @@ struct BigReal : Printable {
 			if n != 0 { exp += Int(BigReal.Bits) }
 			n = n / fradix + Double(int)
 		}
+		mpz_clear(&work)
 		return isNegative() ? -ldexp(n, exp) : ldexp(n, exp)
 	}
 	
 	var integer : Int {
 		var work = number
+		var res : Int
 		if exponent < 0 {
 			mpz_cdiv_q_2exp(&work, &work, UInt(-exponent))
 		} else {
 			mpz_mul_2exp(&work, &work, UInt(exponent))
 		}
-		if mpz_fits_slong_p(&work) != 0 { return mpz_get_si(&work) }
-		if mpz_cmp_ui(&work, 0) < 0 { return Int.min }
-		return Int.max
+		if mpz_fits_slong_p(&work) != 0 { res = mpz_get_si(&work) }
+		else if mpz_cmp_ui(&work, 0) < 0 { res = Int.min }
+		else { res = Int.max }
+		mpz_clear(&work)
+		return res
 	}
 	
 	func add (num: BigReal) -> BigReal {
