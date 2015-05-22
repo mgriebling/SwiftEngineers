@@ -1,0 +1,460 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		2F53A7321B0F79B4007C273A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7311B0F79B4007C273A /* AppDelegate.swift */; };
+		2F53A7341B0F79B4007C273A /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7331B0F79B4007C273A /* ViewController.swift */; };
+		2F53A7361B0F79B4007C273A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A7351B0F79B4007C273A /* Images.xcassets */; };
+		2F53A7391B0F79B4007C273A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A7371B0F79B4007C273A /* Main.storyboard */; };
+		2F53A7451B0F79B4007C273A /* EngineerMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7441B0F79B4007C273A /* EngineerMathTests.swift */; };
+		2F53A74F1B0F79E9007C273A /* libgmp.10.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F53A74E1B0F79E9007C273A /* libgmp.10.dylib */; };
+		2F53A7561B0F7C0C007C273A /* gmpBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7551B0F7C0C007C273A /* gmpBridge.m */; };
+		2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7571B0FA221007C273A /* MatrixVector.swift */; };
+		2F53A75A1B0FA366007C273A /* complex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7591B0FA366007C273A /* complex.swift */; };
+		2F53A75C1B0FA385007C273A /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75B1B0FA385007C273A /* Equations.swift */; };
+		2F53A75E1B0FA38F007C273A /* BigNumbers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75D1B0FA38F007C273A /* BigNumbers.swift */; };
+		2F53A7601B0FA39E007C273A /* gmp-man-6.0.0a.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2F53A73F1B0F79B4007C273A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2F53A7241B0F79B4007C273A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2F53A72B1B0F79B4007C273A;
+			remoteInfo = EngineerMath;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2F53A72C1B0F79B4007C273A /* EngineerMath.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EngineerMath.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F53A7301B0F79B4007C273A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2F53A7311B0F79B4007C273A /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		2F53A7331B0F79B4007C273A /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		2F53A7351B0F79B4007C273A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		2F53A7381B0F79B4007C273A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		2F53A73E1B0F79B4007C273A /* EngineerMathTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EngineerMathTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F53A7431B0F79B4007C273A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2F53A7441B0F79B4007C273A /* EngineerMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineerMathTests.swift; sourceTree = "<group>"; };
+		2F53A74E1B0F79E9007C273A /* libgmp.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libgmp.10.dylib; path = /usr/local/lib/libgmp.10.dylib; sourceTree = "<absolute>"; };
+		2F53A7501B0F7A26007C273A /* gmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gmp.h; path = /usr/local/include/gmp.h; sourceTree = "<absolute>"; };
+		2F53A7511B0F7AC1007C273A /* EngineerMath-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "EngineerMath-Bridging-Header.h"; sourceTree = "<group>"; };
+		2F53A7541B0F7C0C007C273A /* gmpBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gmpBridge.h; sourceTree = "<group>"; };
+		2F53A7551B0F7C0C007C273A /* gmpBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = gmpBridge.m; sourceTree = "<group>"; };
+		2F53A7571B0FA221007C273A /* MatrixVector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatrixVector.swift; sourceTree = "<group>"; };
+		2F53A7591B0FA366007C273A /* complex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = complex.swift; sourceTree = "<group>"; };
+		2F53A75B1B0FA385007C273A /* Equations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Equations.swift; sourceTree = "<group>"; };
+		2F53A75D1B0FA38F007C273A /* BigNumbers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigNumbers.swift; sourceTree = "<group>"; };
+		2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "gmp-man-6.0.0a.pdf"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2F53A7291B0F79B4007C273A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F53A74F1B0F79E9007C273A /* libgmp.10.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2F53A73B1B0F79B4007C273A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2F53A7231B0F79B4007C273A = {
+			isa = PBXGroup;
+			children = (
+				2F53A72E1B0F79B4007C273A /* EngineerMath */,
+				2F53A7411B0F79B4007C273A /* EngineerMathTests */,
+				2F53A72D1B0F79B4007C273A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2F53A72D1B0F79B4007C273A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2F53A72C1B0F79B4007C273A /* EngineerMath.app */,
+				2F53A73E1B0F79B4007C273A /* EngineerMathTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2F53A72E1B0F79B4007C273A /* EngineerMath */ = {
+			isa = PBXGroup;
+			children = (
+				2F53A7311B0F79B4007C273A /* AppDelegate.swift */,
+				2F53A7331B0F79B4007C273A /* ViewController.swift */,
+				2F53A7351B0F79B4007C273A /* Images.xcassets */,
+				2F53A7371B0F79B4007C273A /* Main.storyboard */,
+				2F53A72F1B0F79B4007C273A /* Supporting Files */,
+				2F53A7541B0F7C0C007C273A /* gmpBridge.h */,
+				2F53A7551B0F7C0C007C273A /* gmpBridge.m */,
+				2F53A7571B0FA221007C273A /* MatrixVector.swift */,
+				2F53A75B1B0FA385007C273A /* Equations.swift */,
+				2F53A75D1B0FA38F007C273A /* BigNumbers.swift */,
+				2F53A7591B0FA366007C273A /* complex.swift */,
+			);
+			path = EngineerMath;
+			sourceTree = "<group>";
+		};
+		2F53A72F1B0F79B4007C273A /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				2F53A7511B0F7AC1007C273A /* EngineerMath-Bridging-Header.h */,
+				2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */,
+				2F53A7501B0F7A26007C273A /* gmp.h */,
+				2F53A74E1B0F79E9007C273A /* libgmp.10.dylib */,
+				2F53A7301B0F79B4007C273A /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		2F53A7411B0F79B4007C273A /* EngineerMathTests */ = {
+			isa = PBXGroup;
+			children = (
+				2F53A7441B0F79B4007C273A /* EngineerMathTests.swift */,
+				2F53A7421B0F79B4007C273A /* Supporting Files */,
+			);
+			path = EngineerMathTests;
+			sourceTree = "<group>";
+		};
+		2F53A7421B0F79B4007C273A /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				2F53A7431B0F79B4007C273A /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2F53A72B1B0F79B4007C273A /* EngineerMath */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2F53A7481B0F79B4007C273A /* Build configuration list for PBXNativeTarget "EngineerMath" */;
+			buildPhases = (
+				2F53A7281B0F79B4007C273A /* Sources */,
+				2F53A7291B0F79B4007C273A /* Frameworks */,
+				2F53A72A1B0F79B4007C273A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EngineerMath;
+			productName = EngineerMath;
+			productReference = 2F53A72C1B0F79B4007C273A /* EngineerMath.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2F53A73D1B0F79B4007C273A /* EngineerMathTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2F53A74B1B0F79B4007C273A /* Build configuration list for PBXNativeTarget "EngineerMathTests" */;
+			buildPhases = (
+				2F53A73A1B0F79B4007C273A /* Sources */,
+				2F53A73B1B0F79B4007C273A /* Frameworks */,
+				2F53A73C1B0F79B4007C273A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2F53A7401B0F79B4007C273A /* PBXTargetDependency */,
+			);
+			name = EngineerMathTests;
+			productName = EngineerMathTests;
+			productReference = 2F53A73E1B0F79B4007C273A /* EngineerMathTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2F53A7241B0F79B4007C273A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0630;
+				ORGANIZATIONNAME = "Solinst Canada";
+				TargetAttributes = {
+					2F53A72B1B0F79B4007C273A = {
+						CreatedOnToolsVersion = 6.3.2;
+					};
+					2F53A73D1B0F79B4007C273A = {
+						CreatedOnToolsVersion = 6.3.2;
+						TestTargetID = 2F53A72B1B0F79B4007C273A;
+					};
+				};
+			};
+			buildConfigurationList = 2F53A7271B0F79B4007C273A /* Build configuration list for PBXProject "EngineerMath" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2F53A7231B0F79B4007C273A;
+			productRefGroup = 2F53A72D1B0F79B4007C273A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2F53A72B1B0F79B4007C273A /* EngineerMath */,
+				2F53A73D1B0F79B4007C273A /* EngineerMathTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2F53A72A1B0F79B4007C273A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F53A7601B0FA39E007C273A /* gmp-man-6.0.0a.pdf in Resources */,
+				2F53A7361B0F79B4007C273A /* Images.xcassets in Resources */,
+				2F53A7391B0F79B4007C273A /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2F53A73C1B0F79B4007C273A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2F53A7281B0F79B4007C273A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F53A75A1B0FA366007C273A /* complex.swift in Sources */,
+				2F53A7341B0F79B4007C273A /* ViewController.swift in Sources */,
+				2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */,
+				2F53A75C1B0FA385007C273A /* Equations.swift in Sources */,
+				2F53A75E1B0FA38F007C273A /* BigNumbers.swift in Sources */,
+				2F53A7561B0F7C0C007C273A /* gmpBridge.m in Sources */,
+				2F53A7321B0F79B4007C273A /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2F53A73A1B0F79B4007C273A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2F53A7451B0F79B4007C273A /* EngineerMathTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2F53A7401B0F79B4007C273A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2F53A72B1B0F79B4007C273A /* EngineerMath */;
+			targetProxy = 2F53A73F1B0F79B4007C273A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		2F53A7371B0F79B4007C273A /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				2F53A7381B0F79B4007C273A /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		2F53A7461B0F79B4007C273A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		2F53A7471B0F79B4007C273A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		2F53A7491B0F79B4007C273A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = EngineerMath/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				LINK_WITH_STANDARD_LIBRARIES = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "EngineerMath/EngineerMath-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		2F53A74A1B0F79B4007C273A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = EngineerMath/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				LINK_WITH_STANDARD_LIBRARIES = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "EngineerMath/EngineerMath-Bridging-Header.h";
+			};
+			name = Release;
+		};
+		2F53A74C1B0F79B4007C273A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = EngineerMathTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EngineerMath.app/Contents/MacOS/EngineerMath";
+			};
+			name = Debug;
+		};
+		2F53A74D1B0F79B4007C273A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = EngineerMathTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EngineerMath.app/Contents/MacOS/EngineerMath";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2F53A7271B0F79B4007C273A /* Build configuration list for PBXProject "EngineerMath" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2F53A7461B0F79B4007C273A /* Debug */,
+				2F53A7471B0F79B4007C273A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2F53A7481B0F79B4007C273A /* Build configuration list for PBXNativeTarget "EngineerMath" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2F53A7491B0F79B4007C273A /* Debug */,
+				2F53A74A1B0F79B4007C273A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		2F53A74B1B0F79B4007C273A /* Build configuration list for PBXNativeTarget "EngineerMathTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2F53A74C1B0F79B4007C273A /* Debug */,
+				2F53A74D1B0F79B4007C273A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2F53A7241B0F79B4007C273A /* Project object */;
+}

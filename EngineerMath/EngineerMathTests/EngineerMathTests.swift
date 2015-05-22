@@ -1,15 +1,15 @@
 //
-//  TestEngineerMathTests.swift
-//  TestEngineerMathTests
+//  EngineerMathTests.swift
+//  EngineerMathTests
 //
-//  Created by Mike Griebling on 17 May 2015.
-//  Copyright (c) 2015 Computer Inspirations. All rights reserved.
+//  Created by Michael Griebling on 22May2015.
+//  Copyright (c) 2015 Solinst Canada. All rights reserved.
 //
 
-import UIKit
+import Cocoa
 import XCTest
 
-class TestEngineerMathTests: XCTestCase {
+class EngineerMathTests: XCTestCase {
     
     override func setUp() {
         super.setUp()
