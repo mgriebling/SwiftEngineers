@@ -11,10 +11,15 @@
 
 @interface gmp : NSObject
 
-+ (NSInteger) getDigits;
-+ (void) setDigits: (NSInteger)digits;
++ (NSInteger) getBitSize;
++ (void) setBitSize: (NSInteger)digits;
 + (void) setNumber: (mpf_t *)number fromString: (NSString *)string;
-+ (NSString *) getStringFrom: (mpf_t)number;
++ (void) setNumber: (mpf_t *)number fromInt: (NSInteger)integer;
++ (void) setNumber: (mpf_t *)number fromDouble: (double)x;
++ (void) setNumber: (mpf_t *)number fromLongDouble: (mpf_t)x;
++ (NSString *) getStringFrom: (const mpf_t)number;
++ (double) getDoubleFrom: (const mpf_t)number;
++ (NSInteger) getIntegerFrom: (const mpf_t)number;
 + (void) add: (mpf_t)x toNumber: (mpf_t)y giving: (mpf_t*)result;
 + (void) sub: (mpf_t)x toNumber: (mpf_t)y giving: (mpf_t*)result;
 + (void) mul: (mpf_t)x toNumber: (mpf_t)y giving: (mpf_t*)result;
