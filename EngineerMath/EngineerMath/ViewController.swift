@@ -14,11 +14,21 @@ class ViewController: NSViewController {
 		super.viewDidLoad()
 
 		// Do any additional setup after loading the view.
-		BigReal.bitSize = 256
-		var x = BigReal(1234567890)
-		var y = BigReal("456.789")
+//		var a = NSDecimalNumber(string: "12.345E50")
+//		println("a = \(a), \nmax = \(NSDecimalNumber.maximumDecimalNumber()), \nmin = \(NSDecimalNumber.minimumDecimalNumber())")
+//		let b = NSDecimalNumber.one().decimalNumberByDividingBy(a)
+//		println("1/a = \(b)")
 		
-		println("Tests using \(BigReal.bitSize) bits of resolution");
+		// BigCFloat
+//		var x : BigReal = 1
+//		var x = BigReal(1)
+		var x = BigComplex(1)
+		var y = BigComplex(2)
+//		var z = BigComplex("12.345E50")
+		
+		println("atan \(y)/\(x) = \(x.atan2(y))")
+		
+//		println("z = \(z); 1/z = \(1/z)")
 		println("\(x) + \(y) = \(x+y)")
 		println("\(x) - \(y) = \(x-y)")
 		println("\(x) * \(y) = \(x*y)")

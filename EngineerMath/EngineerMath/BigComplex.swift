@@ -1,0 +1,417 @@
+//
+//  complex.swift
+//
+//	The MIT License (MIT)
+//
+//	Copyright (c) 2014 Dan Kogai
+//  Copyright (c) 2015 Extensively modified by Michael Griebling
+//
+//	Permission is hereby granted, free of charge, to any person obtaining a copy
+//	of this software and associated documentation files (the "Software"), to deal
+//	in the Software without restriction, including without limitation the rights
+//	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//	copies of the Software, and to permit persons to whom the Software is
+//	furnished to do so, subject to the following conditions:
+//
+//	The above copyright notice and this permission notice shall be included in all
+//	copies or substantial portions of the Software.
+//
+//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+//	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+//	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+//	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+//	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+//	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//	SOFTWARE.
+
+import Foundation
+
+class BigComplex : BigReal {
+	
+    var im = BigReal()
+	
+    init(_ re:BigReal, _ im:BigReal) {
+        self.im = im
+		super.init(re.number)
+    }
+	
+	init(_ re:BigReal) {
+		im = BigReal.ZERO
+		super.init(re.number)
+	}
+	
+	override init(_ re:Double) {
+		im = BigReal.ZERO
+		super.init(re)
+	}
+	
+	init(_ re:Double, _ im:Double) {
+		self.im = BigReal(im)
+		super.init(re)
+	}
+	
+	init(_ re:Int, _ im:Int) {
+		self.im = BigReal(im)
+		super.init(re)
+	}
+	
+	override init(_ re:Int) {
+		im = BigReal.ZERO
+		super.init(re)
+	}
+	
+    convenience override init() { self.init(BigReal.ZERO, BigReal.ZERO) }
+	
+    init(abs:BigReal, arg:BigReal) {
+        im = abs * arg.sin()
+		super.init((abs * arg.cos()).number)
+    }
+	
+    /// real part thereof
+    var real:BigReal { return re }
+	
+    /// imaginary part thereof
+    var imag:BigReal { return im }
+	
+    /// absolute value thereof
+    override var abs:BigReal {
+        return re.hypot(im)
+    }
+	
+    /// argument thereof
+    var arg:BigReal  {
+        return im.atan2(re)
+    }
+	
+    /// norm thereof
+    var norm:BigReal { return re.hypot(im) }
+	
+    /// conjugate thereof
+    var conj:BigComplex { return BigComplex(re, -im) }
+	
+    /// projection thereof
+    var proj:BigComplex {
+        if re.isFinite && im.isFinite {
+            return self
+        } else {
+            return BigComplex(
+                BigReal.ONE/BigReal(0), im.isSignMinus ? -BigReal(0) : BigReal(0)
+            )
+        }
+    }
+	
+    /// (real, imag)
+    var tuple:(BigReal, BigReal) {
+        return (re, im)
+    }
+	
+    /// z * i
+    var i:BigComplex { return BigComplex(-im, re) }
+	
+    /// .description -- conforms to Printable
+    override var description:String {
+        let plus = im.isSignMinus ? "" : "+"
+		let ims = im == BigReal(1) ? "i" : "\(im)i"
+		if im.isZero { return re.description }
+		if re.isZero { return "\(plus)\(ims))" }
+        return "\(re)\(plus)\(ims)"
+    }
+	
+    /// .hashvalue -- conforms to Hashable
+    override var hashValue:Int { // take most significant halves and join
+        let bits = sizeof(Int) * 4
+        let mask = bits == 16 ? 0xffff : 0xffffFFFF
+        return (re.hashValue & ~mask) | (im.hashValue >> bits)
+    }
+}
+// operator definitions
+infix operator ** { associativity right precedence 170 }
+infix operator **= { associativity right precedence 90 }
+infix operator =~ { associativity none precedence 130 }
+infix operator !~ { associativity none precedence 130 }
+
+// != is auto-generated thanks to Equatable
+func == (lhs:BigComplex, rhs:BigComplex) -> Bool {
+    return lhs.re == rhs.re && lhs.im == rhs.im
+}
+func == (lhs:BigComplex, rhs:BigReal) -> Bool {
+    return lhs.re == rhs && lhs.im == BigReal(0)
+}
+func == (lhs:BigReal, rhs:BigComplex) -> Bool {
+    return rhs.re == lhs && rhs.im == BigReal(0)
+}
+
+// +, +=
+prefix func + (z:BigComplex) -> BigComplex {
+    return z
+}
+func + (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
+    return BigComplex(lhs.re + rhs.re, lhs.im + rhs.im)
+}
+func + (lhs:BigComplex, rhs:BigReal) -> BigComplex {
+    return lhs + BigComplex(rhs, BigReal(0))
+}
+func + (lhs:BigReal, rhs:BigComplex) -> BigComplex {
+    return BigComplex(lhs, BigReal(0)) + rhs
+}
+func += (inout lhs:BigComplex, rhs:BigComplex) {
+	lhs = BigComplex(lhs.re+rhs.re, lhs.im+rhs.im)
+}
+func += (inout lhs:BigComplex, rhs:BigReal) {
+	lhs = BigComplex(lhs.re+rhs, lhs.im)
+}
+
+// -, -=
+prefix func - (z:BigComplex) -> BigComplex {
+    return BigComplex(-z.re, -z.im)
+}
+func - (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
+    return BigComplex(lhs.re - rhs.re, lhs.im - rhs.im)
+}
+func - (lhs:BigComplex, rhs:BigReal) -> BigComplex {
+    return lhs - BigComplex(rhs, BigReal(0))
+}
+func - (lhs:BigReal, rhs:BigComplex) -> BigComplex {
+    return BigComplex(lhs, BigReal(0)) - rhs
+}
+func -= (inout lhs:BigComplex, rhs:BigComplex) {
+	lhs = BigComplex(lhs.re - rhs.re, lhs.im - rhs.im)
+}
+func -= (inout lhs:BigComplex, rhs:BigReal) {
+    lhs = BigComplex(lhs.re - rhs, lhs.im)
+}
+
+// *, *=
+func * (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
+    return BigComplex(
+        lhs.re * rhs.re - lhs.im * rhs.im,
+        lhs.re * rhs.im + lhs.im * rhs.re
+    )
+}
+func * (lhs:BigComplex, rhs:BigReal) -> BigComplex {
+    return BigComplex(lhs.re * rhs, lhs.im * rhs)
+}
+func * (lhs:BigReal, rhs:BigComplex) -> BigComplex {
+    return BigComplex(lhs * rhs.re, lhs * rhs.im)
+}
+func *= (inout lhs:BigComplex, rhs:BigComplex) {
+    lhs = lhs * rhs
+}
+func *= (inout lhs:BigComplex, rhs:BigReal) {
+    lhs = lhs * rhs
+}
+
+// /, /=
+//
+// cf. https://github.com/dankogai/swift-complex/issues/3
+//
+func / (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
+    if rhs.re.abs >= rhs.im.abs {
+        let r = rhs.im / rhs.re
+        let d = rhs.re + rhs.im * r
+        return BigComplex (
+            (lhs.re + lhs.im * r) / d,
+            (lhs.im - lhs.re * r) / d
+        )
+    } else {
+        let r = rhs.re / rhs.im
+        let d = rhs.re * r + rhs.im
+        return BigComplex (
+            (lhs.re * r + lhs.im) / d,
+            (lhs.im * r - lhs.re) / d
+        )
+        
+    }
+}
+func / (lhs:BigComplex, rhs:BigReal) -> BigComplex {
+    return BigComplex(lhs.re / rhs, lhs.im / rhs)
+}
+func / (lhs:BigReal, rhs:BigComplex) -> BigComplex {
+    return BigComplex(lhs, BigReal(0)) / rhs
+}
+func /= (inout lhs:BigComplex, rhs:BigComplex) {
+    lhs = lhs / rhs
+}
+func /= (inout lhs:BigComplex, rhs:BigReal) {
+    lhs = lhs / rhs
+}
+
+// exp(z)
+func exp(z:BigComplex) -> BigComplex {
+    let abs = z.re.exp()
+    let arg = z.im
+    return BigComplex(abs * arg.cos(), abs * arg.sin())
+}
+
+// ln(z)
+func ln(z:BigComplex) -> BigComplex {
+    return BigComplex(z.abs.ln(), z.arg)
+}
+
+// log(z) -- just because C++ has it
+func log(z:BigComplex) -> BigComplex { return ln(z) / BigReal.LN10 }
+func log(r:BigReal) -> BigComplex { return BigComplex(r.log()) }
+
+// pow(b, x)
+func pow(lhs:BigComplex, rhs:BigComplex) -> BigComplex {
+    if lhs == BigReal(0) { return BigComplex(BigReal.ONE, BigReal(0)) } // 0 ** 0 == 1
+    let z = log(lhs) * rhs
+    return exp(z)
+}
+func pow(lhs:BigComplex, rhs:BigReal) -> BigComplex {
+    return pow(lhs, BigComplex(rhs, BigReal(0)))
+}
+func pow(lhs:BigReal, rhs:BigComplex) -> BigComplex {
+    return pow(BigComplex(lhs, BigReal(0)), rhs)
+}
+
+// **, **=
+func ** (lhs:BigReal, rhs:BigReal) -> BigComplex {
+    return BigComplex(lhs.pow(rhs))
+}
+func ** (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
+    return pow(lhs, rhs)
+}
+func ** (lhs:BigReal, rhs:BigComplex) -> BigComplex {
+    return pow(lhs, rhs)
+}
+func ** (lhs:BigComplex, rhs:BigReal) -> BigComplex {
+    return pow(lhs, rhs)
+}
+func **= (inout lhs:BigReal, rhs:BigReal) {
+    lhs = lhs.pow(rhs)
+}
+func **= (inout lhs:BigComplex, rhs:BigComplex) {
+    lhs = pow(lhs, rhs)
+}
+func **= (inout lhs:BigComplex, rhs:BigReal) {
+    lhs = pow(lhs, rhs)
+}
+
+// sqrt(z)
+func sqrt(z:BigComplex) -> BigComplex {
+    // return z ** 0.5
+    let d = z.re.hypot(z.im)
+    let re = ((z.re + d)/BigReal.TWO).sqrt()
+    if z.im < BigReal(0) {
+        return BigComplex(re, -((-z.re + d)/BigReal.TWO).sqrt())
+    } else {
+        return BigComplex(re,  ((-z.re + d)/BigReal.TWO).sqrt())
+    }
+}
+
+// cos(z)
+func cos(z:BigComplex) -> BigComplex {
+    // return (exp(i*z) + exp(-i*z)) / 2
+    return (exp(z.i) + exp(-z.i)) / BigReal.TWO
+}
+
+// sin(z)
+func sin(z:BigComplex) -> BigComplex {
+    // return (exp(i*z) - exp(-i*z)) / (2*i)
+    return -(exp(z.i) - exp(-z.i)).i / BigReal.TWO
+}
+
+// tan(z)
+func tan(z:BigComplex) -> BigComplex {
+    // return sin(z) / cos(z)
+    let ezi = exp(z.i), e_zi = exp(-z.i)
+    return (ezi - e_zi) / (ezi + e_zi).i
+}
+
+// atan(z)
+func atan(z:BigComplex) -> BigComplex {
+    let l0 = log(BigReal.ONE - z.i), l1 = log(BigReal.ONE + z.i)
+    return (l0 - l1).i / BigReal.TWO
+}
+
+func atan(r:BigReal) -> BigComplex { return atan(BigComplex(r)) }
+
+// atan2(z, zz)
+func atan2(z:BigComplex, zz:BigComplex) -> BigComplex {
+    return atan(z / zz)
+}
+
+// asin(z)
+func asin(z:BigComplex) -> BigComplex {
+    return -log(z.i + sqrt(BigReal.ONE - z*z)).i
+}
+
+// acos(z)
+func acos(z:BigComplex) -> BigComplex {
+    return log(z - sqrt(BigReal.ONE - z*z).i).i
+}
+
+// sinh(z)
+func sinh(z:BigComplex) -> BigComplex {
+    return (exp(z) - exp(-z)) / BigReal.TWO
+}
+
+// cosh(z)
+func cosh(z:BigComplex) -> BigComplex {
+    return (exp(z) + exp(-z)) / BigReal.TWO
+}
+
+// tanh(z)
+func tanh(z:BigComplex) -> BigComplex {
+    let ez = exp(z), e_z = exp(-z)
+    return (ez - e_z) / (ez + e_z)
+}
+
+// asinh(z)
+func asinh(z:BigComplex) -> BigComplex {
+    return ln(z + sqrt(z*z + BigReal.ONE))
+}
+
+// acosh(z)
+func acosh(z:BigComplex) -> BigComplex {
+    return ln(z + sqrt(z*z - BigReal.ONE))
+}
+
+// atanh(z)
+func atanh(z:BigComplex) -> BigComplex {
+    let t = ln((BigReal.ONE + z)/(BigReal.ONE - z))
+    return t / BigReal.TWO
+}
+
+// for the compatibility's sake w/ C++11
+func abs(z:BigComplex) -> BigReal { return z.abs }
+func arg(z:BigComplex) -> BigReal { return z.arg }
+func real(z:BigComplex) -> BigReal { return z.real }
+func imag(z:BigComplex) -> BigReal { return z.imag }
+func norm(z:BigComplex) -> BigReal { return z.norm }
+func conj(z:BigComplex) -> BigComplex { return z.conj }
+func proj(z:BigComplex) -> BigComplex { return z.proj }
+
+//
+// approximate comparisons
+//
+func =~ (lhs:BigReal, rhs:BigReal) -> Bool {
+    if lhs == rhs { return true }
+    let t = (rhs - lhs) / rhs
+    return t.abs <= BigReal.TWO * BigReal.epsilon
+}
+func =~ (lhs:BigComplex, rhs:BigComplex) -> Bool {
+    if lhs == rhs { return true }
+    return lhs.abs =~ rhs.abs
+}
+func =~ (lhs:BigComplex, rhs:BigReal) -> Bool {
+    return lhs.abs =~ rhs.abs
+}
+func =~ (lhs:BigReal, rhs:BigComplex) -> Bool {
+    return lhs.abs =~ rhs.abs
+}
+func !~ (lhs:BigReal, rhs:BigReal) -> Bool {
+    return !(lhs =~ rhs)
+}
+func !~ (lhs:BigComplex, rhs:BigComplex) -> Bool {
+    return !(lhs =~ rhs)
+}
+func !~ (lhs:BigComplex, rhs:BigReal) -> Bool {
+    return !(lhs =~ rhs)
+}
+func !~ (lhs:BigReal, rhs:BigComplex) -> Bool {
+    return !(lhs =~ rhs)
+}
+
+

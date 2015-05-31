@@ -15,10 +15,11 @@
 		2F53A74F1B0F79E9007C273A /* libgmp.10.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F53A74E1B0F79E9007C273A /* libgmp.10.dylib */; };
 		2F53A7561B0F7C0C007C273A /* gmpBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7551B0F7C0C007C273A /* gmpBridge.m */; };
 		2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7571B0FA221007C273A /* MatrixVector.swift */; };
-		2F53A75A1B0FA366007C273A /* complex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7591B0FA366007C273A /* complex.swift */; };
+		2F53A75A1B0FA366007C273A /* BigComplex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7591B0FA366007C273A /* BigComplex.swift */; };
 		2F53A75C1B0FA385007C273A /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75B1B0FA385007C273A /* Equations.swift */; };
-		2F53A75E1B0FA38F007C273A /* BigNumbers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75D1B0FA38F007C273A /* BigNumbers.swift */; };
+		2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75D1B0FA38F007C273A /* BigReal.swift */; };
 		2F53A7601B0FA39E007C273A /* gmp-man-6.0.0a.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */; };
+		4729231D1B19BE3F005C29FE /* BigFloat.m in Sources */ = {isa = PBXBuildFile; fileRef = 4729231C1B19BE3F005C29FE /* BigFloat.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,10 +48,12 @@
 		2F53A7541B0F7C0C007C273A /* gmpBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gmpBridge.h; sourceTree = "<group>"; };
 		2F53A7551B0F7C0C007C273A /* gmpBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = gmpBridge.m; sourceTree = "<group>"; };
 		2F53A7571B0FA221007C273A /* MatrixVector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatrixVector.swift; sourceTree = "<group>"; };
-		2F53A7591B0FA366007C273A /* complex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = complex.swift; sourceTree = "<group>"; };
+		2F53A7591B0FA366007C273A /* BigComplex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigComplex.swift; sourceTree = "<group>"; };
 		2F53A75B1B0FA385007C273A /* Equations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Equations.swift; sourceTree = "<group>"; };
-		2F53A75D1B0FA38F007C273A /* BigNumbers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigNumbers.swift; sourceTree = "<group>"; };
+		2F53A75D1B0FA38F007C273A /* BigReal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigReal.swift; sourceTree = "<group>"; };
 		2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "gmp-man-6.0.0a.pdf"; sourceTree = "<group>"; };
+		4729231B1B19BE3F005C29FE /* BigFloat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BigFloat.h; sourceTree = "<group>"; };
+		4729231C1B19BE3F005C29FE /* BigFloat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BigFloat.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,8 +105,10 @@
 				2F53A7551B0F7C0C007C273A /* gmpBridge.m */,
 				2F53A7571B0FA221007C273A /* MatrixVector.swift */,
 				2F53A75B1B0FA385007C273A /* Equations.swift */,
-				2F53A75D1B0FA38F007C273A /* BigNumbers.swift */,
-				2F53A7591B0FA366007C273A /* complex.swift */,
+				2F53A75D1B0FA38F007C273A /* BigReal.swift */,
+				2F53A7591B0FA366007C273A /* BigComplex.swift */,
+				4729231B1B19BE3F005C29FE /* BigFloat.h */,
+				4729231C1B19BE3F005C29FE /* BigFloat.m */,
 			);
 			path = EngineerMath;
 			sourceTree = "<group>";
@@ -237,11 +242,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F53A75A1B0FA366007C273A /* complex.swift in Sources */,
+				2F53A75A1B0FA366007C273A /* BigComplex.swift in Sources */,
 				2F53A7341B0F79B4007C273A /* ViewController.swift in Sources */,
 				2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */,
 				2F53A75C1B0FA385007C273A /* Equations.swift in Sources */,
-				2F53A75E1B0FA38F007C273A /* BigNumbers.swift in Sources */,
+				2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */,
+				4729231D1B19BE3F005C29FE /* BigFloat.m in Sources */,
 				2F53A7561B0F7C0C007C273A /* gmpBridge.m in Sources */,
 				2F53A7321B0F79B4007C273A /* AppDelegate.swift in Sources */,
 			);
@@ -445,6 +451,7 @@
 				2F53A74A1B0F79B4007C273A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		2F53A74B1B0F79B4007C273A /* Build configuration list for PBXNativeTarget "EngineerMathTests" */ = {
 			isa = XCConfigurationList;
@@ -453,6 +460,7 @@
 				2F53A74D1B0F79B4007C273A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
