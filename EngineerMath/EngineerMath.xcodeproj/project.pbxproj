@@ -19,7 +19,7 @@
 		2F53A75C1B0FA385007C273A /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75B1B0FA385007C273A /* Equations.swift */; };
 		2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75D1B0FA38F007C273A /* BigReal.swift */; };
 		2F53A7601B0FA39E007C273A /* gmp-man-6.0.0a.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */; };
-		4729231D1B19BE3F005C29FE /* BigFloat.m in Sources */ = {isa = PBXBuildFile; fileRef = 4729231C1B19BE3F005C29FE /* BigFloat.m */; };
+		2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */ = {isa = PBXBuildFile; fileRef = 2FA1D7511B1E2B7B00778806 /* BigFloat.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,8 +52,8 @@
 		2F53A75B1B0FA385007C273A /* Equations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Equations.swift; sourceTree = "<group>"; };
 		2F53A75D1B0FA38F007C273A /* BigReal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigReal.swift; sourceTree = "<group>"; };
 		2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "gmp-man-6.0.0a.pdf"; sourceTree = "<group>"; };
-		4729231B1B19BE3F005C29FE /* BigFloat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BigFloat.h; sourceTree = "<group>"; };
-		4729231C1B19BE3F005C29FE /* BigFloat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BigFloat.m; sourceTree = "<group>"; };
+		2FA1D7501B1E2B7B00778806 /* BigFloat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BigFloat.h; sourceTree = "<group>"; };
+		2FA1D7511B1E2B7B00778806 /* BigFloat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BigFloat.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,8 +107,8 @@
 				2F53A75B1B0FA385007C273A /* Equations.swift */,
 				2F53A75D1B0FA38F007C273A /* BigReal.swift */,
 				2F53A7591B0FA366007C273A /* BigComplex.swift */,
-				4729231B1B19BE3F005C29FE /* BigFloat.h */,
-				4729231C1B19BE3F005C29FE /* BigFloat.m */,
+				2FA1D7501B1E2B7B00778806 /* BigFloat.h */,
+				2FA1D7511B1E2B7B00778806 /* BigFloat.m */,
 			);
 			path = EngineerMath;
 			sourceTree = "<group>";
@@ -247,7 +247,7 @@
 				2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */,
 				2F53A75C1B0FA385007C273A /* Equations.swift in Sources */,
 				2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */,
-				4729231D1B19BE3F005C29FE /* BigFloat.m in Sources */,
+				2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */,
 				2F53A7561B0F7C0C007C273A /* gmpBridge.m in Sources */,
 				2F53A7321B0F79B4007C273A /* AppDelegate.swift in Sources */,
 			);

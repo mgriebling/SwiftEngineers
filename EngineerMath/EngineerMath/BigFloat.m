@@ -33,18 +33,18 @@
 //
 
 // An array for cacheing values of pi (initialised to all nil)
-static BigFloat*		pi_array[36] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+static BigFloat* pi_array[36] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 // A string containing the unichar digits 0 to 9 and onwards
-static NSString*		BF_digits = @"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static NSString* BF_digits = @"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 // An internally used structure to get the extra information for a number (its "elements")
 typedef struct
 {
 	unsigned short	bf_radix;
 	unsigned short	bf_value_precision;
-	unsigned long	bf_value_limit;
-	unsigned long	bf_exponent_precision;
+	unsigned int	bf_value_limit;
+	unsigned int	bf_exponent_precision;
 	signed int		bf_exponent;
 	unsigned short	bf_user_point;
 	BOOL			bf_is_negative;
@@ -233,12 +233,12 @@ BF_NumDigitsInArray(unsigned long *values, unsigned short radix, unsigned long p
 	int digitNumber;
 	
 	// Trace through the number looking the the most significant non-zero digit
-	digitsInNumber = (int)(BF_num_values * precision);
+	digitsInNumber = (int) (BF_num_values * precision);
 	valueNumber = BF_num_values;
 	do
 	{
 		valueNumber--;
-		digitNumber = (int)(precision - 1);
+		digitNumber = (int) (precision - 1);
 		while
 		(
 			(((int)(values[valueNumber] / pow(radix, digitNumber)) % radix) == 0)
@@ -456,8 +456,11 @@ BF_NormaliseNumbers
 	// pi_array is retained permanently (until the program quits)
 	pi_array[bf_radix] = [p copy];
 	[pi_array[bf_radix] inverse];
+}
 
-	// Free all the memory
+- (BigFloat *)pi {
+	if (!pi_array[bf_radix]) {[self calculatePi]; }
+	return [pi_array[bf_radix] copy];
 }
 
 //
@@ -512,13 +515,12 @@ BF_NormaliseNumbers
 	bf_is_valid = isValid;
 
 	// Set the bf_radix (if it is valid)
-	if (radix < 2 || radix > 36)
-		radix = 10;
+	if (radix < 2 || radix > 36) radix = 10;
 	bf_radix = radix;
 	
 	bf_value_precision = (unsigned long)(log(0xFFFF + 1) / log(radix));
-	bf_value_limit = (unsigned long)(pow(radix, bf_value_precision));
-	bf_exponent_precision = (unsigned long)(log(0xFFFF + 1) / log(radix));
+	bf_value_limit = (unsigned int)(pow(radix, bf_value_precision));
+	bf_exponent_precision = (unsigned int)(log(0xFFFF + 1) / log(radix));
 
 	// Apply the decimal point
 	if (userPoint > (bf_value_precision * BF_num_values - 1))
@@ -738,12 +740,8 @@ BF_NormaliseNumbers
 	
 	if (self != nil)
 	{
-		// Make certain that we have a pi for this radix
-		if (pi_array[newRadix] == nil)
-			[self calculatePi];
-		
 		// Don't actually return our private PI (in case the caller messes it up)
-		[self assign:pi_array[newRadix]];
+		[self assign:self.pi];   // automatically calculate new pi for unknown radices
 	}
 	
 	return self;
@@ -770,8 +768,8 @@ BF_NormaliseNumbers
 	bf_is_negative = [coder decodeBoolForKey:@"BFIsNegative"];
 	bf_radix = [coder decodeIntForKey:@"BFRadix"];
 	bf_value_precision = [coder decodeIntForKey:@"BFValuePrecision"];
-	bf_value_limit = [coder decodeInt64ForKey:@"BFValueLimit"];
-	bf_exponent_precision = [coder decodeInt64ForKey:@"BFExponentPrecision"];
+	bf_value_limit = [coder decodeIntForKey:@"BFValueLimit"];
+	bf_exponent_precision = [coder decodeIntForKey:@"BFExponentPrecision"];
 	bf_is_valid = [coder decodeBoolForKey:@"BFIsValid"];
 	
 	return self;
@@ -790,14 +788,15 @@ BF_NormaliseNumbers
 // initWithString
 //
 // The most requested constructor for those numbers that don't fit in 15 digits.
+// BTW: I'll go with the Swift convention and use a 'p' exponent for radices other than 10.
 //
 - (instancetype)initWithString:(NSString *)newValue radix:(unsigned short)newRadix {
 	// Mike - created this primarily for the constants
-	NSString *separators = newRadix == 10 ? @"eE" : @"";
-	NSString *digits = [@"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" substringToIndex:newRadix];
+	NSString *separators = newRadix == 10 ? @"eE" : @"pP";
+	NSString *digits = [BF_digits substringToIndex:newRadix];
 	NSCharacterSet *validDigits = [NSCharacterSet characterSetWithCharactersInString:digits];
 	NSCharacterSet *signChars = [NSCharacterSet characterSetWithCharactersInString:@"+-"];
-	int userPoint = 0;
+	NSInteger userPoint = 0;
 
 	self = [self initWithInt:0 radix:newRadix];
 	if (self != nil) {
@@ -843,7 +842,7 @@ BF_NormaliseNumbers
 				if (expNegative) { [self appendExpDigit:'-']; }
 			}
 		}
-		[self setUserPoint:userPoint];
+		[self setUserPoint:(int)userPoint];
 	}
 //	NSLog(@"\"%@\" = %@", newValue, [self toString]);
 	return self;
@@ -862,8 +861,8 @@ BF_NormaliseNumbers
 	[coder encodeBool:bf_is_negative forKey:@"BFIsNegative"];
 	[coder encodeInt:bf_radix forKey:@"BFRadix"];
 	[coder encodeInt:bf_value_precision forKey:@"BFValuePrecision"];
-	[coder encodeInt64:bf_value_limit forKey:@"BFValueLimit"];
-	[coder encodeInt64:bf_exponent_precision forKey:@"BFExponentPrecision"];
+	[coder encodeInt:bf_value_limit forKey:@"BFValueLimit"];
+	[coder encodeInt:bf_exponent_precision forKey:@"BFExponentPrecision"];
 	[coder encodeBool:bf_is_valid forKey:@"BFIsValid"];
 }
 
@@ -902,7 +901,7 @@ BF_NormaliseNumbers
 //
 // bigFloatWithInt
 //
-// A static method to do this quickly and return an autoreleased BigFloat of an int.
+// A static method to do this quickly and return a BigFloat of an int.
 //
 + (BigFloat*)bigFloatWithInt: (signed int)newValue radix: (unsigned short)newRadix
 {
@@ -912,7 +911,7 @@ BF_NormaliseNumbers
 //
 // bigFloatWithDouble
 //
-// A static method to do this quickly and return an autoreleased BigFloat of a double.
+// A static method to do this quickly and return a BigFloat of a double.
 //
 + (BigFloat*)bigFloatWithDouble: (double)newValue radix: (unsigned short)newRadix
 {
@@ -922,7 +921,7 @@ BF_NormaliseNumbers
 //
 // piWithRadix
 //
-// A static method to do this quickly and return an autoreleased BigFloat of π.
+// A static method to do this quickly and return a BigFloat of π.
 //
 + (BigFloat*)piWithRadix:(unsigned short)newRadix
 {
@@ -959,9 +958,9 @@ BF_NormaliseNumbers
 
 		if (complement)
 		{
-			BigFloat				*complementNumberFull;
-			BigFloat				*complementNumberHalf;
-			BigFloat				*mantissaNumber;
+			BigFloat			*complementNumberFull;
+			BigFloat			*complementNumberHalf;
+			BigFloat			*mantissaNumber;
 			unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
 			unsigned long long	complementFull = ((unsigned long long)1 << (complement));
 			NSComparisonResult	relative;	
@@ -1019,6 +1018,13 @@ BF_NormaliseNumbers
 	}
 	
 	return YES;
+}
+
+- (BOOL)isInteger {
+	BigFloat *tmp = self.copy;
+	[tmp abs];
+	[tmp fractionalPart];
+	return tmp.isZero;
 }
 
 //
@@ -1110,10 +1116,9 @@ BF_NormaliseNumbers
 	unsigned long		reverse[BF_num_values * 2];
 	unsigned long		result[BF_num_values * 2];
 	BigFloatElements	elements;
-	int						i;
+	int					i;
 	unsigned long		carryBits;
-	BigFloat				*exponentNum;
-//	BigFloat				*powerNum;
+	BigFloat			*exponentNum;
 	
 	// Check for a valid new radix
 	if (bf_radix == newRadix || newRadix < 2 || newRadix > 36)
@@ -1139,9 +1144,9 @@ BF_NormaliseNumbers
 	// Adjust the precision related elements
 	elements.bf_radix = newRadix;
 	elements.bf_exponent = 0;
-	elements.bf_exponent_precision =  (unsigned long)(log(0xFFFF + 1) / log(elements.bf_radix));
+	elements.bf_exponent_precision =  (unsigned int)(log(0xFFFF + 1) / log(elements.bf_radix));
 	elements.bf_value_precision = (unsigned long)(log(0xFFFF + 1) / log(elements.bf_radix));
-	elements.bf_value_limit = (unsigned long)(pow(newRadix, elements.bf_value_precision));
+	elements.bf_value_limit = (unsigned int)(pow(newRadix, elements.bf_value_precision));
 
 	// Clear the working space
 	BF_ClearValuesArray(reverse, 2);
@@ -1178,8 +1183,6 @@ BF_NormaliseNumbers
 	exponentNum = [[BigFloat alloc] initWithInt: bf_radix radix: newRadix];
 	
 	// Raise the BigFloat to the old exponent power
-//	powerNum = [[BigFloat alloc] initWithInt: bf_exponent radix: newRadix];
-//	[exponentNum raiseToPower:powerNum];
 	[exponentNum raiseToIntPower:bf_exponent];
 
 	// Set the values and elements of this number
@@ -1281,17 +1284,15 @@ BF_NormaliseNumbers
 {
 	unsigned long		values[BF_num_values];
 	unsigned long		otherNum[BF_num_values];
-	int						i;
+	int					i;
 	BigFloatElements	thisNumElements;
 	BigFloatElements	otherNumElements;
 	NSComparisonResult	compare;
-	BOOL					release = NO;
 	
 	if ([num radix] != bf_radix)
 	{
 		num = [num copy];
 		[num convertToRadix:bf_radix];
-		release = YES;
 	}
 	
 	BF_CopyValues(bf_array, values);
@@ -1355,7 +1356,7 @@ BF_NormaliseNumbers
 //
 // duplicate
 //
-// Returns an autoreleased copy (can't you read the code?).
+// Returns a copy (can't you read the code?).
 //
 - (BigFloat*)duplicate
 {
@@ -1391,6 +1392,16 @@ BF_NormaliseNumbers
 	bf_is_negative = NO;
 }
 
+//
+// negate
+//
+// Sets the sign of the number to positive.
+//
+- (void)negate
+{
+	bf_is_negative = !bf_is_negative;
+}
+
 #pragma mark
 #pragma mark ##### Arithmetic Functions #####
 
@@ -1407,14 +1418,11 @@ BF_NormaliseNumbers
 	unsigned long 		carryBits = 0;
 	BigFloatElements	thisNumElements;
 	BigFloatElements	otherNumElements;
-	BOOL					release = NO;
 	
 	if ([num radix] != bf_radix)
 	{
 		num = [num copy];
-		[num convertToRadix:bf_radix];
-		release = YES;
-	}
+		[num convertToRadix:bf_radix];	}
 
 	BF_CopyValues(bf_array, values);
 	[self copyElements: &thisNumElements];
@@ -1433,13 +1441,12 @@ BF_NormaliseNumbers
 	{
 		BigFloat *compareNum;
 		
-		bf_is_negative = bf_is_negative ? NO : YES;
+		bf_is_negative = !bf_is_negative;
 		[self subtract: num];
 		
 		compareNum = [[BigFloat alloc] initWithInt:0 radix:bf_radix];
 		if (![self isZero])
-			bf_is_negative = bf_is_negative ? NO : YES;
-		
+			bf_is_negative = !bf_is_negative;
 		
 		return;
 	}
@@ -1492,19 +1499,17 @@ BF_NormaliseNumbers
 //
 - (void)subtract: (BigFloat*)num
 {
-	int						i, peek;
+	int					i, peek;
 	unsigned long		values[BF_num_values];
 	unsigned long		otherNum[BF_num_values];
 	BigFloatElements	thisNumElements;
 	BigFloatElements	otherNumElements;
 	NSComparisonResult	compare;
-	BOOL					release = NO;
 	
 	if ([num radix] != bf_radix)
 	{
 		num = [num copy];
 		[num convertToRadix:bf_radix];
-		release = YES;
 	}
 	
 	[self copyElements: &thisNumElements];
@@ -1520,9 +1525,9 @@ BF_NormaliseNumbers
 	// Handle differences in sign by calling addition instead
 	if (otherNumElements.bf_is_negative != thisNumElements.bf_is_negative)
 	{
-		bf_is_negative = bf_is_negative ? NO : YES;
+		bf_is_negative = !bf_is_negative;
 		[self add: num];
-		bf_is_negative = bf_is_negative ? NO : YES;
+		bf_is_negative = !bf_is_negative;
 		return;
 	}
 
@@ -1572,7 +1577,7 @@ BF_NormaliseNumbers
 	else if (compare == NSOrderedAscending)
 	{
 		// Change the sign of this num
-		thisNumElements.bf_is_negative = thisNumElements.bf_is_negative ? NO : YES;
+		thisNumElements.bf_is_negative = !thisNumElements.bf_is_negative;
 		
 		// Perform the subtraction
 		for (i = 0; i < BF_num_values; i++)
@@ -1627,13 +1632,11 @@ BF_NormaliseNumbers
 	BigFloatElements	thisNumElements;
 	BigFloatElements	otherNumElements;
 	BOOL				shift = NO;
-	BOOL				release = NO;
 	
 	if ([num radix] != bf_radix)
 	{
 		num = [num copy];
 		[num convertToRadix:bf_radix];
-		release = YES;
 	}
 	
 	// Get a working copy of the values that will be multiplied
@@ -1720,7 +1723,7 @@ BF_NormaliseNumbers
 //
 - (void)divideBy: (BigFloat*)num
 {
-	int						i, j, peek;
+	int					i, j, peek;
 	unsigned long		carryBits;
 	unsigned long		values[BF_num_values * 2];
 	unsigned long		otherNumValues[BF_num_values * 2];
@@ -1730,13 +1733,11 @@ BF_NormaliseNumbers
 	BigFloatElements	otherNumElements;
 	unsigned long		quotient;
 	NSComparisonResult	compare;
-	BOOL					release = NO;
 	
 	if ([num radix] != bf_radix)
 	{
 		num = [num copy];
 		[num convertToRadix:bf_radix];
-		release = YES;
 	}
 
 	// Clear the working space
@@ -2007,7 +2008,7 @@ BF_NormaliseNumbers
 //
 - (void)moduloBy: (BigFloat*)num
 {
-	int						i, j, peek;
+	int					i, j, peek;
 	unsigned long		carryBits;
 	unsigned long		values[BF_num_values * 2];
 	unsigned long		otherNumValues[BF_num_values * 2];
@@ -2017,15 +2018,13 @@ BF_NormaliseNumbers
 	BigFloatElements	thisNumElements;
 	unsigned long		quotient;
 	NSComparisonResult	compare;
-	int						divisionExponent;
-	BigFloat				*subNum;
-	BOOL					release = NO;
+	int					divisionExponent;
+	BigFloat			*subNum;
 	
 	if ([num radix] != bf_radix)
 	{
 		num = [num copy];
 		[num convertToRadix:bf_radix];
-		release = YES;
 	}
 
 	// Clear the working space
@@ -2493,6 +2492,14 @@ BF_NormaliseNumbers
 		return;
 	}
 	
+	[numCopy fractionalPart];
+	int exp = (int)num.doubleValue;
+	if ([numCopy isZero] && abs(exp) < 0x8000) {
+		[self raiseToIntPower:exp];
+		return;
+	}
+	numCopy = [num copy];
+	
 	if (bf_is_negative)
 	{
 		bf_is_negative = NO;
@@ -2527,116 +2534,30 @@ BF_NormaliseNumbers
 	
 }
 
+//
+// sqrt
+//
+// Takes the square root of the receiver
+//
 - (void)sqrt {
 	[self nRoot:2];
-//	BigFloat				*original;
-//	BigFloat				*prevGuess;
-//	BigFloat				*newGuess;
-//	BigFloat				*two;
-//	int						i, j;
-//	BOOL					digitNotFound = YES;
-//	int						numDigits;
-//	NSComparisonResult	compare;
-//	
-//	if (!bf_is_valid)
-//		return;
-//	
-//	if ([self isNegative])
-//	{
-//		bf_is_valid = NO;
-//		return;
-//	}
-//	
-//	if ([self isZero])
-//	{
-//		return;
-//	}
-//	
-//	original = [self copy];
-//	two = [[BigFloat alloc] initWithInt:2 radix: bf_radix];
-//	
-//	// Count the number of digits left of the point
-//	numDigits = BF_num_values * bf_value_precision + bf_exponent - bf_user_point;
-//	for (i = BF_num_values - 1; i >= 0 && digitNotFound; i--)
-//	{
-//		for (j = bf_value_precision - 1; j >= 0 && digitNotFound; j--)
-//		{
-//			if ((bf_array[i] / (unsigned long)(pow(bf_radix, j)) % bf_radix) == 0)
-//			{
-//				numDigits--;
-//			}
-//			else
-//			{
-//				digitNotFound = NO;
-//			}
-//		}
-//	}
-//	
-//	// The first guess will be this number with its numDigits halved
-//	bf_exponent -= (numDigits / 2);
-//	prevGuess = [self copy];
-//	newGuess = [self copy];
-//	compare = NSOrderedDescending;
-//	
-//	// Do some Newton's method iterations until we converge
-//	while(compare != NSOrderedSame)
-//	{
-//		[prevGuess assign: newGuess];
-//		
-//		[newGuess assign: original];
-//		[newGuess divideBy: prevGuess];
-//		[newGuess add: prevGuess];
-//		[newGuess divideBy: two];
-//		
-//		compare = [newGuess compareWith: prevGuess];
-//	}
-//	
-//	// Use the last guess
-//	[self assign: newGuess];
-//	
-//	//
-//	// This method has problems actually giving "1" as a result. If we're
-//	// within 2 * smallest digit size, then round to one.
-//	//
-//	BigFloat *one = [[BigFloat alloc] initWithInt:1 radix:bf_radix];
-//	BigFloat *twoEpsilon =
-//	[[BigFloat alloc]
-//	 initWithMantissa:2
-//	 exponent:-(BF_num_values * bf_value_precision) + 1
-//	 isNegative:NO
-//	 radix:bf_radix
-//	 userPointAt:0];
-//	if ([one compareWith:self] == NSOrderedDescending)
-//	{
-//		//
-//		// If we're slightly greater than 1, check if we should round down
-//		//
-//		BigFloat *difference = [one copy];
-//		[difference subtract:self];
-//		if ([difference compareWith:twoEpsilon] == NSOrderedAscending)
-//		{
-//			[self assign:one];
-//		}
-//	}
-//	else
-//	{
-//		//
-//		// If we're slightly less than 1, check if we should round up
-//		//
-//		BigFloat *difference = [self copy];
-//		[difference subtract:one];
-//		if ([difference compareWith:twoEpsilon] == NSOrderedAscending)
-//		{
-//			[self assign:one];
-//		}
-//	}
-//	
+
 }
 
+//
+// cbrt
+//
+// Takes the third root of the receiver
+//
 - (void)cbrt {
 	[self nRoot:3];
 }
 
+//
+// raiseToIntPower
+//
+// Takes the third root of the receiver
+//
 - (void)raiseToIntPower: (NSInteger)n {
 	BigFloat *Z = [BigFloat bigFloatWithInt:0 radix:bf_radix];
 	NSUInteger N = labs(n);
@@ -2685,15 +2606,17 @@ BF_NormaliseNumbers
 	BOOL				digitNotFound = YES;
 	int					numDigits;
 	NSComparisonResult	compare;
+	BOOL				negative = bf_is_negative;
 	
-	if (!bf_is_valid)
-		return;
+	if (!bf_is_valid) return;
 
-	if ([self isNegative])
+	// oddly-numbered roots of negative numbers should work
+	if ([self isNegative] && ((n & 1) == 0))
 	{
 		bf_is_valid = NO;
 		return;
 	}
+	bf_is_negative = NO;     // we'll fix this later
 	
 	if ([self isZero])
 	{
@@ -2721,33 +2644,26 @@ BF_NormaliseNumbers
 	}
 	
 	// The first guess will be the scaled exponent of this number
-//	double froot = pow(self.doubleValue, 1.0/n);
-//	[self assign:[BigFloat bigFloatWithDouble:froot radix:bf_radix]];
-//	NSLog(@"Initial guess = %f", froot);
-	bf_exponent -= (numDigits / n);
+	bf_exponent -= (numDigits / (int)n);
 	prevGuess = [self copy];
 	newGuess = [self copy];
 	compare = NSOrderedDescending;
 	
 	// Do some Newton's method iterations until we converge
 	NSInteger maxIterations = 1000;
-	BigFloat *rootn1 = [[BigFloat alloc] initWithInt:(int)n-1 radix: bf_radix];
 	BigFloat *power = [[BigFloat alloc] init];
 	while (compare != NSOrderedSame && maxIterations-- > 0)
 	{
-		prevGuess = [newGuess copy];
-		power = [newGuess copy];
+		[prevGuess assign:newGuess];
+		
+		[newGuess assign:original];
+		[power assign:prevGuess];
 		[power raiseToIntPower:n-1];
-		
-		newGuess = [original copy];
 		[newGuess divideBy: power];
-		power = [prevGuess copy];
-		[power multiplyBy:rootn1];
-		[newGuess add:power];
-	
-		[newGuess divideBy: root];
-		
-		compare = [newGuess compareWith: prevGuess];
+		[newGuess subtract:prevGuess];
+		[newGuess divideBy:root];
+		[newGuess add:prevGuess];
+		compare = [newGuess compareWith:prevGuess];
 	}
 	if (maxIterations <= 0) NSLog(@"Exceeded iteration limit on root evaluation: Error is likely");
 	
@@ -2791,6 +2707,8 @@ BF_NormaliseNumbers
 		}
 	}
 	
+	// fix the sign
+	bf_is_negative = negative;
 }
 
 //
@@ -2841,6 +2759,53 @@ BF_NormaliseNumbers
 	
 }
 
+- (void)toRadiansFrom:(BFTrigMode)mode {
+	if (mode != BF_radians)
+	{
+		
+		if (mode == BF_degrees)
+		{
+			BigFloat *oneEighty = [BigFloat bigFloatWithInt: 180 radix: bf_radix];
+			BigFloat *threeSixty = [BigFloat bigFloatWithInt: 360 radix: bf_radix];
+			[self divideBy:oneEighty];
+			[self moduloBy:threeSixty];
+		}
+		else if (mode == BF_gradians)
+		{
+			BigFloat *twoHundred = [BigFloat bigFloatWithInt: 200 radix: bf_radix];
+			BigFloat *fourHundred = [BigFloat bigFloatWithInt: 400 radix: bf_radix];
+			[self divideBy:twoHundred];
+			[self moduloBy:fourHundred];
+		}
+		
+		[self multiplyBy: self.pi];
+	}
+	else
+	{
+		BigFloat *two_pi = [BigFloat bigFloatWithInt:2 radix: bf_radix];
+		[two_pi multiplyBy:self.pi];
+		[self moduloBy:two_pi];
+	}
+}
+
+- (void)radiansToMode:(BFTrigMode)mode {
+	if (mode != BF_radians)
+	{
+		if (mode == BF_degrees)
+		{
+			BigFloat *oneEighty = [[BigFloat alloc] initWithInt: 180 radix: bf_radix];
+			[self multiplyBy:oneEighty];
+		}
+		else if (mode == BF_gradians)
+		{
+			BigFloat *twoHundred = [[BigFloat alloc] initWithInt: 200 radix: bf_radix];
+			[self multiplyBy:twoHundred];
+		}
+		
+		[self divideBy: self.pi];
+	}
+}
+
 //
 // sinWithTrigMode
 //
@@ -2877,35 +2842,7 @@ BF_NormaliseNumbers
 	{
 		if (useInverse == NO)
 		{
-			if (pi_array[bf_radix] == nil)
-				[self calculatePi];
-
-			if (mode != BF_radians)
-			{
-				
-				if (mode == BF_degrees)
-				{
-					BigFloat *oneEighty = [[BigFloat alloc] initWithInt: 180 radix: bf_radix];
-					BigFloat *threeSixty = [[BigFloat alloc] initWithInt: 360 radix: bf_radix];
-					[self divideBy:oneEighty];
-					[self moduloBy:threeSixty];
-				}
-				else if (mode == BF_gradians)
-				{
-					BigFloat *twoHundred = [[BigFloat alloc] initWithInt: 200 radix: bf_radix];
-					BigFloat *fourHundred = [[BigFloat alloc] initWithInt: 400 radix: bf_radix];
-					[self divideBy:twoHundred];
-					[self moduloBy:fourHundred];
-				}
-				
-				[self multiplyBy: pi_array[bf_radix]];
-			}
-			else
-			{
-				BigFloat *two_pi = [[BigFloat alloc] initWithInt:2 radix: bf_radix];
-				[two_pi multiplyBy:pi_array[bf_radix]];
-				[self moduloBy:two_pi];
-			}
+			[self toRadiansFrom:mode];
 			
 			prevIteration = [zero copy];
 			factorial = [one copy];
@@ -2930,7 +2867,7 @@ BF_NormaliseNumbers
 				
 				// Divide the term by (2n+1)!
 				twoN = [[BigFloat alloc] initWithInt: (int)(i * 2) radix: bf_radix];
-				twoNPlusOne = [[BigFloat alloc] initWithInt: (int)(i * 2 + 1) radix: bf_radix];
+				twoNPlusOne = [[BigFloat alloc] initWithInt:(int) (i * 2 + 1) radix: bf_radix];
 				[factorial multiplyBy:twoN];
 				[factorial multiplyBy:twoNPlusOne];
 				[nextTerm divideBy: factorial];
@@ -3029,22 +2966,16 @@ BF_NormaliseNumbers
 			
 			if (arcsinShift == YES)
 			{
-				if (pi_array[bf_radix] == nil)
-					[self calculatePi];
 				[self multiplyBy:four];
 				[self appendDigit:L'-' useComplement:0];
-				[self add: pi_array[bf_radix]];
+				[self add: self.pi];
 				[self divideBy:two];
 			}
 			
-			if (signChange == YES)
-				[self appendDigit:L'-' useComplement:0];
-			
-			if (pi_array[bf_radix] == nil)
-				[self calculatePi];
+			if (signChange == YES) [self appendDigit:L'-' useComplement:0];
 
 			// Check that accurracy hasn't caused something illegal
-			[original assign: pi_array[bf_radix]];
+			[original assign: self.pi];
 			[original divideBy:two];
 			if ([self compareWith: original] == NSOrderedDescending)
 				[self assign: original];
@@ -3052,21 +2983,7 @@ BF_NormaliseNumbers
 			if ([self compareWith: original] == NSOrderedAscending)
 				[self assign: original];
 
-			if (mode != BF_radians)
-			{
-				if (mode == BF_degrees)
-				{
-					BigFloat *oneEighty = [[BigFloat alloc] initWithInt: 180 radix: bf_radix];
-					[self multiplyBy:oneEighty];
-				}
-				else if (mode == BF_gradians)
-				{
-					BigFloat *twoHundred = [[BigFloat alloc] initWithInt: 200 radix: bf_radix];
-					[self multiplyBy:twoHundred];
-				}
-		
-				[self divideBy: pi_array[bf_radix]];
-			}
+			[self radiansToMode:mode];
 		}
 
 	}
@@ -3131,35 +3048,7 @@ BF_NormaliseNumbers
 	{
 		if (useInverse == NO)
 		{
-			if (pi_array[bf_radix] == nil)
-				[self calculatePi];
-
-			if (mode != BF_radians)
-			{
-				
-				if (mode == BF_degrees)
-				{
-					BigFloat *oneEighty = [[BigFloat alloc] initWithInt: 180 radix: bf_radix];
-					BigFloat *threeSixty = [[BigFloat alloc] initWithInt: 360 radix: bf_radix];
-					[self divideBy:oneEighty];
-					[self moduloBy:threeSixty];
-				}
-				else if (mode == BF_gradians)
-				{
-					BigFloat *twoHundred = [[BigFloat alloc] initWithInt: 200 radix: bf_radix];
-					BigFloat *fourHundred = [[BigFloat alloc] initWithInt: 400 radix: bf_radix];
-					[self divideBy:twoHundred];
-					[self moduloBy:fourHundred];
-				}
-				
-				[self multiplyBy: pi_array[bf_radix]];
-			}
-			else
-			{
-				BigFloat *two_pi = [[BigFloat alloc] initWithInt:2 radix: bf_radix];
-				[two_pi multiplyBy:pi_array[bf_radix]];
-				[self moduloBy:two_pi];
-			}
+			[self toRadiansFrom:mode];
 			
 			prevIteration = [zero copy];
 			factorial = [one copy];
@@ -3185,7 +3074,7 @@ BF_NormaliseNumbers
 				[nextTerm assign:powerCopy];
 				
 				// Divide the term by (2n)!
-				twoN = [[BigFloat alloc] initWithInt: (int) (i * 2) radix:bf_radix];
+				twoN = [[BigFloat alloc] initWithInt: (int)(i * 2) radix:bf_radix];
 				twoNMinusOne = [[BigFloat alloc] initWithInt:(int)(i * 2 - 1) radix:bf_radix];
 				[factorial multiplyBy:twoN];
 				[factorial multiplyBy:twoNMinusOne];
@@ -3228,30 +3117,12 @@ BF_NormaliseNumbers
 			// arccos = π/2 - arcsin
 			original = [self copy];
 			[original sinWithTrigMode: BF_radians inv: YES hyp: NO];
-			if (pi_array[bf_radix] == nil)
-				[self calculatePi];
-			factorial = [pi_array[bf_radix] copy];
+			factorial = self.pi;
 			[factorial divideBy:two];
 			[factorial subtract: original];
 			
 			[self assign: factorial];
-			
-			if (mode != BF_radians)
-			{
-				if (mode == BF_degrees)
-				{
-					BigFloat *oneEighty = [[BigFloat alloc] initWithInt: 180 radix: bf_radix];
-					[self multiplyBy:oneEighty];
-				}
-				else if (mode == BF_gradians)
-				{
-					BigFloat *twoHundred = [[BigFloat alloc] initWithInt: 200 radix: bf_radix];
-					[self multiplyBy:twoHundred];
-				}
-		
-				[self divideBy: pi_array[bf_radix]];
-			}
-			
+			[self radiansToMode:mode];
 		}
 	}
 	else	// hyperbolic cosine
@@ -3317,35 +3188,7 @@ BF_NormaliseNumbers
 	{
 		if (useInverse == NO)
 		{
-			if (pi_array[bf_radix] == nil)
-				[self calculatePi];
-
-			if (mode != BF_radians)
-			{
-				
-				if (mode == BF_degrees)
-				{
-					BigFloat *oneEighty = [[BigFloat alloc] initWithInt: 180 radix: bf_radix];
-					BigFloat *threeSixty = [[BigFloat alloc] initWithInt: 360 radix: bf_radix];
-					[self divideBy:oneEighty];
-					[self moduloBy:threeSixty];
-				}
-				else if (mode == BF_gradians)
-				{
-					BigFloat *twoHundred = [[BigFloat alloc] initWithInt: 200 radix: bf_radix];
-					BigFloat *fourHundred = [[BigFloat alloc] initWithInt: 400 radix: bf_radix];
-					[self divideBy:twoHundred];
-					[self moduloBy:fourHundred];
-				}
-				
-				[self multiplyBy: pi_array[bf_radix]];
-			}
-			else
-			{
-				BigFloat *two_pi = [[BigFloat alloc] initWithInt:2 radix: bf_radix];
-				[two_pi multiplyBy:pi_array[bf_radix]];
-				[self moduloBy:two_pi];
-			}
+			[self toRadiansFrom:mode];
 			
 			original = [self copy];
 			[self sinWithTrigMode:BF_radians inv:NO hyp:NO];
@@ -3386,11 +3229,8 @@ BF_NormaliseNumbers
 			}
 			else
 			{
-				if (pi_array[bf_radix] == nil)
-					[self calculatePi];
-	
 				// tan-1(1) = pi/4
-				[self assign:pi_array[bf_radix]];
+				[self assign:self.pi];
 				[self divideBy:two];
 				[self divideBy:two];
 				path = 4;
@@ -3426,11 +3266,9 @@ BF_NormaliseNumbers
 			else if (path != 4) // inverse tangent for |x| >= 1
 			{
 				// arctan = ((x>=1) * -1)π/2 - 1/x + 1/(3x^3) - 1/(5x^5) +...
-				if (pi_array[bf_radix] == nil)
-					[self calculatePi];
 	
 				// generate the (+/-) π/2
-				[self assign:pi_array[bf_radix]];
+				[self assign:self.pi];
 				[self divideBy:two];
 				if (path == 3)
 					[self appendDigit:L'-' useComplement:0];
@@ -3471,24 +3309,7 @@ BF_NormaliseNumbers
 				prevIteration = [self copy];
 			}
 			
-			if (mode != BF_radians)
-			{
-				if (mode == BF_degrees)
-				{
-					BigFloat *oneEighty = [[BigFloat alloc] initWithInt: 180 radix: bf_radix];
-					[self multiplyBy:oneEighty];
-				}
-				else if (mode == BF_gradians)
-				{
-					BigFloat *twoHundred = [[BigFloat alloc] initWithInt: 200 radix: bf_radix];
-					[self multiplyBy:twoHundred];
-				}
-				
-				if (pi_array[bf_radix] == nil)
-					[self calculatePi];
-				
-				[self divideBy: pi_array[bf_radix]];
-			}
+			[self radiansToMode:mode];
 
 		}
 	}
@@ -3528,10 +3349,8 @@ BF_NormaliseNumbers
 	BigFloat		*one;
 	BigFloat		*fractional_part;
 	
-	if (!bf_is_valid) return;
-	
-//	[self add:[BigFloat bigFloatWithInt:1 radix:bf_radix]];
-//	[self gamma];
+	if (!bf_is_valid)
+		return;
 
 	fractional_part = [self copy];
 	[fractional_part fractionalPart];
@@ -3822,64 +3641,68 @@ BF_NormaliseNumbers
 //
 // Implementation of the Gamma function using Stirling's approximation
 //
-- (void)gamma {
-	BigFloat *y = [BigFloat bigFloatWithInt:2 radix:bf_radix];
-	BigFloat *tmp1 = [BigFloat piWithRadix:bf_radix];
-//	BigFloat *gam = [BigFloat bigFloatWithInt:30 radix:bf_radix];
-	BigFloat *two = [BigFloat bigFloatWithInt:2 radix:bf_radix];
-	BigFloat *tmp = [BigFloat bigFloatWithInt:1 radix:bf_radix];
-//	BigFloat *tmp2 = [BigFloat bigFloatWithInt:12 radix:bf_radix];
-	BigFloat *e = [BigFloat bigFloatWithInt:1 radix:bf_radix];
-//	NSInteger i,j;
-	
-	if (!bf_is_negative) {
-		[y add:self];			// y = x + 2
-		[tmp1 multiplyBy:two];	// pi * 2
-		[tmp1 multiplyBy:self]; // pi * 2 * x
-		[tmp1 sqrt];			// sqrt(pi * 2 * x)
-		[tmp assign:self];
-		[e powerOfE];			// e
-		[tmp divideBy:e];		// x / e
-		[tmp raiseToPower:self];// (x/e)^x
-		[tmp1 multiplyBy:tmp];	// sqrt(pi * 2 * x) * (x/e)^x
-		[self assign:tmp1];
-		
-//		[gam multiplyBy:y];		// 30 * y
-//		[gam multiplyBy:y];		// 30 * y^2
-//		[gam inverse];			// 1/(30 * y^2)
-//		[tmp subtract:gam];		// 1 - 1/(30 * y^2)
-//		[tmp2 multiplyBy:y];	// 12 * y
-//		[tmp divideBy:tmp2];    // (1 - 1/(30 * y^2))/(12 * y)
-//		[tmp subtract:y];		// (1 - 1/(30 * y^2))/(12 * y) - y
-//		[tmp2 assign:y];
-//		[tmp2 ln];				// ln(y)
-//		[tmp2 multiplyBy:y];	// y * ln(y)
-//		[tmp2 add:tmp];			// y * ln(y) + (1 - 1/(30 * y^2))/(12 * y) - y
-//		[tmp2 powerOfE];		// exp(y * ln(y) + (1 - 1/(30 * y^2))/(12 * y) - y)
-//		[gam assign:tmp1];		// gam = sqrt(pi * 2 / y)
-//		[gam multiplyBy:tmp2];	// gam = sqrt(pi * 2 / y) * exp(y * ln(y) + (1 - 1/(30 * y^2))/(12 * y) - y)
+//- (void)gamma {
+////	BigFloat *y = [BigFloat bigFloatWithInt:2 radix:bf_radix];
+//	BigFloat *tmp1 = self.pi;
+//	BigFloat *two = [BigFloat bigFloatWithInt:2 radix:bf_radix];
+//	BigFloat *tmp = [BigFloat bigFloatWithInt:1 radix:bf_radix];
+//	BigFloat *e = [BigFloat bigFloatWithInt:1 radix:bf_radix];
+//	
+//	if (!bf_is_negative) {
+//		[tmp1 multiplyBy:two];	// pi * 2
+//		[tmp1 multiplyBy:self]; // pi * 2 * x
+//		[tmp1 sqrt];			// sqrt(pi * 2 * x)
+//		[e powerOfE];			// e
 //		[tmp assign:self];
-//		[tmp add:one];			// x + 1
-//		[tmp multiplyBy:self];	// x*(x+1)
-//		[gam divideBy:tmp];		// gam = gam / (x*(x+1))
-//		[self assign:gam];
-	} // else {
-//		// x < 0
-//		j = 0; [y assign:self];	// y = x
-//		do {
-//			j++; [y add:one];
-//		} while ([y isNegative]);
-//		[gam assign:y];
-//		[gam gamma];			// recursive call to this function
-//		for (i=0; i<j; i++) {
-//			tmp = [BigFloat bigFloatWithInt:i radix:bf_radix];
-//			[tmp add:self];		// i + x
-//			[gam divideBy:tmp]; // gam = gam / (x + i)
-//		}
-//		[self assign:gam];
+//		[tmp divideBy:e];		// x / e
+//		[tmp raiseToPower:self];// (x/e)^x
+//		[tmp1 multiplyBy:tmp];	// sqrt(pi * 2 * x) * (x/e)^x
+//		[self assign:tmp1];
 //	}
-	
-	
+//	
+//}
+
+- (void)preComplement:(int)complement withNumber:(BigFloat *)number {
+	if (complement)
+	{
+		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
+		
+		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
+		BigFloat *complementNumberFull = [complementNumberHalf copy];
+		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
+		[complementNumberFull multiplyBy:two];
+		
+		if ([number isNegative])
+		{
+			BigFloat *normal = [complementNumberFull copy];
+			[normal add:number];
+			[number assign:normal];
+		}
+	}
+}
+
+- (void)postComplement:(int)complement {
+	if (complement)
+	{
+		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
+		
+		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
+		BigFloat *complementNumberFull = [complementNumberHalf copy];
+		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
+		[complementNumberFull multiplyBy:two];
+		
+		NSComparisonResult relative = [self compareWith:complementNumberHalf];
+		if (relative == NSOrderedSame || relative == NSOrderedDescending)
+		{
+			BigFloat *zero = [[BigFloat alloc] initWithInt:0 radix:bf_radix];
+			
+			[complementNumberFull subtract:self];
+			[zero subtract:complementNumberFull];
+			
+			[self assign:zero];
+		}
+		
+	}
 }
 
 //
@@ -3894,26 +3717,9 @@ BF_NormaliseNumbers
 	unsigned long	offset;
 	int					old_radix;
 	
-	if (!bf_is_valid)
-		return;
+	if (!bf_is_valid) return;
 
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		if (bf_is_negative)
-		{
-			BigFloat *normal = [complementNumberFull copy];
-			[normal add:self];
-			[self assign:normal];
-		}
-		
-	}
+	[self preComplement:complement withNumber:self];
 
 	// Convert to a radix that is a power of 2
 	old_radix = bf_radix;
@@ -3953,27 +3759,7 @@ BF_NormaliseNumbers
 	if (old_radix != bf_radix)
 		[self convertToRadix: old_radix];
 
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		NSComparisonResult relative = [self compareWith:complementNumberHalf];
-		if (relative == NSOrderedSame || relative == NSOrderedDescending)
-		{
-			BigFloat *zero = [[BigFloat alloc] initWithInt:0 radix:bf_radix];
-			
-			[complementNumberFull subtract:self];
-			[zero subtract:complementNumberFull];
-			
-			[self assign:zero];
-		}
-		
-	}
+	[self postComplement:complement];
 }
 
 //
@@ -3983,12 +3769,12 @@ BF_NormaliseNumbers
 //
 - (void)andWith: (BigFloat*)num usingComplement:(int)complement
 {
-	int					digit;
-	int					index;
+	int				digit;
+	int				index;
 	unsigned long	offset;
 	unsigned long	otherValues[BF_num_values];
-	int					old_radix;
-	BigFloat			*otherNum;
+	int				old_radix;
+	BigFloat		*otherNum;
 	
 	if (!bf_is_valid)
 		return;
@@ -3999,29 +3785,8 @@ BF_NormaliseNumbers
 		return;
 	}
 
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		if (bf_is_negative)
-		{
-			BigFloat *normal = [complementNumberFull copy];
-			[normal add:self];
-			[self assign:normal];
-		}
-		
-		if ([num isNegative])
-		{
-			BigFloat *normal = [complementNumberFull copy];
-			[normal add:num];
-			[num assign:normal];
-		}
-	}
+	[self preComplement:complement withNumber:self];
+	[self preComplement:complement withNumber:num];
 	
 	otherNum = [num copy];
 	
@@ -4066,28 +3831,7 @@ BF_NormaliseNumbers
 	// Restore the radix
 	[self convertToRadix: old_radix];
 	
-
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		NSComparisonResult relative = [self compareWith:complementNumberHalf];
-		if (relative == NSOrderedSame || relative == NSOrderedDescending)
-		{
-			BigFloat *zero = [[BigFloat alloc] initWithInt:0 radix:bf_radix];
-			
-			[complementNumberFull subtract:self];
-			[zero subtract:complementNumberFull];
-			
-			[self assign:zero];
-		}
-		
-	}
+	[self postComplement:complement];
 }
 
 //
@@ -4113,29 +3857,8 @@ BF_NormaliseNumbers
 		return;
 	}
 
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		if (bf_is_negative)
-		{
-			BigFloat *normal = [complementNumberFull copy];
-			[normal add:self];
-			[self assign:normal];
-		}
-		
-		if ([num isNegative])
-		{
-			BigFloat *normal = [complementNumberFull copy];
-			[normal add:num];
-			[num assign:normal];
-		}
-	}
+	[self preComplement:complement withNumber:self];
+	[self preComplement:complement withNumber:num];
 	
 	otherNum = [num copy];
 	
@@ -4181,28 +3904,8 @@ BF_NormaliseNumbers
 	if (old_radix != bf_radix)
 		[self convertToRadix: old_radix];
 
-
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		NSComparisonResult relative = [self compareWith:complementNumberHalf];
-		if (relative == NSOrderedSame || relative == NSOrderedDescending)
-		{
-			BigFloat *zero = [[BigFloat alloc] initWithInt:0 radix:bf_radix];
-			
-			[complementNumberFull subtract:self];
-			[zero subtract:complementNumberFull];
-			
-			[self assign:zero];
-		}
-		
-	}
+	
+	[self postComplement:complement];
 }
 
 //
@@ -4228,29 +3931,8 @@ BF_NormaliseNumbers
 		return;
 	}
 
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		if (bf_is_negative)
-		{
-			BigFloat *normal = [complementNumberFull copy];
-			[normal add:self];
-			[self assign:normal];
-		}
-		
-		if ([num isNegative])
-		{
-			BigFloat *normal = [complementNumberFull copy];
-			[normal add:num];
-			[num assign:normal];
-		}
-	}
+	[self preComplement:complement withNumber:self];
+	[self preComplement:complement withNumber:num];
 
 	otherNum = [num copy];
 	
@@ -4297,27 +3979,7 @@ BF_NormaliseNumbers
 	if (old_radix != bf_radix)
 		[self convertToRadix: old_radix];
 
-	
-	if (complement)
-	{
-		unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		
-		BigFloat *complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		BigFloat *complementNumberFull = [complementNumberHalf copy];
-		BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		[complementNumberFull multiplyBy:two];
-		
-		NSComparisonResult relative = [self compareWith:complementNumberHalf];
-		if (relative == NSOrderedSame || relative == NSOrderedDescending)
-		{
-			BigFloat *zero = [[BigFloat alloc] initWithInt:0 radix:bf_radix];
-			[complementNumberFull subtract:self];
-			[zero subtract:complementNumberFull];
-			
-			[self assign:zero];
-		}
-		
-	}
+	[self postComplement:complement];
 }
 
 
@@ -4716,7 +4378,7 @@ BF_NormaliseNumbers
 		
 		complementNumber = [[BigFloat alloc] initWithMantissa:complementBits exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
 		mantissaNumber = [complementNumber copy];
-		BF_AssignValues(mantissaNumber->bf_array, values);
+		BF_CopyValues(mantissaNumber->bf_array, values);
 		
 		carryBits = 0;
 		while
@@ -4775,7 +4437,7 @@ BF_NormaliseNumbers
 		
 		if (bf_is_negative)
 		{
-			BigFloat *two = [[BigFloat alloc] initWithMantissa:2 exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
+			BigFloat *two = [BigFloat bigFloatWithInt:2 radix:bf_radix];
 			[complementNumber multiplyBy:two];
 			[complementNumber subtract:mantissaNumber];
 			BF_CopyValues(complementNumber->bf_array, values);

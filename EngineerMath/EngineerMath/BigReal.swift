@@ -87,6 +87,10 @@ public class BigReal : Printable, Comparable, Equatable, Hashable {
 		return Int(number.doubleValue)
 	}
 	
+	func isInteger () -> Bool {
+		return number.isInteger()
+	}
+	
 	public func add (n: BigReal) -> BigReal {
 		let x = icopy()
 		x.add(n.number)
@@ -179,6 +183,13 @@ public class BigReal : Printable, Comparable, Equatable, Hashable {
 		return BigReal(icopy())
 	}
 	
+	func negate() -> BigReal {
+		var x = BigFloat()
+		x.assign(number)
+		x.negate()
+		return BigReal(x)
+	}
+	
 	func atan2(y:BigReal)->BigReal {
 		let x = copy()
 		
@@ -243,30 +254,30 @@ public class BigReal : Printable, Comparable, Equatable, Hashable {
 
 public func + (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.add(rhs) }
 public func += (inout lhs: BigReal, rhs: BigReal) { lhs = lhs + rhs }
-public func + (lhs: BigReal, rhs: Double) -> BigReal { return lhs.add(BigReal(rhs)) }
-public func + (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).add(rhs) }
+//public func + (lhs: BigReal, rhs: Double) -> BigReal { return lhs.add(BigReal(rhs)) }
+//public func + (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).add(rhs) }
 
 public func - (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.sub(rhs) }
 public func -= (inout lhs: BigReal, rhs: BigReal) { lhs = lhs - rhs }
-public func - (lhs: BigReal, rhs: Double) -> BigReal { return lhs.sub(BigReal(rhs)) }
-public func - (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).sub(rhs) }
+//public func - (lhs: BigReal, rhs: Double) -> BigReal { return lhs.sub(BigReal(rhs)) }
+//public func - (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).sub(rhs) }
 
 public func * (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.mul(rhs) }
 public func *= (inout lhs: BigReal, rhs: BigReal) { lhs = lhs * rhs }
-public func * (lhs: BigReal, rhs: Double) -> BigReal { return lhs.mul(BigReal(rhs)) }
-public func * (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).mul(rhs) }
+//public func * (lhs: BigReal, rhs: Double) -> BigReal { return lhs.mul(BigReal(rhs)) }
+//public func * (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).mul(rhs) }
 
 public func / (lhs: BigReal, rhs: BigReal) -> BigReal { return lhs.div(rhs) }
 public func /= (inout lhs: BigReal, rhs: BigReal) { lhs = lhs / rhs }
-public func / (lhs: BigReal, rhs: Double) -> BigReal { return lhs.div(BigReal(rhs)) }
-public func / (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).div(rhs) }
+//public func / (lhs: BigReal, rhs: Double) -> BigReal { return lhs.div(BigReal(rhs)) }
+//public func / (lhs: Double, rhs: BigReal) -> BigReal { return BigReal(lhs).div(rhs) }
 
-public func ** (lhs: BigReal, rhs: Int) -> BigReal { return lhs.ipower(rhs) }
-public func ** (lhs: Double, rhs: Int) -> BigReal { return BigReal(lhs).ipower(rhs) }
-public func ** (lhs: Int, rhs: Int) -> BigReal { return BigReal(lhs).ipower(rhs) }
+//public func ** (lhs: BigReal, rhs: Int) -> BigReal { return lhs.ipower(rhs) }
+//public func ** (lhs: Double, rhs: Int) -> BigReal { return BigReal(lhs).ipower(rhs) }
+//public func ** (lhs: Int, rhs: Int) -> BigReal { return BigReal(lhs).ipower(rhs) }
 
 public prefix func + (lhs: BigReal)->BigReal { return lhs }
-public prefix func - (lhs: BigReal)->BigReal { return BigReal(0) - lhs }
+public prefix func - (lhs: BigReal)->BigReal { return lhs.negate() }
 
 public func == (lhs: BigReal, rhs: BigReal) -> Bool { return lhs.cmp(rhs) == .OrderedSame }
 public func < (lhs: BigReal, rhs: BigReal) -> Bool { return lhs.cmp(rhs) == .OrderedAscending }

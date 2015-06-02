@@ -60,6 +60,8 @@ class BigComplex : BigReal {
 		super.init(re)
 	}
 	
+	override var isZero: Bool { return re.number.zero && im.number.zero }
+	
     convenience override init() { self.init(BigReal.ZERO, BigReal.ZERO) }
 	
     init(abs:BigReal, arg:BigReal) {
@@ -77,6 +79,31 @@ class BigComplex : BigReal {
     override var abs:BigReal {
         return re.hypot(im)
     }
+
+	override func ipower(n: Int) -> BigComplex {
+		var Z = BigComplex(0)
+		var N = Swift.abs(n)
+		var t : UInt
+		var Y = BigComplex(1)
+		
+		if self.isZero {
+			if n == 0 { return Y }
+			return Z
+		}
+		
+		Z = self
+		while true {
+			t = UInt(N % 2); N = N / 2
+			if t != 0 {
+				Y *= Z
+			}
+			if N == 0 { break }
+			Z *= Z
+		}
+
+		if n < 0 { return 1/Y }
+		return Y
+	}
 	
     /// argument thereof
     var arg:BigReal  {
@@ -106,14 +133,15 @@ class BigComplex : BigReal {
     }
 	
     /// z * i
-    var i:BigComplex { return BigComplex(-im, re) }
+	static var i: BigComplex { return BigComplex(0, 1) }
+    var i:BigComplex { return BigComplex.i }
 	
     /// .description -- conforms to Printable
     override var description:String {
         let plus = im.isSignMinus ? "" : "+"
-		let ims = im == BigReal(1) ? "i" : "\(im)i"
+		let ims = im == BigReal(1) ? "i" : im == BigReal(-1) ? "-i" : "\(im)i"
 		if im.isZero { return re.description }
-		if re.isZero { return "\(plus)\(ims))" }
+		if re.isZero { return "\(ims)" }
         return "\(re)\(plus)\(ims)"
     }
 	
@@ -124,6 +152,9 @@ class BigComplex : BigReal {
         return (re.hashValue & ~mask) | (im.hashValue >> bits)
     }
 }
+
+let i = BigComplex.i
+
 // operator definitions
 infix operator ** { associativity right precedence 170 }
 infix operator **= { associativity right precedence 90 }
@@ -145,14 +176,32 @@ func == (lhs:BigReal, rhs:BigComplex) -> Bool {
 prefix func + (z:BigComplex) -> BigComplex {
     return z
 }
+prefix func + (z:Double) -> BigComplex {
+	return BigComplex(z)
+}
+prefix func + (z:Int) -> BigComplex {
+	return BigComplex(z)
+}
 func + (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs.re + rhs.re, lhs.im + rhs.im)
 }
 func + (lhs:BigComplex, rhs:BigReal) -> BigComplex {
-    return lhs + BigComplex(rhs, BigReal(0))
+    return lhs + BigComplex(rhs)
 }
 func + (lhs:BigReal, rhs:BigComplex) -> BigComplex {
-    return BigComplex(lhs, BigReal(0)) + rhs
+    return BigComplex(lhs) + rhs
+}
+func + (lhs:BigComplex, rhs:Double) -> BigComplex {
+	return lhs + BigComplex(rhs)
+}
+func + (lhs:Double, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) + rhs
+}
+func + (lhs:BigComplex, rhs:Int) -> BigComplex {
+	return lhs + BigComplex(rhs)
+}
+func + (lhs:Int, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) + rhs
 }
 func += (inout lhs:BigComplex, rhs:BigComplex) {
 	lhs = BigComplex(lhs.re+rhs.re, lhs.im+rhs.im)
@@ -174,6 +223,18 @@ func - (lhs:BigComplex, rhs:BigReal) -> BigComplex {
 func - (lhs:BigReal, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs, BigReal(0)) - rhs
 }
+func - (lhs:BigComplex, rhs:Double) -> BigComplex {
+	return lhs - BigComplex(rhs)
+}
+func - (lhs:Double, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) - rhs
+}
+func - (lhs:BigComplex, rhs:Int) -> BigComplex {
+	return lhs - BigComplex(rhs)
+}
+func - (lhs:Int, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) - rhs
+}
 func -= (inout lhs:BigComplex, rhs:BigComplex) {
 	lhs = BigComplex(lhs.re - rhs.re, lhs.im - rhs.im)
 }
@@ -193,6 +254,18 @@ func * (lhs:BigComplex, rhs:BigReal) -> BigComplex {
 }
 func * (lhs:BigReal, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs * rhs.re, lhs * rhs.im)
+}
+func * (lhs:BigComplex, rhs:Double) -> BigComplex {
+	return lhs * BigComplex(rhs)
+}
+func * (lhs:Double, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) * rhs
+}
+func * (lhs:BigComplex, rhs:Int) -> BigComplex {
+	return lhs * BigComplex(rhs)
+}
+func * (lhs:Int, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) * rhs
 }
 func *= (inout lhs:BigComplex, rhs:BigComplex) {
     lhs = lhs * rhs
@@ -227,13 +300,25 @@ func / (lhs:BigComplex, rhs:BigReal) -> BigComplex {
     return BigComplex(lhs.re / rhs, lhs.im / rhs)
 }
 func / (lhs:BigReal, rhs:BigComplex) -> BigComplex {
-    return BigComplex(lhs, BigReal(0)) / rhs
+    return BigComplex(lhs) / rhs
 }
 func /= (inout lhs:BigComplex, rhs:BigComplex) {
     lhs = lhs / rhs
 }
 func /= (inout lhs:BigComplex, rhs:BigReal) {
     lhs = lhs / rhs
+}
+func / (lhs:BigComplex, rhs:Double) -> BigComplex {
+	return lhs / BigComplex(rhs)
+}
+func / (lhs:Double, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) / rhs
+}
+func / (lhs:BigComplex, rhs:Int) -> BigComplex {
+	return lhs / BigComplex(rhs)
+}
+func / (lhs:Int, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) / rhs
 }
 
 // exp(z)
@@ -254,8 +339,11 @@ func log(r:BigReal) -> BigComplex { return BigComplex(r.log()) }
 
 // pow(b, x)
 func pow(lhs:BigComplex, rhs:BigComplex) -> BigComplex {
-    if lhs == BigReal(0) { return BigComplex(BigReal.ONE, BigReal(0)) } // 0 ** 0 == 1
-    let z = log(lhs) * rhs
+    if lhs.isZero { return BigComplex(BigReal.ONE) } // 0 ** 0 == 1
+	if rhs.im.isZero && rhs.re.isInteger() {
+		return lhs.ipower(rhs.re.integer)
+	}
+    let z = ln(lhs) * rhs
     return exp(z)
 }
 func pow(lhs:BigComplex, rhs:BigReal) -> BigComplex {
@@ -277,6 +365,21 @@ func ** (lhs:BigReal, rhs:BigComplex) -> BigComplex {
 }
 func ** (lhs:BigComplex, rhs:BigReal) -> BigComplex {
     return pow(lhs, rhs)
+}
+func ** (lhs:BigComplex, rhs:Double) -> BigComplex {
+	return lhs ** BigComplex(rhs)
+}
+func ** (lhs:Double, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) ** rhs
+}
+func ** (lhs:BigComplex, rhs:Int) -> BigComplex {
+	return lhs ** BigComplex(rhs)
+}
+func ** (lhs:Int, rhs:BigComplex) -> BigComplex {
+	return BigComplex(lhs) ** rhs
+}
+func ** (lhs:Int, rhs:Int) -> BigComplex {
+	return BigComplex(lhs) ** BigComplex(rhs)
 }
 func **= (inout lhs:BigReal, rhs:BigReal) {
     lhs = lhs.pow(rhs)
@@ -412,6 +515,18 @@ func !~ (lhs:BigComplex, rhs:BigReal) -> Bool {
 }
 func !~ (lhs:BigReal, rhs:BigComplex) -> Bool {
     return !(lhs =~ rhs)
+}
+
+extension Double {
+	var i : BigComplex {
+		return self * BigComplex.i
+	}
+}
+
+extension Int {
+	var i : BigComplex {
+		return self * BigComplex.i
+	}
 }
 
 
