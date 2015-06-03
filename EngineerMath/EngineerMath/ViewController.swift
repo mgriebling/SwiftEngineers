@@ -24,7 +24,7 @@ class ViewController: NSViewController {
 //		var x = BigReal(1)
 		var x : BigComplex = 1 + 0.i
 		var y : BigComplex = 2.3456-2.5*i
-		var z = BigComplex("+5 - 0i")
+		var z = BigComplex("+5 - i23")
 		
 //		println("atan \(y)/\(x) = \(x.atan2(y))")
 		println("x = \(x), y = \(y)")

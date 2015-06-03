@@ -95,10 +95,10 @@ class BigComplex : BigReal {
 					} else {
 						// Only one number exists
 						if let irange = vs.rangeOfString(imaginary) {
-							inumber = number + vs 		// transfer the sign
-							number = ""					// clear the real part
+							inumber = number + vs 	// transfer the sign
+							number = ""				// clear the real part
 						} else {
-							number += vs				// copy the number
+							number += vs			// copy the number
 						}
 					}
 				} else {
@@ -109,10 +109,10 @@ class BigComplex : BigReal {
 			} else {
 				// only one number exists
 				if let irange = vs.rangeOfString(imaginary) {
-					inumber = number + vs 		// transfer the sign
-					number = ""					// clear the real part
+					inumber = number + vs 	// transfer the sign
+					number = ""				// clear the real part
 				} else {
-					number = number + vs		// copy the number
+					number += vs			// copy the number
 				}
 			}
 			super.init(number)
