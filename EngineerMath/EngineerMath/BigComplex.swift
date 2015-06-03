@@ -26,6 +26,15 @@
 
 import Foundation
 
+extension Character {
+	
+	func toUnichar () -> unichar {
+		// Caution: this won't work for multi-char Characters
+		return [unichar](String(self).utf16).first!
+	}
+	
+}
+
 class BigComplex : BigReal {
 	
     var im = BigReal()
@@ -58,6 +67,67 @@ class BigComplex : BigReal {
 	override init(_ re:Int) {
 		im = BigReal.ZERO
 		super.init(re)
+	}
+	
+	override init(_ s: String) {
+		var vs = s.stringByReplacingOccurrencesOfString(" ", withString: "").lowercaseString  // remove all spaces & make lowercase
+		if !vs.isEmpty {
+			// break apart the string into real and imaginary pieces
+			let signChars = NSCharacterSet(charactersInString: "+-")
+			let exponent = "e"
+			let imaginary = "i"
+			var number = ""
+			var inumber = ""
+			var ch = vs[vs.startIndex]
+			var iPresent = false
+			
+			// remove leading sign -- if any
+			if signChars.characterIsMember(ch.toUnichar()) { number.append(ch); ch = vs.removeAtIndex(vs.startIndex) }
+			if var range = vs.rangeOfCharacterFromSet(signChars) {
+				// check if this is an exponent
+				if let expRange = vs.rangeOfString(exponent) where expRange.startIndex == range.startIndex.predecessor() {
+					// search beyond the exponent
+					range = range.startIndex.successor()...vs.endIndex
+					if let range = vs.rangeOfCharacterFromSet(signChars, options: .allZeros, range: range) {
+						// This is likely the start of the second number
+						number += vs.substringToIndex(range.startIndex)
+						inumber = vs.substringFromIndex(range.startIndex)
+					} else {
+						// Only one number exists
+						if let irange = vs.rangeOfString(imaginary) {
+							inumber = number + vs 		// transfer the sign
+							number = ""					// clear the real part
+						} else {
+							number += vs				// copy the number
+						}
+					}
+				} else {
+					// This is the start of the second number
+					number += vs.substringToIndex(range.startIndex)
+					inumber = vs.substringFromIndex(range.startIndex)
+				}
+			} else {
+				// only one number exists
+				if let irange = vs.rangeOfString(imaginary) {
+					inumber = number + vs 		// transfer the sign
+					number = ""					// clear the real part
+				} else {
+					number = number + vs		// copy the number
+				}
+			}
+			super.init(number)
+			iPresent = !inumber.isEmpty
+			inumber = inumber.stringByReplacingOccurrencesOfString(imaginary, withString: "") // remove the "i"
+			
+			// account for solitary "i"
+			if iPresent {
+				if inumber.isEmpty { inumber = "1" }
+				else if inumber == "+" || inumber == "-" { inumber += "1" }
+			}
+			im = BigReal(inumber)
+		} else {
+			super.init()
+		}
 	}
 	
 	override var isZero: Bool { return re.number.zero && im.number.zero }
@@ -213,6 +283,12 @@ func += (inout lhs:BigComplex, rhs:BigReal) {
 // -, -=
 prefix func - (z:BigComplex) -> BigComplex {
     return BigComplex(-z.re, -z.im)
+}
+prefix func - (z:Double) -> BigComplex {
+	return -BigComplex(z)
+}
+prefix func - (z:Int) -> BigComplex {
+	return BigComplex(-z)
 }
 func - (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs.re - rhs.re, lhs.im - rhs.im)

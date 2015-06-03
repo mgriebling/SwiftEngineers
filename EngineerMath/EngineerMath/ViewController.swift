@@ -22,14 +22,13 @@ class ViewController: NSViewController {
 		// BigCFloat
 //		var x : BigReal = 1
 //		var x = BigReal(1)
-		var x : BigComplex = 10.i
+		var x : BigComplex = 1 + 0.i
 		var y : BigComplex = 2.3456-2.5*i
-//		var z = BigComplex("12.345E50")
-		var z : Int = 1
+		var z = BigComplex("+5 - 0i")
 		
 //		println("atan \(y)/\(x) = \(x.atan2(y))")
 		println("x = \(x), y = \(y)")
-//		println("z = \(z); 1/z = \(1/z)")
+		println("z = \(z); 1/z = \(1/z)")
 		println("\(x) + \(y) = \(x+y)")
 		println("\(x) - \(y) = \(x-y)")
 		println("\(x) * \(y) = \(x*y)")
