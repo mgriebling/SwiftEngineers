@@ -22,7 +22,8 @@ class ViewController: NSViewController {
 		// BigCFloat
 //		var x : BigReal = 1
 //		var x = BigReal(1)
-		var x : BigComplex = 1 + 0.i
+		var a : BigReal = +5.5
+		var x : BigComplex = 1 + 5.i
 		var y : BigComplex = 2.3456-2.5*i
 		var z = BigComplex("+5 - 0i")
 		
