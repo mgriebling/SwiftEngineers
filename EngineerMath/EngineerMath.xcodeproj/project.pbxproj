@@ -12,14 +12,13 @@
 		2F53A7361B0F79B4007C273A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A7351B0F79B4007C273A /* Images.xcassets */; };
 		2F53A7391B0F79B4007C273A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A7371B0F79B4007C273A /* Main.storyboard */; };
 		2F53A7451B0F79B4007C273A /* EngineerMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7441B0F79B4007C273A /* EngineerMathTests.swift */; };
-		2F53A74F1B0F79E9007C273A /* libgmp.10.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2F53A74E1B0F79E9007C273A /* libgmp.10.dylib */; };
-		2F53A7561B0F7C0C007C273A /* gmpBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7551B0F7C0C007C273A /* gmpBridge.m */; };
 		2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7571B0FA221007C273A /* MatrixVector.swift */; };
 		2F53A75A1B0FA366007C273A /* BigComplex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7591B0FA366007C273A /* BigComplex.swift */; };
 		2F53A75C1B0FA385007C273A /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75B1B0FA385007C273A /* Equations.swift */; };
 		2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75D1B0FA38F007C273A /* BigReal.swift */; };
-		2F53A7601B0FA39E007C273A /* gmp-man-6.0.0a.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */; };
 		2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */ = {isa = PBXBuildFile; fileRef = 2FA1D7511B1E2B7B00778806 /* BigFloat.m */; };
+		2FD25D2B1B1F3CF30043E9A1 /* Units.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD25D2A1B1F3CF30043E9A1 /* Units.swift */; };
+		2FD25D2D1B1F3EEA0043E9A1 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,18 +41,15 @@
 		2F53A73E1B0F79B4007C273A /* EngineerMathTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EngineerMathTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2F53A7431B0F79B4007C273A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		2F53A7441B0F79B4007C273A /* EngineerMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineerMathTests.swift; sourceTree = "<group>"; };
-		2F53A74E1B0F79E9007C273A /* libgmp.10.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libgmp.10.dylib; path = /usr/local/lib/libgmp.10.dylib; sourceTree = "<absolute>"; };
-		2F53A7501B0F7A26007C273A /* gmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gmp.h; path = /usr/local/include/gmp.h; sourceTree = "<absolute>"; };
 		2F53A7511B0F7AC1007C273A /* EngineerMath-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "EngineerMath-Bridging-Header.h"; sourceTree = "<group>"; };
-		2F53A7541B0F7C0C007C273A /* gmpBridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = gmpBridge.h; sourceTree = "<group>"; };
-		2F53A7551B0F7C0C007C273A /* gmpBridge.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = gmpBridge.m; sourceTree = "<group>"; };
 		2F53A7571B0FA221007C273A /* MatrixVector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MatrixVector.swift; sourceTree = "<group>"; };
 		2F53A7591B0FA366007C273A /* BigComplex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigComplex.swift; sourceTree = "<group>"; };
 		2F53A75B1B0FA385007C273A /* Equations.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Equations.swift; sourceTree = "<group>"; };
 		2F53A75D1B0FA38F007C273A /* BigReal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BigReal.swift; sourceTree = "<group>"; };
-		2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "gmp-man-6.0.0a.pdf"; sourceTree = "<group>"; };
 		2FA1D7501B1E2B7B00778806 /* BigFloat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BigFloat.h; sourceTree = "<group>"; };
 		2FA1D7511B1E2B7B00778806 /* BigFloat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BigFloat.m; sourceTree = "<group>"; };
+		2FD25D2A1B1F3CF30043E9A1 /* Units.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Units.swift; sourceTree = "<group>"; };
+		2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bag.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,7 +57,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F53A74F1B0F79E9007C273A /* libgmp.10.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -101,14 +96,12 @@
 				2F53A7351B0F79B4007C273A /* Images.xcassets */,
 				2F53A7371B0F79B4007C273A /* Main.storyboard */,
 				2F53A72F1B0F79B4007C273A /* Supporting Files */,
-				2F53A7541B0F7C0C007C273A /* gmpBridge.h */,
-				2F53A7551B0F7C0C007C273A /* gmpBridge.m */,
 				2F53A7571B0FA221007C273A /* MatrixVector.swift */,
 				2F53A75B1B0FA385007C273A /* Equations.swift */,
 				2F53A75D1B0FA38F007C273A /* BigReal.swift */,
 				2F53A7591B0FA366007C273A /* BigComplex.swift */,
-				2FA1D7501B1E2B7B00778806 /* BigFloat.h */,
-				2FA1D7511B1E2B7B00778806 /* BigFloat.m */,
+				2FD25D2A1B1F3CF30043E9A1 /* Units.swift */,
+				2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */,
 			);
 			path = EngineerMath;
 			sourceTree = "<group>";
@@ -116,10 +109,9 @@
 		2F53A72F1B0F79B4007C273A /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				2FA1D7501B1E2B7B00778806 /* BigFloat.h */,
+				2FA1D7511B1E2B7B00778806 /* BigFloat.m */,
 				2F53A7511B0F7AC1007C273A /* EngineerMath-Bridging-Header.h */,
-				2F53A75F1B0FA39E007C273A /* gmp-man-6.0.0a.pdf */,
-				2F53A7501B0F7A26007C273A /* gmp.h */,
-				2F53A74E1B0F79E9007C273A /* libgmp.10.dylib */,
 				2F53A7301B0F79B4007C273A /* Info.plist */,
 			);
 			name = "Supporting Files";
@@ -222,7 +214,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2F53A7601B0FA39E007C273A /* gmp-man-6.0.0a.pdf in Resources */,
 				2F53A7361B0F79B4007C273A /* Images.xcassets in Resources */,
 				2F53A7391B0F79B4007C273A /* Main.storyboard in Resources */,
 			);
@@ -243,12 +234,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F53A75A1B0FA366007C273A /* BigComplex.swift in Sources */,
+				2FD25D2B1B1F3CF30043E9A1 /* Units.swift in Sources */,
 				2F53A7341B0F79B4007C273A /* ViewController.swift in Sources */,
 				2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */,
 				2F53A75C1B0FA385007C273A /* Equations.swift in Sources */,
 				2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */,
 				2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */,
-				2F53A7561B0F7C0C007C273A /* gmpBridge.m in Sources */,
+				2FD25D2D1B1F3EEA0043E9A1 /* Bag.swift in Sources */,
 				2F53A7321B0F79B4007C273A /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
