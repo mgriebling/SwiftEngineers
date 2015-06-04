@@ -43,18 +43,18 @@ class ViewController: NSViewController {
 //		else if x < y { println("\(x) < \(y)") }
 //		else { println("\(x) = \(y)") }
 		
-		var t = UnitBag()
+//		var t = UnitBag()
 		
-		t.add("m"); t.add("m")
-		t.add("ft")
-//		t.removeAll("m")
-		
-		println("Bag contains \(t.count) items: ")
-		for (index, item) in enumerate(t) {
-			print("\(item)")
-			if index < t.uniqueCount-1 { print(", ") }
-		}
-		println()
+//		t.add("m"); t.add("m")
+//		t.add("ft")
+////		t.removeAll("m")
+//		
+//		println("Bag contains \(t.count) items: ")
+//		for (index, item) in enumerate(t) {
+//			print("\(item)")
+//			if index < t.uniqueCount-1 { print(", ") }
+//		}
+//		println()
 	}
 
 	override var representedObject: AnyObject? {

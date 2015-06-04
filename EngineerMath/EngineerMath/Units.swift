@@ -16,9 +16,9 @@ class Units {
 	
 	typealias UnitBag = Bag<String>
 	
-	struct UnitType : Equatable {
-		var upper: UnitBag		// units to positive power
-		var lower: UnitBag		// units to negative power
+	struct UnitType {
+		var upper = UnitBag()	// units to positive power
+		var lower = UnitBag()	// units to negative power
 		var description: String {
 			var unitString = ""
 			for unit in upper {
@@ -73,22 +73,118 @@ class Units {
 	}
 	
 	static func defineUnits () {
+		// Basic conversion constants
+		let inchPerFoot  = 12.0
+		let cmPerInch    = 2.54
+		let feetPerMile  = 5280.0
+		let secsPerMin   = 60.0
+		let minsPerHour  = 60.0
+		let secsPerHour  = secsPerMin * minsPerHour
+		let degFOffset   = 32.0
+		let cmPerMeter   = 100.0
+		let mmPerMeter   = 1000.0
+		let degFPerdegC  = 9.0/5.0
+		let absoluteZero = 273.16
+		
+		// Define some baseline units where SI units are the baseline
+		// By convention the base units come first
 		defineUnit(.Length,		 name: "meter",		 abbreviation: "m")
-		defineUnit(.Length,		 name: "centimeter", abbreviation: "cm", toBase: { $0/100 } )
-		defineUnit(.Length,		 name: "millimeter", abbreviation: "mm", toBase: { $0/1000 } )
-		defineUnit(.Length,		 name: "foot",		 abbreviation: "ft", toBase: { 12*2.54*$0/100 } )
-		defineUnit(.Length,		 name: "mile",		 abbreviation: "mi", toBase: { 5280*12*2.54*$0/100 } )
-		defineUnit(.Time,		 name: "hour",		 abbreviation: "hr", toBase: { $0*3600 } )
 		defineUnit(.Time,		 name: "second",	 abbreviation: "s")
-		defineUnit(.Temperature, name: "Fahrenheit", abbreviation: "°F", toBase: { 5*($0-32)/9 }, fromBase: { 9*$0/5+32 } )
-		defineUnit(.Temperature, name: "Celsius",	 abbreviation: "°C")
+		defineUnit(.Temperature, name: "kelvin",	 abbreviation: "K")
+		defineUnit(.Mass,		 name: "kilogram",	 abbreviation: "kg")
+		defineUnit(.Current,     name: "ampere",	 abbreviation: "A")
+		defineUnit(.Luminance,	 name: "candela",	 abbreviation: "cd")
+		defineUnit(.Amount,		 name: "mole",		 abbreviation: "mol")
+		
+		// Add other derived units
+		defineUnit(.Length,		 name: "centimeter", abbreviation: "cm", toBase: { $0/cmPerMeter } )
+		defineUnit(.Length,		 name: "millimeter", abbreviation: "mm", toBase: { $0/mmPerMeter } )
+		defineUnit(.Length,		 name: "foot",		 abbreviation: "ft", toBase: { inchPerFoot*cmPerInch*$0/cmPerMeter } )
+		defineUnit(.Length,		 name: "mile",		 abbreviation: "mi", toBase: { feetPerMile*inchPerFoot*cmPerInch*$0/cmPerMeter } )
+		defineUnit(.Time,		 name: "hour",		 abbreviation: "hr", toBase: { $0*secsPerHour } )
+		defineUnit(.Time,		 name: "minute",	 abbreviation: "min",toBase: { $0*secsPerMin } )
+		defineUnit(.Temperature, name: "kahrenheit", abbreviation: "°F", toBase: { ($0-degFOffset)/degFPerdegC }, fromBase: { degFPerdegC*$0+degFOffset } )
+		defineUnit(.Temperature, name: "celsius",	 abbreviation: "°C", toBase: { $0-absoluteZero}, fromBase: { $0+absoluteZero } )
 	}
 	
 	//
-	// Initialize with unit abbreviation strings like Units("m", "s s") for m/s²
+	// Initialize with unit abbreviation strings like Units("m / s s") for m/s²
 	//
-	init (_ upper : String, _ lower : String = "") {
-		if Units.abbreviations.count == 0 { Units.defineUnits() }  // define some standard units
+	init (_ unitString : String) {
+		units = UnitType()
+		
+		// define some standard units
+		if Units.abbreviations.count == 0 { Units.defineUnits() }
+		
+		// break apart the unit string to actual defined units
+		let unitArrays = unitString.componentsSeparatedByString("/")
+		
+		// extract the lower units
+		if let lowerArrays = unitArrays.last?.componentsSeparatedByString(" ") where unitArrays.count > 1 {
+			for unit in lowerArrays {
+				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
+				if abbreviationIsDefined(abbreviation) { self.units.upper.add(abbreviation) }
+			}
+		}
+		
+		// extract the upper units
+		if let upperArrays = unitArrays.first?.componentsSeparatedByString(" ") {
+			for unit in upperArrays {
+				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
+				if abbreviationIsDefined(abbreviation) { self.units.lower.add(abbreviation) }
+			}
+		}
+	}
+	
+	//
+	// Initialize with the base unit for the UnitCategory
+	//
+	init (_ unit : UnitCategory) {
+		units = UnitType()
+		if let abbreviation = Units.abbreviations[unit]?.first {
+			units.upper.add(abbreviation)
+		}
+	}
+	
+	init (_ units : UnitType) {
+		self.units = units
+	}
+	
+	var baseUnit : Units {
+		var base = UnitType()
+		
+		for unit in units.upper {
+			let baseAbbreviation = baseUnit(unit.0)
+			if !baseAbbreviation.isEmpty { base.upper.add(baseAbbreviation) }
+		}
+		for unit in units.lower {
+			let baseAbbreviation = baseUnit(unit.0)
+			if !baseAbbreviation.isEmpty { base.lower.add(baseAbbreviation) }
+		}
+		return Units(base)
+	}
+	
+	func baseUnit (abbreviation: String) -> String {
+		for baseUnitAbbreviations in Units.abbreviations {
+			for unitAbbreviation in baseUnitAbbreviations.1 {
+				if unitAbbreviation == abbreviation {
+					let unit = baseUnitAbbreviations.0
+					if let baseAbbreviation = Units.abbreviations[unit]?.first {
+						return baseAbbreviation
+					}
+				}
+			}
+		}
+		return ""
+	}
+	
+	func abbreviationIsDefined (abbreviation: String) -> Bool {
+		for baseUnitAbbreviations in Units.abbreviations {
+			for unitAbbreviation in baseUnitAbbreviations.1 {
+				if unitAbbreviation == abbreviation { return true }
+			}
+		}
+		return false
 	}
 	
 	private static func convert(number: Double, power: Int, conversion: convertFunction) -> Double {
@@ -102,32 +198,32 @@ class Units {
 		return baseNumber
 	}
 	
-	private static func convert(number: Double, fromType: UnitType, toType: UnitType) -> Double? {
-		if fromType.baseUnit != toType.baseUnit { return nil }  // illegal conversion
-		if let convertToBase = toBase[fromType.baseUnit]?[fromType.activeUnit] {
-			var baseNumber = convert(number, power: fromType.order, conversion: convertToBase)
-			if let convertToType = fromBase[toType.baseUnit]?[toType.activeUnit] {
-				return convert(baseNumber, power: toType.order, conversion: convertToType)
-			}
-		}
-		return nil
-	}
+//	private static func convert(number: Double, fromType: UnitType, toType: UnitType) -> Double? {
+//		if fromType != toType { return nil }  // illegal conversion
+////		if let convertToBase = toBase[fromType.baseUnit]?[fromType.activeUnit] {
+////			var baseNumber = convert(number, power: fromType.order, conversion: convertToBase)
+////			if let convertToType = fromBase[toType.baseUnit]?[toType.activeUnit] {
+////				return convert(baseNumber, power: toType.order, conversion: convertToType)
+////			}
+////		}
+//		return nil
+//	}
 	
 	private func getMatchingUnit (unit: UnitType, inUnits: Units) -> UnitType? {
-		for funit in inUnits.units {
-			if unit.baseUnit == funit.baseUnit { return funit }
-		}
+//		for funit in inUnits.units {
+//			if unit.baseUnit == funit.baseUnit { return funit }
+//		}
 		return nil
 	}
 	
 	static func convert (number: Double, fromType: Units, toType: Units) -> Double? {
 		if fromType.isCompatibleWith(toType) {
 			var x = number
-			for unit in fromType.units {
-				if let toUnit = fromType.getMatchingUnit(unit, inUnits: toType) {
-					x = Units.convert(x, fromType: unit, toType: toUnit)!
-				}
-			}
+//			for unit in fromType.units {
+//				if let toUnit = fromType.getMatchingUnit(unit, inUnits: toType) {
+//					x = Units.convert(x, fromType: unit, toType: toUnit)!
+//				}
+//			}
 			return x
 		}
 		return nil
@@ -138,18 +234,18 @@ class Units {
 	}
 	
 	func isCompatibleWith (unit: Units) -> Bool {
-		return (self.units == unit.units)
+		return (self.baseUnit == unit.baseUnit)
 	}
 	
 	func inverse () -> Units {
 		// invert units by negating powers
-		var result: Set<UnitType> = []
-		for unit in units {
-			var newUnit = unit
-			newUnit.order = -newUnit.order
-			result.insert(newUnit)
-		}
-		return Units(unit: result)
+//		var result: Set<UnitType> = []
+//		for unit in units {
+//			var newUnit = unit
+//			newUnit.order = -newUnit.order
+//			result.insert(newUnit)
+//		}
+		return Units("")
 	}
 	
 	func div (x: Units) -> Units {
@@ -158,21 +254,21 @@ class Units {
 	
 	func mul (x: Units) -> Units {
 		var result = self.units
-		for unit in x.units {
-			var newUnit = unit
-			if let runit = getMatchingUnit(unit, inUnits: self) {
-				result.remove(runit)
-				newUnit.order += runit.order
-			}
-			result.insert(unit)
-		}
-		return Units(unit: result)
+//		for unit in x.units {
+//			var newUnit = unit
+//			if let runit = getMatchingUnit(unit, inUnits: self) {
+//				result.remove(runit)
+//				newUnit.order += runit.order
+//			}
+//			result.insert(unit)
+//		}
+		return Units("")
 	}
 
 }
 
 // required for UnitType Hashable protocol
-func == (lhs: Units.UnitType, rhs: Units.UnitType) -> Bool {
+func == (lhs: Units, rhs: Units) -> Bool {
 	return (lhs.baseUnit == rhs.baseUnit)
 }
 

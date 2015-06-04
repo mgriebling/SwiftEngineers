@@ -60,7 +60,6 @@ struct Bag<T:Hashable> : SequenceType {
 		return items.generate()
 	}
 	
+	
 }
-
-typealias UnitBag = Bag<String>
 
