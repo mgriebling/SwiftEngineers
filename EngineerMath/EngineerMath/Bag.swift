@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Bag<T:Hashable> {
+struct Bag<T:Hashable> : SequenceType {
 	
 	var items = [T: Int]()	// Bag definition as an object and a quantity
 	
@@ -19,4 +19,10 @@ struct Bag<T:Hashable> {
 	func add (item: T) {
 		
 	}
+	
+	func generate() -> DictionaryGenerator<T,Int> {
+		return items.generate()
+	}
+	
+	
 }
