@@ -67,8 +67,9 @@ class Units {
 	}
 	
 	static func defineUnit (unit: UnitCategory, name: String, abbreviation: String, isBaseUnit: Bool = false,
-							toBase: convertFunction = { $0 }, fromBase: convertFunction = { $0 }) {
-		let definition = UnitDefinition(fromBase: fromBase, toBase: toBase, name: name, unitType: unit, isBaseUnit: isBaseUnit)
+							toBase: convertFunction = { $0 }, fromBase: convertFunction? = nil) {
+		var fromBaseVar : convertFunction = fromBase ?? { 1/toBase($0) }
+		let definition = UnitDefinition(fromBase: fromBaseVar, toBase: toBase, name: name, unitType: unit, isBaseUnit: isBaseUnit)
 		definitions[abbreviation] = definition
 	}
 	

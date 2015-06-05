@@ -91,11 +91,19 @@ public struct Bag<T:Hashable> : SequenceType, Equatable {
 		return items.generate()
 	}
 	
-	func isEqual (lhs: Bag<T>, rhs: Bag<T>) -> Bool {
-		let result
+	func isEqual (rhs: Bag<T>) -> Bool {
+		if self.count != rhs.count { return false }
+		if self.uniqueCount != rhs.uniqueCount { return false }
+		for item in self {
+			if item.1 != rhs[item.0] { return false }
+		}
+		return true
 	}
 	
-	
+}
+
+public func == <T>(lhs: Bag<T>, rhs: Bag<T>) -> Bool {
+	return lhs.isEqual(rhs)
 }
 
 
