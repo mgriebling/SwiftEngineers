@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Bag<T:Hashable> : SequenceType {
+public struct Bag<T:Hashable> : SequenceType, Equatable {
 	
 	var items = [T: Int]()	// Bag definition as an object and a quantity
 	
@@ -87,10 +87,15 @@ struct Bag<T:Hashable> : SequenceType {
 	}
 	
 	// Sequence generator
-	func generate() -> DictionaryGenerator<T,Int> {
+	public func generate() -> DictionaryGenerator<T,Int> {
 		return items.generate()
+	}
+	
+	func isEqual (lhs: Bag<T>, rhs: Bag<T>) -> Bool {
+		let result
 	}
 	
 	
 }
+
 

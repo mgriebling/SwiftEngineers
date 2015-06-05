@@ -55,6 +55,12 @@ class ViewController: NSViewController {
 //			if index < t.uniqueCount-1 { print(", ") }
 //		}
 //		println()
+		
+		// Test unit conversions
+		let feet = Units("ft")
+		let meter = Units("m")
+		let result = Units.convert(1, fromType: meter, toType: feet)
+		
 	}
 
 	override var representedObject: AnyObject? {
