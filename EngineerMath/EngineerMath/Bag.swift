@@ -42,13 +42,44 @@ struct Bag<T:Hashable> : SequenceType {
 	}
 	
 	mutating func removeAll (item: T) {
-		let value = items[item] ?? 0
-		if value == 0 { return }
 		items.removeValueForKey(item)
 	}
 	
 	mutating func removeAllItems () {
 		items = [T: Int]()
+	}
+	
+	func combinedWith (bag: Bag<T>) -> Bag<T> {
+		var combined = bag
+		for item in self {
+			let value = (combined.items[item.0] ?? 0) + item.1
+			combined.items[item.0] = value
+		}
+		return combined
+	}
+	
+	func removeItemsIn (bag: Bag<T>) -> Bag<T> {
+		var removed = self
+		for item in bag {
+			if let value = removed.items[item.0] {
+				if item.1 < value {
+					removed.items[item.0] = value - item.1
+				} else {
+					removed.removeAll(item.0)
+				}
+			}
+		}
+		return removed
+	}
+	
+	func itemsAlsoIn (bag: Bag<T>) -> Bag<T> {
+		var intersect = Bag<T>()
+		for item in bag {
+			if let value = self.items[item.0] {
+				intersect.items[item.0] = min(value, item.1)
+			}
+		}
+		return intersect
 	}
 	
 	func isEmpty () -> Bool {

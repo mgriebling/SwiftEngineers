@@ -134,6 +134,9 @@ class Units {
 				if abbreviationIsDefined(abbreviation) { self.units.lower.add(abbreviation) }
 			}
 		}
+		
+		// normalize the units
+		units = Units.normalize(units)
 	}
 	
 	//
@@ -144,27 +147,34 @@ class Units {
 		if let abbreviation = Units.abbreviations[unit]?.first {
 			units.upper.add(abbreviation)
 		}
+		
+		// normalize the units
+		units = Units.normalize(units)
 	}
 	
 	init (_ units : UnitType) {
-		self.units = units
+		self.units = Units.normalize(units)
+	}
+	
+	init (_ upper: UnitBag, _ lower: UnitBag) {
+		units = Units.normalize(UnitType(upper: upper, lower: lower))
 	}
 	
 	var baseUnit : Units {
 		var base = UnitType()
 		
 		for unit in units.upper {
-			let baseAbbreviation = baseUnit(unit.0)
+			let baseAbbreviation = Units.baseUnit(unit.0)
 			if !baseAbbreviation.isEmpty { base.upper.add(baseAbbreviation) }
 		}
 		for unit in units.lower {
-			let baseAbbreviation = baseUnit(unit.0)
+			let baseAbbreviation = Units.baseUnit(unit.0)
 			if !baseAbbreviation.isEmpty { base.lower.add(baseAbbreviation) }
 		}
 		return Units(base)
 	}
 	
-	func baseUnit (abbreviation: String) -> String {
+	static func baseUnit (abbreviation: String) -> String {
 		for baseUnitAbbreviations in Units.abbreviations {
 			for unitAbbreviation in baseUnitAbbreviations.1 {
 				if unitAbbreviation == abbreviation {
@@ -198,32 +208,36 @@ class Units {
 		return baseNumber
 	}
 	
-//	private static func convert(number: Double, fromType: UnitType, toType: UnitType) -> Double? {
-//		if fromType != toType { return nil }  // illegal conversion
-////		if let convertToBase = toBase[fromType.baseUnit]?[fromType.activeUnit] {
-////			var baseNumber = convert(number, power: fromType.order, conversion: convertToBase)
-////			if let convertToType = fromBase[toType.baseUnit]?[toType.activeUnit] {
-////				return convert(baseNumber, power: toType.order, conversion: convertToType)
-////			}
-////		}
-//		return nil
-//	}
-	
-	private func getMatchingUnit (unit: UnitType, inUnits: Units) -> UnitType? {
-//		for funit in inUnits.units {
-//			if unit.baseUnit == funit.baseUnit { return funit }
+	private static func convert(number: Double, fromType: String, toType: String) -> Double? {
+		if fromType != toType { return nil }  // illegal conversion
+//		if let convertToBase = toBase[fromType.baseUnit]?[fromType.activeUnit] {
+//			var baseNumber = convert(number, power: fromType.order, conversion: convertToBase)
+//			if let convertToType = fromBase[toType.baseUnit]?[toType.activeUnit] {
+//				return convert(baseNumber, power: toType.order, conversion: convertToType)
+//			}
 //		}
+		return nil
+	}
+	
+	private func getMatchingUnit (unit: String, inUnits: UnitBag) -> String? {
+		for funit in inUnits {
+			if Units.baseUnit(unit) == Units.baseUnit(funit.0) { return funit.0 }
+		}
 		return nil
 	}
 	
 	static func convert (number: Double, fromType: Units, toType: Units) -> Double? {
 		if fromType.isCompatibleWith(toType) {
 			var x = number
-//			for unit in fromType.units {
-//				if let toUnit = fromType.getMatchingUnit(unit, inUnits: toType) {
-//					x = Units.convert(x, fromType: unit, toType: toUnit)!
-//				}
-//			}
+			for unit in fromType.units.upper {
+				if let toUnit = fromType.getMatchingUnit(unit.0, inUnits: toType.units.upper) {
+					if let result = Units.convert(x, fromType: unit.0, toType: toUnit.0) {
+						x = result
+					} else {
+						return nil
+					}
+				}
+			}
 			return x
 		}
 		return nil
@@ -237,39 +251,34 @@ class Units {
 		return (self.baseUnit == unit.baseUnit)
 	}
 	
+	static private func normalize (units: UnitType) -> UnitType {
+		// if any units are common to both upper and lower units they cancel each other
+		let common = units.upper.itemsAlsoIn(units.lower)
+		return UnitType(upper: units.upper.removeItemsIn(common), lower: units.lower.removeItemsIn(common))
+	}
+	
 	func inverse () -> Units {
-		// invert units by negating powers
-//		var result: Set<UnitType> = []
-//		for unit in units {
-//			var newUnit = unit
-//			newUnit.order = -newUnit.order
-//			result.insert(newUnit)
-//		}
-		return Units("")
+		// invert units by swapping upper/lower units (i.e., m/s² => s²/m)
+		return Units(units.lower, units.upper)
 	}
 	
 	func div (x: Units) -> Units {
+		// divide the units (i.e., m/s / s => m/s²)
 		return x.inverse().mul(self)
 	}
 	
 	func mul (x: Units) -> Units {
 		var result = self.units
-//		for unit in x.units {
-//			var newUnit = unit
-//			if let runit = getMatchingUnit(unit, inUnits: self) {
-//				result.remove(runit)
-//				newUnit.order += runit.order
-//			}
-//			result.insert(unit)
-//		}
-		return Units("")
+		result.upper = result.upper.combinedWith(x.units.upper)
+		result.lower = result.lower.combinedWith(x.units.lower)
+		return Units(result)
 	}
 
 }
 
 // required for UnitType Hashable protocol
 func == (lhs: Units, rhs: Units) -> Bool {
-	return (lhs.baseUnit == rhs.baseUnit)
+	return lhs == rhs
 }
 
 // convenience functions for units
