@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Units {
+class Units : Printable, Equatable {
 	
 	enum UnitCategory {
 		case Time, Length, Mass, Temperature, Current, Luminance, Amount
@@ -56,7 +56,7 @@ class Units {
 		if rpower <= 1 && power >= 0 { return "" }	// handle case of x^1 = x and x^0 = 1
 		while rpower > 0 {
 			let digit = rpower % 10; rpower /= 10
-			let raisedDigit = powers[advance(Units.powers.startIndex, digit)]
+			let raisedDigit = powers[advance(powers.startIndex, digit)]
 			result = [raisedDigit] + result
 		}
 		return sign + result
@@ -66,10 +66,16 @@ class Units {
 		return units.description
 	}
 	
-	static func defineUnit (unit: UnitCategory, name: String, abbreviation: String, isBaseUnit: Bool = false,
-							toBase: convertFunction = { $0 }, fromBase: convertFunction? = nil) {
-		var fromBaseVar : convertFunction = fromBase ?? { 1/toBase($0) }
-		let definition = UnitDefinition(fromBase: fromBaseVar, toBase: toBase, name: name, unitType: unit, isBaseUnit: isBaseUnit)
+	static func defineUnit (unit: UnitCategory, name: String, abbreviation: String, isBaseUnit: Bool = false, toBase: convertFunction = { $0 }, fromBase: convertFunction? = nil) {
+		let fromFunction : convertFunction
+		if let fromBase = fromBase {
+			fromFunction = fromBase
+		} else if isBaseUnit {
+			fromFunction = { $0 }
+		} else {
+			fromFunction = { $0/toBase(1) }
+		}
+		let definition = UnitDefinition(fromBase: fromFunction, toBase: toBase, name: name, unitType: unit, isBaseUnit: isBaseUnit)
 		definitions[abbreviation] = definition
 	}
 	
@@ -79,33 +85,58 @@ class Units {
 		let cmPerInch    = 2.54
 		let feetPerMile  = 5280.0
 		let secsPerMin   = 60.0
-		let minsPerHour  = 60.0
+		let minsPerHour  = secsPerMin
 		let secsPerHour  = secsPerMin * minsPerHour
+		let secsPerDay	 = secsPerHour * 24
 		let degFOffset   = 32.0
-		let cmPerMeter   = 100.0
-		let mmPerMeter   = 1000.0
+		let centi		 = 1/100.0
+		let K			 = 1000.0
+		let milli		 = 1/1000.0
 		let degFPerdegC  = 9.0/5.0
 		let absoluteZero = 273.16
+		let kgPerLb		 = 0.4535924
 		
 		// Define some baseline units where SI units are the baseline
 		// By convention the base units come first
 		defineUnit(.Length,		 name: "meter",		 abbreviation: "m",   isBaseUnit: true)
 		defineUnit(.Time,		 name: "second",	 abbreviation: "s",   isBaseUnit: true)
 		defineUnit(.Temperature, name: "kelvin",	 abbreviation: "K",   isBaseUnit: true)
-		defineUnit(.Mass,		 name: "kilogram",	 abbreviation: "kg",  isBaseUnit: true)
+		defineUnit(.Mass,		 name: "gram",		 abbreviation: "g",   isBaseUnit: true)
 		defineUnit(.Current,     name: "ampere",	 abbreviation: "A",	  isBaseUnit: true)
 		defineUnit(.Luminance,	 name: "candela",	 abbreviation: "cd",  isBaseUnit: true)
 		defineUnit(.Amount,		 name: "mole",		 abbreviation: "mol", isBaseUnit: true)
 		
 		// Add other derived units
-		defineUnit(.Length,		 name: "centimeter", abbreviation: "cm", toBase: { $0/cmPerMeter } )
-		defineUnit(.Length,		 name: "millimeter", abbreviation: "mm", toBase: { $0/mmPerMeter } )
-		defineUnit(.Length,		 name: "foot",		 abbreviation: "ft", toBase: { inchPerFoot*cmPerInch*$0/cmPerMeter } )
-		defineUnit(.Length,		 name: "mile",		 abbreviation: "mi", toBase: { feetPerMile*inchPerFoot*cmPerInch*$0/cmPerMeter } )
-		defineUnit(.Time,		 name: "hour",		 abbreviation: "hr", toBase: { $0*secsPerHour } )
-		defineUnit(.Time,		 name: "minute",	 abbreviation: "min",toBase: { $0*secsPerMin } )
-		defineUnit(.Temperature, name: "fahrenheit", abbreviation: "°F", toBase: { ($0-degFOffset)/degFPerdegC - absoluteZero}, fromBase: { degFPerdegC*$0+degFOffset + absoluteZero} )
-		defineUnit(.Temperature, name: "celsius",	 abbreviation: "°C", toBase: { $0-absoluteZero}, fromBase: { $0+absoluteZero } )
+		defineMetricUnitsfor("g")  // automatically add all gram-related metric scaled units
+//		defineMetricUnitsfor("m")  // automatically add all meter-related metric scaled units
+//		defineMetricUnitsfor("s")  // automatically add all second-related metric scaled units
+		defineUnit(.Mass,		 name: "pound",		 abbreviation: "lb",  toBase: { $0*kgPerLb*K } )
+		defineUnit(.Length,		 name: "centimeter", abbreviation: "cm",  toBase: { $0*centi } )
+		defineUnit(.Length,		 name: "kilometer",  abbreviation: "km",  toBase: { $0*K } )
+		defineUnit(.Length,		 name: "millimeter", abbreviation: "mm",  toBase: { $0*milli } )
+		defineUnit(.Length,		 name: "foot",		 abbreviation: "ft",  toBase: { inchPerFoot*cmPerInch*$0*centi } )
+		defineUnit(.Length,		 name: "inch",		 abbreviation: "in",  toBase: { cmPerInch*$0*centi } )
+		defineUnit(.Length,		 name: "mile",		 abbreviation: "mi",  toBase: { feetPerMile*inchPerFoot*cmPerInch*$0*centi } )
+		defineUnit(.Time,		 name: "hour",		 abbreviation: "hr",  toBase: { $0*secsPerHour } )
+		defineUnit(.Time,		 name: "minute",	 abbreviation: "min", toBase: { $0*secsPerMin } )
+		defineUnit(.Time,		 name: "day",		 abbreviation: "day", toBase: { $0*secsPerDay } )
+		defineUnit(.Time,		 name: "week",		 abbreviation: "wk",  toBase: { $0*secsPerDay*7 } )
+		defineUnit(.Temperature, name: "fahrenheit", abbreviation: "°F",  toBase: { ($0-degFOffset)/degFPerdegC + absoluteZero}, fromBase: { degFPerdegC*($0-absoluteZero)+degFOffset} )
+		defineUnit(.Temperature, name: "celsius",	 abbreviation: "°C",  toBase: { $0+absoluteZero}, fromBase: { $0-absoluteZero } )
+	}
+	
+	static func defineMetricUnitsfor (abbreviation: String) {
+		if let baseUnit = definitions[abbreviation] where baseUnit.isBaseUnit {
+			let name = baseUnit.name
+			let baseType = baseUnit.unitType
+			let prefixes = ["exa", "peta", "tera", "giga", "mega", "kilo", "hecto", "deca", "deci", "centi", "milli", "micro", "nano", "pico"]
+			let abbrevs  = ["E", "P", "T", "G", "M", "k", "h", "da", "d", "c", "m", "μ", "n", "p"]
+			let scale = [1e18, 1e15, 1e12, 1e9, 1e6, 1e3, 1e2, 1e1, 1e-1, 1e-2, 1e-3, 1e-6, 1e-9, 1e-12]
+			
+			for (index, prefix) in enumerate(prefixes) {
+				defineUnit(baseType, name: prefix+name, abbreviation: abbrevs[index]+abbreviation, toBase: { $0*scale[index] } )
+			}
+		}
 	}
 	
 	//
@@ -191,13 +222,13 @@ class Units {
 	}
 	
 	func abbreviationIsDefined (abbreviation: String) -> Bool {
-		if let _ = Units.definitions[abbreviation] { return true }
-		return false
+		return Units.definitions[abbreviation] != nil
 	}
 	
 	private static func convert(number: Double, power: Int, conversion: convertFunction) -> Double {
 		var lpower: Int = abs(power)
 		var baseNumber = number
+		println("convert(\(number)) == \(conversion(number))")
 		while lpower > 0 {
 			baseNumber = conversion(baseNumber)
 			lpower--
@@ -208,9 +239,11 @@ class Units {
 	
 	private static func convert(number: Double, fromType: (String, Int), toType: (String, Int)) -> Double? {
 		if let convertToBase = Units.definitions[fromType.0]?.toBase {
-			var baseNumber = convert(number, power: fromType.1, conversion: convertToBase)
+			println("1\(fromType.0) = \(convertToBase(1)) \(Units.baseUnit(fromType.0))")
+			var baseNumber = Units.convert(number, power: fromType.1, conversion: convertToBase)
 			if let convertToType = Units.definitions[toType.0]?.fromBase {
-				return convert(baseNumber, power: toType.1, conversion: convertToType)
+				println("1\(toType.0) = \(convertToType(1)) \(Units.baseUnit(toType.0))")
+				return Units.convert(baseNumber, power: toType.1, conversion: convertToType)
 			}
 		}
 		return nil
@@ -236,7 +269,7 @@ class Units {
 				}
 			}
 			for unit in fromType.units.lower {
-				if let toUnit = fromType.getMatchingUnit(unit.0, inUnits: toType.units.upper) {
+				if let toUnit = fromType.getMatchingUnit(unit.0, inUnits: toType.units.lower) {
 					// Note: Unit powers are negated to give an inverse conversion
 					if let result = Units.convert(x, fromType: (unit.0, -unit.1), toType: (toUnit.0, -toUnit.1)) {
 						x = result
