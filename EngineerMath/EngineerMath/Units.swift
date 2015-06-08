@@ -38,6 +38,7 @@ class Units : Printable, Equatable {
 	// contains all the aggregated units e.g., m∙s⁻¹
 	private var units: UnitType
 	
+	// Basic unit definitions
 	struct UnitDefinition {
 		let fromBase : convertFunction
 		let toBase : convertFunction
@@ -46,6 +47,9 @@ class Units : Printable, Equatable {
 		let isBaseUnit : Bool
 	}
 	private static var definitions = [String: UnitDefinition]()
+	
+	// Unit aliases
+	private static var aliases = [String: Units]()
 	
 	private static let powers = "⁰¹²³⁴⁵⁶⁷⁸⁹"
 	private static func getStringForPower (power: Int) -> String {
@@ -66,6 +70,9 @@ class Units : Printable, Equatable {
 		return units.description
 	}
 	
+	//
+	// Basic unit definition which is defined as function of one of the base units (e.g., feet = k * meters)
+	//
 	static func defineUnit (unit: UnitCategory, name: String, abbreviation: String, isBaseUnit: Bool = false, toBase: convertFunction = { $0 }, fromBase: convertFunction? = nil) {
 		let fromFunction : convertFunction
 		if let fromBase = fromBase {
@@ -79,7 +86,16 @@ class Units : Printable, Equatable {
 		definitions[abbreviation] = definition
 	}
 	
-	static func defineUnits () {
+	//
+	// An alias unit definition creates a pseudo-base unit that is used in place of an SI unit definition
+	// For example: the SI Volt derived unit is defined as kg m^2 / (A s^3).  With this defined alias,
+	// a "V" will be returned whenever kg m^2 / (A s^3) occurs.
+	//
+	static func defineAliasUnit (unit: Units, abbreviation: String) {
+		aliases[abbreviation] = unit
+	}
+	
+	private static func defineUnits () {
 		// Basic conversion constants
 		let inchPerFoot  = 12.0
 		let cmPerInch    = 2.54
@@ -123,9 +139,19 @@ class Units : Printable, Equatable {
 		defineUnit(.Time,		 name: "week",		 abbreviation: "wk",  toBase: { $0*secsPerDay*7 } )
 		defineUnit(.Temperature, name: "fahrenheit", abbreviation: "°F",  toBase: { ($0-degFOffset)/degFPerdegC + absoluteZero}, fromBase: { degFPerdegC*($0-absoluteZero)+degFOffset} )
 		defineUnit(.Temperature, name: "celsius",	 abbreviation: "°C",  toBase: { $0+absoluteZero}, fromBase: { $0-absoluteZero } )
+	
+		// Define some often-used aliases for the SI derived units
+		defineAliasUnit(Units("kg m m / A s s s"),	 abbreviation: "V")	// Volt
+		defineAliasUnit(Units("kg m m / A A s s s"), abbreviation: "Ω")	// Ohm
+		defineAliasUnit(Units("kg m m / s s"),		 abbreviation: "J")	// Joule
+		defineAliasUnit(Units("kg m m / s s s"),	 abbreviation: "W")	// Watt
+		
+		defineAliasUnit(Units("m m m"),				 abbreviation: "l")	// litre
+		defineAliasUnit(Units("°F"),				 abbreviation: "F") // alias for °F
+		defineAliasUnit(Units("°C"),				 abbreviation: "C") // alias for °C
 	}
 	
-	static func defineMetricUnitsfor (abbreviation: String) {
+	private static func defineMetricUnitsfor (abbreviation: String) {
 		if let baseUnit = definitions[abbreviation] where baseUnit.isBaseUnit {
 			let name = baseUnit.name
 			let baseType = baseUnit.unitType
@@ -155,7 +181,12 @@ class Units : Printable, Equatable {
 		if let lowerArrays = unitArrays.last?.componentsSeparatedByString(" ") where unitArrays.count > 1 {
 			for unit in lowerArrays {
 				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
-				if abbreviationIsDefined(abbreviation) { self.units.lower.add(abbreviation) }
+				if let alias = Units.aliases[abbreviation] {
+					self.units.upper = self.units.upper.combinedWith(alias.units.lower)
+					self.units.lower = self.units.lower.combinedWith(alias.units.upper)
+				} else if abbreviationIsDefined(abbreviation) {
+					self.units.lower.add(abbreviation)
+				}
 			}
 		}
 		
@@ -163,7 +194,12 @@ class Units : Printable, Equatable {
 		if let upperArrays = unitArrays.first?.componentsSeparatedByString(" ") {
 			for unit in upperArrays {
 				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
-				if abbreviationIsDefined(abbreviation) { self.units.upper.add(abbreviation) }
+				if let alias = Units.aliases[abbreviation] {
+					self.units.upper = self.units.upper.combinedWith(alias.units.upper)
+					self.units.lower = self.units.lower.combinedWith(alias.units.lower)
+				} else if abbreviationIsDefined(abbreviation) {
+					self.units.upper.add(abbreviation)
+				}
 			}
 		}
 		
@@ -222,7 +258,11 @@ class Units : Printable, Equatable {
 	}
 	
 	func abbreviationIsDefined (abbreviation: String) -> Bool {
-		return Units.definitions[abbreviation] != nil
+		return Units.definitions[abbreviation] != nil || aliasIsDefined(abbreviation)
+	}
+	
+	func aliasIsDefined (abbreviation: String) -> Bool {
+		return Units.aliases[abbreviation] != nil
 	}
 	
 	private static func convert(number: Double, power: Int, conversion: convertFunction) -> Double {
