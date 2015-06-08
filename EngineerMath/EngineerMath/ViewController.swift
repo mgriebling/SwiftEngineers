@@ -70,6 +70,8 @@ class ViewController: NSViewController {
 		let kelvin = Units("K")
 		let kg = Units("kg")
 		let lb = Units("lb")
+		let mA = Units("mA")
+		let Amp = Units("A")
 		var result = Units.convert(10, fromType: hour, toType: seconds)
 		println("10 \(hour) = \(result!) \(seconds)")
 		result = Units.convert(10, fromType:mile, toType: km)
@@ -86,6 +88,7 @@ class ViewController: NSViewController {
 		println("25 \(degreeC) = \(result!) \(degreeF)")
 		result = Units.convert(200, fromType:lb, toType: kg)
 		println("200 \(lb) = \(result!) \(kg)")
+		println("200 \(mA) = \(Units.convert(200, fromType:mA, toType: Amp)!) \(Amp)")
 	}
 
 	override var representedObject: AnyObject? {

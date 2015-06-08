@@ -108,12 +108,12 @@ class Units : Printable, Equatable {
 		
 		// Add other derived units
 		defineMetricUnitsfor("g")  // automatically add all gram-related metric scaled units
-//		defineMetricUnitsfor("m")  // automatically add all meter-related metric scaled units
-//		defineMetricUnitsfor("s")  // automatically add all second-related metric scaled units
+		defineMetricUnitsfor("m")  // automatically add all meter-related metric scaled units
+		defineMetricUnitsfor("s")  // automatically add all second-related metric scaled units
+		defineMetricUnitsfor("A")  // automatically add all current-related metric scaled units
+		
+		// Only need to define non-metric units
 		defineUnit(.Mass,		 name: "pound",		 abbreviation: "lb",  toBase: { $0*kgPerLb*K } )
-		defineUnit(.Length,		 name: "centimeter", abbreviation: "cm",  toBase: { $0*centi } )
-		defineUnit(.Length,		 name: "kilometer",  abbreviation: "km",  toBase: { $0*K } )
-		defineUnit(.Length,		 name: "millimeter", abbreviation: "mm",  toBase: { $0*milli } )
 		defineUnit(.Length,		 name: "foot",		 abbreviation: "ft",  toBase: { inchPerFoot*cmPerInch*$0*centi } )
 		defineUnit(.Length,		 name: "inch",		 abbreviation: "in",  toBase: { cmPerInch*$0*centi } )
 		defineUnit(.Length,		 name: "mile",		 abbreviation: "mi",  toBase: { feetPerMile*inchPerFoot*cmPerInch*$0*centi } )
@@ -227,22 +227,22 @@ class Units : Printable, Equatable {
 	
 	private static func convert(number: Double, power: Int, conversion: convertFunction) -> Double {
 		var lpower: Int = abs(power)
-		var baseNumber = number
-		println("convert(\(number)) == \(conversion(number))")
+		var baseNumber = power < 0 ? 1 : number
+//		println("convert(\(number)) == \(conversion(number))")
 		while lpower > 0 {
 			baseNumber = conversion(baseNumber)
 			lpower--
 		}
-		if power < 0 { baseNumber = 1 / baseNumber }
+		if power < 0 { return number / baseNumber }
 		return baseNumber
 	}
 	
 	private static func convert(number: Double, fromType: (String, Int), toType: (String, Int)) -> Double? {
 		if let convertToBase = Units.definitions[fromType.0]?.toBase {
-			println("1\(fromType.0) = \(convertToBase(1)) \(Units.baseUnit(fromType.0))")
+//			println("1\(fromType.0) = \(convertToBase(1)) \(Units.baseUnit(fromType.0))")
 			var baseNumber = Units.convert(number, power: fromType.1, conversion: convertToBase)
 			if let convertToType = Units.definitions[toType.0]?.fromBase {
-				println("1\(toType.0) = \(convertToType(1)) \(Units.baseUnit(toType.0))")
+//				println("1\(toType.0) = \(convertToType(1)) \(Units.baseUnit(toType.0))")
 				return Units.convert(baseNumber, power: toType.1, conversion: convertToType)
 			}
 		}
