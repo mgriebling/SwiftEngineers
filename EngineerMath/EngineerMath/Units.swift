@@ -17,16 +17,17 @@ class Units : Printable, Equatable {
 	typealias UnitBag = Bag<String>
 	
 	struct UnitType {
+		private static let rdot = "∙"
 		var upper = UnitBag()	// units to positive power
 		var lower = UnitBag()	// units to negative power
 		var description: String {
 			var unitString = ""
 			for unit in upper {
-				if !unitString.isEmpty { unitString += "∙" }
+				if !unitString.isEmpty { unitString += UnitType.rdot }
 				unitString += unit.0 + Units.getStringForPower(unit.1)
 			}
 			for unit in lower {
-				if !unitString.isEmpty { unitString += "∙" }
+				if !unitString.isEmpty { unitString += UnitType.rdot  }
 				unitString += unit.0 + Units.getStringForPower(-unit.1)
 			}
 			return unitString
@@ -39,17 +40,23 @@ class Units : Printable, Equatable {
 	private var units: UnitType
 	
 	// Basic unit definitions
-	struct UnitDefinition {
-		let fromBase : convertFunction
-		let toBase : convertFunction
-		let name : String
-		let unitType : UnitCategory
-		let isBaseUnit : Bool
+	enum UnitDefinition {
+		case BaseUnit (
+			name: String,
+			baseUnit: UnitCategory
+		)
+		case AliasUnit (
+			name: String,
+			unit: UnitType
+		)
+		case NonBaseUnit (
+			name: String,
+			baseUnit: UnitCategory,
+			fromBase: convertFunction,
+			toBase: convertFunction
+		)
 	}
 	private static var definitions = [String: UnitDefinition]()
-	
-	// Unit aliases
-	private static var aliases = [String: Units]()
 	
 	private static let powers = "⁰¹²³⁴⁵⁶⁷⁸⁹"
 	private static func getStringForPower (power: Int) -> String {
@@ -71,28 +78,32 @@ class Units : Printable, Equatable {
 	}
 	
 	//
-	// Basic unit definition which is defined as function of one of the base units (e.g., feet = k * meters)
+	// Basic unit definition
 	//
-	static func defineUnit (unit: UnitCategory, name: String, abbreviation: String, isBaseUnit: Bool = false, toBase: convertFunction = { $0 }, fromBase: convertFunction? = nil) {
+	static func defineBaseUnit (name: String, unit: UnitCategory, abbreviation: String) {
+		definitions[abbreviation] = .BaseUnit(name: name, baseUnit: unit)
+	}
+
+	//
+	// Derived unit definition which is defined as function of one of the base units (e.g., feet = k * meters)
+	//
+	static func defineUnit (name: String, unit: UnitCategory, abbreviation: String, toBase: convertFunction = { $0 }, fromBase: convertFunction? = nil) {
 		let fromFunction : convertFunction
 		if let fromBase = fromBase {
 			fromFunction = fromBase
-		} else if isBaseUnit {
-			fromFunction = { $0 }
 		} else {
 			fromFunction = { $0/toBase(1) }
 		}
-		let definition = UnitDefinition(fromBase: fromFunction, toBase: toBase, name: name, unitType: unit, isBaseUnit: isBaseUnit)
-		definitions[abbreviation] = definition
+		definitions[abbreviation] = .NonBaseUnit(name: name, baseUnit: unit, fromBase:fromFunction, toBase:toBase)
 	}
-	
+		
 	//
 	// An alias unit definition creates a pseudo-base unit that is used in place of an SI unit definition
 	// For example: the SI Volt derived unit is defined as kg m^2 / (A s^3).  With this defined alias,
 	// a "V" will be returned whenever kg m^2 / (A s^3) occurs.
 	//
-	static func defineAliasUnit (unit: Units, abbreviation: String) {
-		aliases[abbreviation] = unit
+	static func defineAliasUnit (name: String, unit: UnitType, abbreviation: String) {
+		definitions[abbreviation] = .AliasUnit(name: name, unit: unit)
 	}
 	
 	private static func defineUnits () {
@@ -114,13 +125,13 @@ class Units : Printable, Equatable {
 		
 		// Define some baseline units where SI units are the baseline
 		// By convention the base units come first
-		defineUnit(.Length,		 name: "meter",		 abbreviation: "m",   isBaseUnit: true)
-		defineUnit(.Time,		 name: "second",	 abbreviation: "s",   isBaseUnit: true)
-		defineUnit(.Temperature, name: "kelvin",	 abbreviation: "K",   isBaseUnit: true)
-		defineUnit(.Mass,		 name: "gram",		 abbreviation: "g",   isBaseUnit: true)
-		defineUnit(.Current,     name: "ampere",	 abbreviation: "A",	  isBaseUnit: true)
-		defineUnit(.Luminance,	 name: "candela",	 abbreviation: "cd",  isBaseUnit: true)
-		defineUnit(.Amount,		 name: "mole",		 abbreviation: "mol", isBaseUnit: true)
+		defineBaseUnit("meter",   unit: .Length,		abbreviation: "m")
+		defineBaseUnit("second",  unit: .Time,			abbreviation: "s")
+		defineBaseUnit("kelvin",  unit: .Temperature,	abbreviation: "K")
+		defineBaseUnit("gram",	  unit: .Mass,			abbreviation: "g")
+		defineBaseUnit( "ampere", unit: .Current,		abbreviation: "A")
+		defineBaseUnit("candela", unit: .Luminance,		abbreviation: "cd")
+		defineBaseUnit("mole",	  unit:.Amount,			abbreviation: "mol")
 		
 		// Add other derived units
 		defineMetricUnitsfor("g")  // automatically add all gram-related metric scaled units
@@ -129,26 +140,26 @@ class Units : Printable, Equatable {
 		defineMetricUnitsfor("A")  // automatically add all current-related metric scaled units
 		
 		// Only need to define non-metric units
-		defineUnit(.Mass,		 name: "pound",		 abbreviation: "lb",  toBase: { $0*kgPerLb*K } )
-		defineUnit(.Length,		 name: "foot",		 abbreviation: "ft",  toBase: { inchPerFoot*cmPerInch*$0*centi } )
-		defineUnit(.Length,		 name: "inch",		 abbreviation: "in",  toBase: { cmPerInch*$0*centi } )
-		defineUnit(.Length,		 name: "mile",		 abbreviation: "mi",  toBase: { feetPerMile*inchPerFoot*cmPerInch*$0*centi } )
-		defineUnit(.Time,		 name: "hour",		 abbreviation: "hr",  toBase: { $0*secsPerHour } )
-		defineUnit(.Time,		 name: "minute",	 abbreviation: "min", toBase: { $0*secsPerMin } )
-		defineUnit(.Time,		 name: "day",		 abbreviation: "day", toBase: { $0*secsPerDay } )
-		defineUnit(.Time,		 name: "week",		 abbreviation: "wk",  toBase: { $0*secsPerDay*7 } )
-		defineUnit(.Temperature, name: "fahrenheit", abbreviation: "°F",  toBase: { ($0-degFOffset)/degFPerdegC + absoluteZero}, fromBase: { degFPerdegC*($0-absoluteZero)+degFOffset} )
-		defineUnit(.Temperature, name: "celsius",	 abbreviation: "°C",  toBase: { $0+absoluteZero}, fromBase: { $0-absoluteZero } )
+		defineUnit("pound",		 unit: .Mass,		 abbreviation: "lb",  toBase: { $0*kgPerLb*K } )
+		defineUnit( "foot",		 unit: .Length,		 abbreviation: "ft",  toBase: { inchPerFoot*cmPerInch*$0*centi } )
+		defineUnit("inch",		 unit: .Length,		 abbreviation: "in",  toBase: { cmPerInch*$0*centi } )
+		defineUnit("mile",		 unit: .Length,		 abbreviation: "mi",  toBase: { feetPerMile*inchPerFoot*cmPerInch*$0*centi } )
+		defineUnit("hour",		 unit: .Time,		 abbreviation: "hr",  toBase: { $0*secsPerHour } )
+		defineUnit("minute",	 unit: .Time,		 abbreviation: "min", toBase: { $0*secsPerMin } )
+		defineUnit("day",		 unit: .Time,		 abbreviation: "day", toBase: { $0*secsPerDay } )
+		defineUnit("week",		 unit: .Time,		 abbreviation: "wk",  toBase: { $0*secsPerDay*7 } )
+		defineUnit("fahrenheit", unit: .Temperature, abbreviation: "°F",  toBase: { ($0-degFOffset)/degFPerdegC + absoluteZero}, fromBase: { degFPerdegC*($0-absoluteZero)+degFOffset} )
+		defineUnit("celsius",	 unit: .Temperature, abbreviation: "°C",  toBase: { $0+absoluteZero}, fromBase: { $0-absoluteZero } )
 	
 		// Define some often-used aliases for the SI derived units
-		defineAliasUnit(Units("kg m m / A s s s"),	 abbreviation: "V")	// Volt
-		defineAliasUnit(Units("kg m m / A A s s s"), abbreviation: "Ω")	// Ohm
-		defineAliasUnit(Units("kg m m / s s"),		 abbreviation: "J")	// Joule
-		defineAliasUnit(Units("kg m m / s s s"),	 abbreviation: "W")	// Watt
+		defineAliasUnit("volt",  unit: Units("kg m m / A s s s").units,	  abbreviation: "V")	// Volt
+		defineAliasUnit("ohm",   unit: Units("kg m m / A A s s s").units, abbreviation: "Ω")	// Ohm
+		defineAliasUnit("joule", unit: Units("kg m m / s s").units,		  abbreviation: "J")	// Joule
+		defineAliasUnit("watt",	 unit: Units("kg m m / s s s").units,	  abbreviation: "W")	// Watt
 		
-		defineAliasUnit(Units("m m m"),				 abbreviation: "l")	// litre
-		defineAliasUnit(Units("°F"),				 abbreviation: "F") // alias for °F
-		defineAliasUnit(Units("°C"),				 abbreviation: "C") // alias for °C
+		defineAliasUnit("litre",	  unit: Units("m m m").units,		 abbreviation: "l")		// litre
+		defineAliasUnit("fahrenheit", unit: Units("°F").units,			 abbreviation: "F")		// alias for °F
+		defineAliasUnit("celcius",	  unit: Units("°C").units,			 abbreviation: "C")		// alias for °C
 	}
 	
 	private static func defineMetricUnitsfor (abbreviation: String) {
@@ -157,7 +168,7 @@ class Units : Printable, Equatable {
 			let baseType = baseUnit.unitType
 			let prefixes = ["exa", "peta", "tera", "giga", "mega", "kilo", "hecto", "deca", "deci", "centi", "milli", "micro", "nano", "pico"]
 			let abbrevs  = ["E", "P", "T", "G", "M", "k", "h", "da", "d", "c", "m", "μ", "n", "p"]
-			let scale = [1e18, 1e15, 1e12, 1e9, 1e6, 1e3, 1e2, 1e1, 1e-1, 1e-2, 1e-3, 1e-6, 1e-9, 1e-12]
+			let scale = [1e18, 1e15, 1e12, 1e9, 1e6, 1,000, 100, 10, 1e-1, 1e-2, 1e-3, 1e-6, 1e-9, 1e-12]
 			
 			for (index, prefix) in enumerate(prefixes) {
 				defineUnit(baseType, name: prefix+name, abbreviation: abbrevs[index]+abbreviation, toBase: { $0*scale[index] } )
