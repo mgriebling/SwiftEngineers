@@ -163,15 +163,19 @@ class Units : Printable, Equatable {
 	}
 	
 	private static func defineMetricUnitsfor (abbreviation: String) {
-		if let baseUnit = definitions[abbreviation] where baseUnit.isBaseUnit {
-			let name = baseUnit.name
-			let baseType = baseUnit.unitType
+		if let base = definitions[abbreviation] {
+			switch base {
+			case let .BaseUnit(name: name, baseUnit: baseType): break
+			case let .AliasUnit(name: name, unit: units): break
+			}
+//			let name = baseUnit.name
+//			let baseType = baseUnit.unitType
 			let prefixes = ["exa", "peta", "tera", "giga", "mega", "kilo", "hecto", "deca", "deci", "centi", "milli", "micro", "nano", "pico"]
 			let abbrevs  = ["E", "P", "T", "G", "M", "k", "h", "da", "d", "c", "m", "μ", "n", "p"]
 			let scale = [1e18, 1e15, 1e12, 1e9, 1e6, 1,000, 100, 10, 1e-1, 1e-2, 1e-3, 1e-6, 1e-9, 1e-12]
 			
 			for (index, prefix) in enumerate(prefixes) {
-				defineUnit(baseType, name: prefix+name, abbreviation: abbrevs[index]+abbreviation, toBase: { $0*scale[index] } )
+				defineUnit(prefix+name, baseType, abbreviation: abbrevs[index]+abbreviation, toBase: { $0*scale[index] } )
 			}
 		}
 	}
