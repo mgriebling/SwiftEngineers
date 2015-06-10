@@ -22,13 +22,13 @@ class Units : Printable, Equatable {
 		var lower = UnitBag()	// units to negative power
 		var description: String {
 			var unitString = ""
-			for unit in upper {
+			for (abbrev, power) in upper {
 				if !unitString.isEmpty { unitString += UnitType.rdot }
-				unitString += unit.0 + Units.getStringForPower(unit.1)
+				unitString += abbrev + Units.getStringForPower(power)
 			}
-			for unit in lower {
+			for (abbrev, power)  in lower {
 				if !unitString.isEmpty { unitString += UnitType.rdot  }
-				unitString += unit.0 + Units.getStringForPower(-unit.1)
+				unitString += abbrev + Units.getStringForPower(-power)
 			}
 			return unitString
 		}
@@ -66,16 +66,16 @@ class Units : Printable, Equatable {
 			return number
 		}
 		
-		func convert (x: Double, toUnits units: UnitType) -> Double {
+		func convertFromBaseUnits (x: Double) -> Double {
 			var number = x
-			for (abbrev, power) in units.upper {
+			for (abbrev, power) in upper {
 				switch Units.definitions[abbrev]! {
 					case let .NonBaseUnit(_, _, convertToUnits, _):
 						number = Units.convert(number, power: power, conversion: convertToUnits)
 					default: break
 				}
 			}
-			for (abbrev, power) in units.lower {
+			for (abbrev, power) in lower {
 				switch Units.definitions[abbrev]! {
 					case let .NonBaseUnit(_, _, convertToUnits, _):
 						number = Units.convert(number, power: -power, conversion: convertToUnits)
@@ -83,6 +83,19 @@ class Units : Printable, Equatable {
 				}
 			}
 			return number
+		}
+		
+		func isEqualTo (x: UnitType) -> Bool {
+			return upper == x.upper && lower == x.lower
+		}
+		
+		mutating func add (x: UnitType) {
+			upper.combinedWith(x.upper)
+			lower.combinedWith(x.lower)
+		}
+		
+		func inverse () -> UnitType {
+			return UnitType(upper: lower, lower: upper)
 		}
 	}
 	
@@ -181,7 +194,7 @@ class Units : Printable, Equatable {
 		defineBaseUnit("second",  unit: .Time,			abbreviation: "s")
 		defineBaseUnit("kelvin",  unit: .Temperature,	abbreviation: "K")
 		defineBaseUnit("gram",	  unit: .Mass,			abbreviation: "g")
-		defineBaseUnit( "ampere", unit: .Current,		abbreviation: "A")
+		defineBaseUnit("ampere",  unit: .Current,		abbreviation: "A")
 		defineBaseUnit("candela", unit: .Luminance,		abbreviation: "cd")
 		defineBaseUnit("mole",	  unit: .Amount,		abbreviation: "mol")
 		
@@ -228,8 +241,8 @@ class Units : Printable, Equatable {
 			let name : String
 			
 			switch base {
-				case .BaseUnit(let name, let baseType): units = Units(baseType).units
-				case .AliasUnit(let name, let units): break
+				case let .BaseUnit(lname, baseType): name = lname; units = Units(baseType).units
+				case let .AliasUnit(lname, lunits): name = lname; units = lunits
 				default: return
 			}
 			
@@ -257,12 +270,8 @@ class Units : Printable, Equatable {
 				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
 				if let unitDefinition = Units.definitions[abbreviation] {
 					switch unitDefinition {
-						case let .NonBaseUnit(_, unit, _, _):
-							units.lower.combinedWith(unit.upper)
-							units.upper.combinedWith(unit.lower)
-						case let .AliasUnit(_, unit):
-							units.lower.combinedWith(unit.upper)
-							units.upper.combinedWith(unit.lower)
+						case let .NonBaseUnit(_, unit, _, _): units.add(unit.inverse())
+						case let .AliasUnit(_, unit): units.add(unit.inverse())
 						default: break
 					}
 				}
@@ -275,13 +284,9 @@ class Units : Printable, Equatable {
 				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
 				if let unitDefinition = Units.definitions[abbreviation] {
 					switch unitDefinition {
-					case let .NonBaseUnit(_, unit, _, _):
-						units.lower.combinedWith(unit.lower)
-						units.upper.combinedWith(unit.upper)
-					case let .AliasUnit(_, unit):
-						units.lower.combinedWith(unit.lower)
-						units.upper.combinedWith(unit.upper)
-					default: break
+						case let .NonBaseUnit(_, unit, _, _): units.add(unit)
+						case let .AliasUnit(_, unit): units.add(unit)
+						default: break
 					}
 				}
 			}
@@ -296,10 +301,10 @@ class Units : Printable, Equatable {
 	//
 	init (_ unit : UnitCategory) {
 		units = UnitType()
-		for (abbrev, definition) in enumerate(Units.definitions) {
+		forloop: for (abbrev, definition) in Units.definitions {
 			switch definition {
-				case let .BaseUnit(name, baseUnit):
-					if baseUnit == unit { units.upper.add(abbrev) }
+				case let .BaseUnit(name, base):
+					if base == unit { units.upper.add(abbrev); break forloop }
 				default: break
 			}
 		}
@@ -318,10 +323,16 @@ class Units : Printable, Equatable {
 	
 	static func baseUnit (abbreviation: String) -> String {
 		if let definition = Units.definitions[abbreviation] {
-			for (abbrev, match) in enumerate(Units.definitions) {
-				switch definition {
-					case let .BaseUnit(name, baseUnit):
-						if baseUnit == unit { units.upper.add(abbrev) }
+			let baseUnit : UnitType
+			switch definition {
+				case let .NonBaseUnit(_, unit, _, _): baseUnit = unit
+				case let .AliasUnit(_, unit): baseUnit = unit
+				case let .BaseUnit(_, _): return abbreviation
+			}
+			for (abbrev, match) in Units.definitions {
+				switch match {
+					case let .NonBaseUnit(_, base, _, _):
+						if base.isEqualTo(baseUnit) { return abbrev }
 					default: break
 				}
 			}
@@ -345,48 +356,10 @@ class Units : Printable, Equatable {
 		return baseNumber
 	}
 	
-	private static func convert(number: Double, fromType: (String, Int), toType: (String, Int)) -> Double? {
-		if let convertToBase = Units.definitions[fromType.0]?.toBase {
-//			println("1\(fromType.0) = \(convertToBase(1)) \(Units.baseUnit(fromType.0))")
-			var baseNumber = Units.convert(number, power: fromType.1, conversion: convertToBase)
-			if let convertToType = Units.definitions[toType.0]?.fromBase {
-//				println("1\(toType.0) = \(convertToType(1)) \(Units.baseUnit(toType.0))")
-				return Units.convert(baseNumber, power: toType.1, conversion: convertToType)
-			}
-		}
-		return nil
-	}
-	
-	private func getMatchingUnit (unit: String, inUnits: UnitBag) -> (String, Int)? {
-		for funit in inUnits {
-			if Units.baseUnit(unit) == Units.baseUnit(funit.0) { return funit }
-		}
-		return nil
-	}
-	
 	static func convert (number: Double, fromType: Units, toType: Units) -> Double? {
 		if fromType.isCompatibleWith(toType) {
-			var x = number
-			for unit in fromType.units.upper {
-				if let toUnit = fromType.getMatchingUnit(unit.0, inUnits: toType.units.upper) {
-					if let result = Units.convert(x, fromType: unit, toType: toUnit) {
-						x = result
-					} else {
-						return nil
-					}
-				}
-			}
-			for unit in fromType.units.lower {
-				if let toUnit = fromType.getMatchingUnit(unit.0, inUnits: toType.units.lower) {
-					// Note: Unit powers are negated to give an inverse conversion
-					if let result = Units.convert(x, fromType: (unit.0, -unit.1), toType: (toUnit.0, -toUnit.1)) {
-						x = result
-					} else {
-						return nil
-					}
-				}
-			}
-			return x
+			let x = fromType.units.convertToBaseUnits(number)
+			return toType.units.convertFromBaseUnits(x)
 		}
 		return nil
 	}
@@ -396,7 +369,7 @@ class Units : Printable, Equatable {
 	}
 	
 	func isCompatibleWith (unit: Units) -> Bool {
-		return (self.baseUnit == unit.baseUnit)
+		return (self.units.baseUnit.isEqualTo(unit.units.baseUnit))
 	}
 	
 	static private func normalize (units: UnitType) -> UnitType {
@@ -407,7 +380,7 @@ class Units : Printable, Equatable {
 	
 	func inverse () -> Units {
 		// invert units by swapping upper/lower units (i.e., m/s² => s²/m)
-		return Units(units.lower, units.upper)
+		return Units(units.inverse())
 	}
 	
 	func div (x: Units) -> Units {
@@ -417,8 +390,7 @@ class Units : Printable, Equatable {
 	
 	func mul (x: Units) -> Units {
 		var result = self.units
-		result.upper = result.upper.combinedWith(x.units.upper)
-		result.lower = result.lower.combinedWith(x.units.lower)
+		result.add(x.units)
 		return Units(result)
 	}
 
@@ -426,7 +398,7 @@ class Units : Printable, Equatable {
 
 // required for UnitType Hashable protocol
 func == (lhs: Units, rhs: Units) -> Bool {
-	return lhs.units.upper == rhs.units.upper && lhs.units.lower == rhs.units.lower
+	return lhs.units.isEqualTo(rhs.units)
 }
 
 // convenience functions for units
