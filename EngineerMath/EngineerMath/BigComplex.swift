@@ -35,7 +35,10 @@ extension Character {
 	
 }
 
-class BigComplex : BigReal {
+class BigComplex : BigReal, FloatLiteralConvertible, IntegerLiteralConvertible, StringLiteralConvertible {
+	
+	typealias ExtendedGraphemeClusterLiteralType = StringLiteralType
+	typealias UnicodeScalarLiteralType = Character
 	
     var im = BigReal()
 	
@@ -48,12 +51,7 @@ class BigComplex : BigReal {
 		im = BigReal.ZERO
 		super.init(re.number)
 	}
-	
-	override init(_ re:Double) {
-		im = BigReal.ZERO
-		super.init(re)
-	}
-	
+
 	init(_ re:Double, _ im:Double) {
 		self.im = BigReal(im)
 		super.init(re)
@@ -64,12 +62,52 @@ class BigComplex : BigReal {
 		super.init(re)
 	}
 	
-	override init(_ re:Int) {
+	convenience override init(_ re: Double) {
+		self.init(floatLiteral: re)
+	}
+	
+	convenience override init(_ re: Int) {
+		self.init(integerLiteral: re)
+	}
+	
+	convenience override init(_ s: String) {
+		self.init(stringLiteral: s)
+	}
+	
+	//
+	// FloatLiteralConvertible protocol
+	//
+	required init(floatLiteral re:Double) {
 		im = BigReal.ZERO
 		super.init(re)
 	}
 	
-	override init(_ s: String) {
+	//
+	// IntegerLiteralConvertible protocol
+	//
+	required init(integerLiteral re:Int) {
+		im = BigReal.ZERO
+		super.init(re)
+	}
+	
+	//
+	// StringLiteralConvertible protocol
+	//
+	required convenience init(extendedGraphemeClusterLiteral value: ExtendedGraphemeClusterLiteralType) {
+		self.init(stringLiteral: value)
+	}
+
+	//
+	// StringLiteralConvertible protocol
+	//
+	required convenience init(unicodeScalarLiteral value: UnicodeScalarLiteralType) {
+		self.init(stringLiteral: "\(value)")
+	}
+
+	//
+	// StringLiteralConvertible protocol
+	//
+	required init(stringLiteral s: String) {
 		var vs = s.stringByReplacingOccurrencesOfString(" ", withString: "").lowercaseString  // remove all spaces & make lowercase
 		if !vs.isEmpty {
 			// break apart the string into real and imaginary pieces
@@ -132,7 +170,7 @@ class BigComplex : BigReal {
 	
 	override var isZero: Bool { return re.number.zero && im.number.zero }
 	
-    convenience override init() { self.init(BigReal.ZERO, BigReal.ZERO) }
+    convenience override init() { self.init(0) }
 	
     init(abs:BigReal, arg:BigReal) {
         im = abs * arg.sin()
@@ -218,12 +256,12 @@ class BigComplex : BigReal {
     /// .hashvalue -- conforms to Hashable
     override var hashValue:Int { // take most significant halves and join
         let bits = sizeof(Int) * 4
-        let mask = bits == 16 ? 0xffff : 0xffffFFFF
+        let mask = bits == 16 ? 0xFFFF : 0xFFFF_FFFF
         return (re.hashValue & ~mask) | (im.hashValue >> bits)
     }
 }
 
-let i = BigComplex.i
+let i = BigComplex.i	// perhaps this is dangerous but very convenient -- Mike
 
 // operator definitions
 infix operator ** { associativity right precedence 170 }
@@ -247,10 +285,10 @@ prefix func + (z:BigComplex) -> BigComplex {
     return z
 }
 prefix func + (z:Double) -> BigComplex {
-	return BigComplex(z)
+	return BigComplex(floatLiteral: z)
 }
 prefix func + (z:Int) -> BigComplex {
-	return BigComplex(z)
+	return BigComplex(integerLiteral: z)
 }
 func + (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs.re + rhs.re, lhs.im + rhs.im)
@@ -262,16 +300,16 @@ func + (lhs:BigReal, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs) + rhs
 }
 func + (lhs:BigComplex, rhs:Double) -> BigComplex {
-	return lhs + BigComplex(rhs)
+	return lhs + BigComplex(floatLiteral: rhs)
 }
 func + (lhs:Double, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) + rhs
+	return BigComplex(floatLiteral: lhs) + rhs
 }
 func + (lhs:BigComplex, rhs:Int) -> BigComplex {
-	return lhs + BigComplex(rhs)
+	return lhs + BigComplex(integerLiteral: rhs)
 }
 func + (lhs:Int, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) + rhs
+	return BigComplex(integerLiteral: lhs) + rhs
 }
 func += (inout lhs:BigComplex, rhs:BigComplex) {
 	lhs = BigComplex(lhs.re+rhs.re, lhs.im+rhs.im)
@@ -285,7 +323,7 @@ prefix func - (z:BigComplex) -> BigComplex {
     return BigComplex(-z.re, -z.im)
 }
 prefix func - (z:Double) -> BigComplex {
-	return -BigComplex(z)
+	return -BigComplex(floatLiteral: z)
 }
 prefix func - (z:Int) -> BigComplex {
 	return BigComplex(-z)
@@ -300,16 +338,16 @@ func - (lhs:BigReal, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs, BigReal(0)) - rhs
 }
 func - (lhs:BigComplex, rhs:Double) -> BigComplex {
-	return lhs - BigComplex(rhs)
+	return lhs - BigComplex(floatLiteral: rhs)
 }
 func - (lhs:Double, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) - rhs
+	return BigComplex(floatLiteral: lhs) - rhs
 }
 func - (lhs:BigComplex, rhs:Int) -> BigComplex {
-	return lhs - BigComplex(rhs)
+	return lhs - BigComplex(integerLiteral: rhs)
 }
 func - (lhs:Int, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) - rhs
+	return BigComplex(integerLiteral: lhs) - rhs
 }
 func -= (inout lhs:BigComplex, rhs:BigComplex) {
 	lhs = BigComplex(lhs.re - rhs.re, lhs.im - rhs.im)
@@ -332,16 +370,16 @@ func * (lhs:BigReal, rhs:BigComplex) -> BigComplex {
     return BigComplex(lhs * rhs.re, lhs * rhs.im)
 }
 func * (lhs:BigComplex, rhs:Double) -> BigComplex {
-	return lhs * BigComplex(rhs)
+	return lhs * BigComplex(floatLiteral: rhs)
 }
 func * (lhs:Double, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) * rhs
+	return BigComplex(floatLiteral: lhs) * rhs
 }
 func * (lhs:BigComplex, rhs:Int) -> BigComplex {
-	return lhs * BigComplex(rhs)
+	return lhs * BigComplex(integerLiteral: rhs)
 }
 func * (lhs:Int, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) * rhs
+	return BigComplex(integerLiteral: lhs) * rhs
 }
 func *= (inout lhs:BigComplex, rhs:BigComplex) {
     lhs = lhs * rhs
@@ -385,16 +423,16 @@ func /= (inout lhs:BigComplex, rhs:BigReal) {
     lhs = lhs / rhs
 }
 func / (lhs:BigComplex, rhs:Double) -> BigComplex {
-	return lhs / BigComplex(rhs)
+	return lhs / BigComplex(floatLiteral: rhs)
 }
 func / (lhs:Double, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) / rhs
+	return BigComplex(floatLiteral: lhs) / rhs
 }
 func / (lhs:BigComplex, rhs:Int) -> BigComplex {
-	return lhs / BigComplex(rhs)
+	return lhs / BigComplex(integerLiteral: rhs)
 }
 func / (lhs:Int, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) / rhs
+	return BigComplex(integerLiteral: lhs) / rhs
 }
 
 // exp(z)
@@ -443,19 +481,19 @@ func ** (lhs:BigComplex, rhs:BigReal) -> BigComplex {
     return pow(lhs, rhs)
 }
 func ** (lhs:BigComplex, rhs:Double) -> BigComplex {
-	return lhs ** BigComplex(rhs)
+	return lhs ** BigComplex(floatLiteral: rhs)
 }
 func ** (lhs:Double, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) ** rhs
+	return BigComplex(floatLiteral: lhs) ** rhs
 }
 func ** (lhs:BigComplex, rhs:Int) -> BigComplex {
-	return lhs ** BigComplex(rhs)
+	return lhs ** BigComplex(integerLiteral: rhs)
 }
 func ** (lhs:Int, rhs:BigComplex) -> BigComplex {
-	return BigComplex(lhs) ** rhs
+	return BigComplex(integerLiteral: lhs) ** rhs
 }
 func ** (lhs:Int, rhs:Int) -> BigComplex {
-	return BigComplex(lhs) ** BigComplex(rhs)
+	return BigComplex(integerLiteral: lhs) ** BigComplex(integerLiteral: rhs)
 }
 func **= (inout lhs:BigReal, rhs:BigReal) {
     lhs = lhs.pow(rhs)

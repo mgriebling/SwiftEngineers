@@ -22,10 +22,10 @@ class ViewController: NSViewController {
 		// BigCFloat
 ////		var x : BigReal = 1
 ////		var x = BigReal(1)
-//		var x : BigComplex = 1 + 0.i
-//		var y : BigComplex = 2.3456-2.5*i
-//		var z = BigComplex("+5 - i23")
-//		
+		var x : BigComplex = 1
+		var y : BigComplex = 2.3456-2.5*i
+		var z : BigComplex = "+5 - i23"
+		
 ////		println("atan \(y)/\(x) = \(x.atan2(y))")
 //		println("x = \(x), y = \(y)")
 //		println("z = \(z); 1/z = \(1/z)")
