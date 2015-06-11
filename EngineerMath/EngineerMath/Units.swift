@@ -10,16 +10,23 @@ import Foundation
 
 class Units : Printable, Equatable {
 	
+	//
+	// 
+	//
 	enum UnitCategory {
 		case Time, Length, Mass, Temperature, Current, Luminance, Amount
 	}
 	
 	typealias UnitBag = Bag<String>
 	
+	//
+	// Units are primarily defined within this type
+	//
 	struct UnitType {
-		private static let rdot = "∙"
 		var upper = UnitBag()	// units to positive power
 		var lower = UnitBag()	// units to negative power
+		
+		private static let rdot = "∙"
 		var description: String {
 			var unitString = ""
 			for (abbrev, power) in upper {
@@ -180,12 +187,12 @@ class Units : Printable, Equatable {
 		let minsPerHour  = secsPerMin
 		let secsPerHour  = secsPerMin * minsPerHour
 		let secsPerDay	 = secsPerHour * 24
-		let degFOffset   = 32.0
+		let FOff		 = 32.0
 		let centi		 = 1/100.0
 		let K			 = 1000.0
 		let milli		 = 1/1000.0
 		let degFPerdegC  = 9.0/5.0
-		let absoluteZero = 273.16
+		let zeroK		 = 273.16
 		let kgPerLb		 = 0.4535924
 		
 		// Define some baseline units where SI units are the baseline
@@ -217,8 +224,8 @@ class Units : Printable, Equatable {
 		defineUnit("minute",	 unit: T,	 abbreviation: "min", toBase: { $0*secsPerMin } )
 		defineUnit("day",		 unit: T,	 abbreviation: "day", toBase: { $0*secsPerDay } )
 		defineUnit("week",		 unit: T,	 abbreviation: "wk",  toBase: { $0*secsPerDay*7 } )
-		defineUnit("fahrenheit", unit: Temp, abbreviation: "°F",  toBase: { ($0-degFOffset)/degFPerdegC + absoluteZero}, fromBase: { degFPerdegC*($0-absoluteZero)+degFOffset} )
-		defineUnit("celsius",	 unit: Temp, abbreviation: "°C",  toBase: { $0+absoluteZero}, fromBase: { $0-absoluteZero } )
+		defineUnit("fahrenheit", unit: Temp, abbreviation: "°F",  toBase: { ($0-FOff)/degFPerdegC+zeroK}, fromBase: { degFPerdegC*($0-zeroK)+FOff} )
+		defineUnit("celsius",	 unit: Temp, abbreviation: "°C",  toBase: { $0+zeroK}, fromBase: { $0-zeroK } )
 	
 		// Define some often-used aliases for the SI derived units
 		defineAliasUnit("volt",  unit: Units("kg m m / A s s s").units,	  abbreviation: "V")	// Volt
@@ -272,7 +279,7 @@ class Units : Printable, Equatable {
 					switch unitDefinition {
 						case let .NonBaseUnit(_, unit, _, _): units.add(unit.inverse())
 						case let .AliasUnit(_, unit): units.add(unit.inverse())
-						default: break
+						case let .BaseUnit(_, baseType): units.lower.add(abbreviation)
 					}
 				}
 			}
@@ -286,7 +293,7 @@ class Units : Printable, Equatable {
 					switch unitDefinition {
 						case let .NonBaseUnit(_, unit, _, _): units.add(unit)
 						case let .AliasUnit(_, unit): units.add(unit)
-						default: break
+						case let .BaseUnit(_, baseType): units.upper.add(abbreviation)
 					}
 				}
 			}

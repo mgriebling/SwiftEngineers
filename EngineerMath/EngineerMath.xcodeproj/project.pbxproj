@@ -101,7 +101,6 @@
 				2F53A75D1B0FA38F007C273A /* BigReal.swift */,
 				2F53A7591B0FA366007C273A /* BigComplex.swift */,
 				47D0F3221B205435002C1213 /* Units.swift */,
-				2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */,
 			);
 			path = EngineerMath;
 			sourceTree = "<group>";
@@ -109,6 +108,7 @@
 		2F53A72F1B0F79B4007C273A /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */,
 				2FA1D7501B1E2B7B00778806 /* BigFloat.h */,
 				2FA1D7511B1E2B7B00778806 /* BigFloat.m */,
 				2F53A7511B0F7AC1007C273A /* EngineerMath-Bridging-Header.h */,
