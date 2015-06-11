@@ -22,9 +22,9 @@ class ViewController: NSViewController {
 		// BigCFloat
 ////		var x : BigReal = 1
 ////		var x = BigReal(1)
-		var x : BigComplex = 1
-		var y : BigComplex = 2.3456-2.5*i
-		var z : BigComplex = "+5 - i23"
+//		var x : BigComplex = 1
+//		var y : BigComplex = 2.3456-2.5*i
+//		var z : BigComplex = "+5 - i23"
 		
 ////		println("atan \(y)/\(x) = \(x.atan2(y))")
 //		println("x = \(x), y = \(y)")
@@ -74,23 +74,23 @@ class ViewController: NSViewController {
 		let Amp = Units("A")
 		let volt = Units("V")
 		var result = Units.convert(10, fromType: hour, toType: seconds)
-		println("10 \(hour) = \(result!) \(seconds)")
+		print("10 \(hour) = \(result!) \(seconds)")
 		result = Units.convert(10, fromType:mile, toType: km)
-		println("10 \(mile) = \(result!) \(km)")
+		print("10 \(mile) = \(result!) \(km)")
 		result = Units.convert(60, fromType:miphr, toType: kmphr)
-		println("60 \(miphr) = \(result!) \(kmphr)")
+		print("60 \(miphr) = \(result!) \(kmphr)")
 		result = Units.convert(5, fromType:mps, toType: kmphr)
-		println("5 \(mps) = \(result!) \(kmphr)")
+		print("5 \(mps) = \(result!) \(kmphr)")
 		result = Units.convert(5, fromType:ftps, toType: kmphr)
-		println("5 \(ftps) = \(result!) \(kmphr)")
+		print("5 \(ftps) = \(result!) \(kmphr)")
 		result = Units.convert(25, fromType:degreeC, toType: kelvin)
-		println("25 \(degreeC) = \(result!) \(kelvin)")
+		print("25 \(degreeC) = \(result!) \(kelvin)")
 		result = Units.convert(25, fromType:degreeC, toType: degreeF)
-		println("25 \(degreeC) = \(result!) \(degreeF)")
+		print("25 \(degreeC) = \(result!) \(degreeF)")
 		result = Units.convert(200, fromType:lb, toType: kg)
-		println("200 \(lb) = \(result!) \(kg)")
-		println("200 \(mA) = \(Units.convert(200, fromType:mA, toType: Amp)!) \(Amp)")
-		println("Volt units = \(volt)")
+		print("200 \(lb) = \(result!) \(kg)")
+		print("200 \(mA) = \(Units.convert(200, fromType:mA, toType: Amp)!) \(Amp)")
+		print("Volt units = \(volt)")
 	}
 
 	override var representedObject: AnyObject? {

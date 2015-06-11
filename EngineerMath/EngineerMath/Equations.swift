@@ -61,7 +61,7 @@ class Equations {
 		}
 		
 		// compute the curve-fitting coefficients by solving these equations
-		var m = Matrix(matrix, numberOfRows: size)
+		let m = Matrix(matrix, numberOfRows: size)
 		if let result = solveUsingCramersRule(m, y: Vector(yData)) { // Matrix.solveLinear1(matrix, n: yData) {
 			return result
 		}
@@ -70,18 +70,18 @@ class Equations {
 	
 	static func solveUsingGaussianElimination (a: Matrix, y: Vector) -> Vector? {
 		let n = y.count-1
-		var b = a
-		var w = y
-		var coeff = Vector(size: y.count)
+		let b = a
+		let w = y
+		let coeff = Vector(size: y.count)
 		
 		for i in 0...n-1 {
 			// find largest pivot point
 			var big = abs(b[i,i])
 			var l = i
-			var i1 = i+1
+			let i1 = i+1
 			
 			for j in i1...n {
-				var ab = abs(b[i,j])
+				let ab = abs(b[i,j])
 				if ab > big { big = ab; l = j }
 			}
 			
@@ -113,7 +113,7 @@ class Equations {
 		coeff[n] = w[n] / b[n,n]
 		var i = n - 1
 		
-		do {
+		repeat {
 			var sum = 0.0
 			for j in i+1...n {
 				sum += b[j,i] * coeff[j]

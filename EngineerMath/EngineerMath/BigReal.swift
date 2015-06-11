@@ -18,7 +18,7 @@ extension String {
 	}
 }
 
-public class BigReal : Printable, Comparable, Equatable, Hashable {
+public class BigReal : CustomStringConvertible, Comparable, Equatable, Hashable {
 	
 	internal var number = BigFloat()	// signed extended floating-point number
 	internal var re : BigReal {
@@ -174,7 +174,7 @@ public class BigReal : Printable, Comparable, Equatable, Hashable {
 	}
 	
 	internal func icopy() -> BigFloat {
-		var x = BigFloat()
+		let x = BigFloat()
 		x.assign(number)
 		return x
 	}
@@ -184,7 +184,7 @@ public class BigReal : Printable, Comparable, Equatable, Hashable {
 	}
 	
 	func negate() -> BigReal {
-		var x = BigFloat()
+		let x = BigFloat()
 		x.assign(number)
 		x.negate()
 		return BigReal(x)

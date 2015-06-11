@@ -126,13 +126,13 @@ class BigComplex : BigReal, FloatLiteralConvertible, IntegerLiteralConvertible, 
 				if let expRange = vs.rangeOfString(exponent) where expRange.startIndex == range.startIndex.predecessor() {
 					// search beyond the exponent
 					range = range.startIndex.successor()...vs.endIndex
-					if let range = vs.rangeOfCharacterFromSet(signChars, options: .allZeros, range: range) {
+					if let range = vs.rangeOfCharacterFromSet(signChars, options: [], range: range) {
 						// This is likely the start of the second number
 						number += vs.substringToIndex(range.startIndex)
 						inumber = vs.substringFromIndex(range.startIndex)
 					} else {
 						// Only one number exists
-						if let irange = vs.rangeOfString(imaginary) {
+						if let _ = vs.rangeOfString(imaginary) {
 							inumber = number + vs 	// transfer the sign
 							number = ""				// clear the real part
 						} else {
@@ -146,7 +146,7 @@ class BigComplex : BigReal, FloatLiteralConvertible, IntegerLiteralConvertible, 
 				}
 			} else {
 				// only one number exists
-				if let irange = vs.rangeOfString(imaginary) {
+				if let _ = vs.rangeOfString(imaginary) {
 					inumber = number + vs 	// transfer the sign
 					number = ""				// clear the real part
 				} else {
@@ -452,7 +452,7 @@ func log(z:BigComplex) -> BigComplex { return ln(z) / BigReal.LN10 }
 func log(r:BigReal) -> BigComplex { return BigComplex(r.log()) }
 
 // pow(b, x)
-func pow(lhs:BigComplex, rhs:BigComplex) -> BigComplex {
+func pow(lhs:BigComplex, _ rhs:BigComplex) -> BigComplex {
     if lhs.isZero { return BigComplex(BigReal.ONE) } // 0 ** 0 == 1
 	if rhs.im.isZero && rhs.re.isInteger() {
 		return lhs.ipower(rhs.re.integer)
@@ -460,10 +460,10 @@ func pow(lhs:BigComplex, rhs:BigComplex) -> BigComplex {
     let z = ln(lhs) * rhs
     return exp(z)
 }
-func pow(lhs:BigComplex, rhs:BigReal) -> BigComplex {
+func pow(lhs:BigComplex, _ rhs:BigReal) -> BigComplex {
     return pow(lhs, BigComplex(rhs, BigReal(0)))
 }
-func pow(lhs:BigReal, rhs:BigComplex) -> BigComplex {
+func pow(lhs:BigReal, _ rhs:BigComplex) -> BigComplex {
     return pow(BigComplex(lhs, BigReal(0)), rhs)
 }
 

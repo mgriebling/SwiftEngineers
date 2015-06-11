@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Units : Printable, Equatable {
+class Units : CustomStringConvertible, Equatable {
 	
 	//
 	// 
@@ -97,8 +97,8 @@ class Units : Printable, Equatable {
 		}
 		
 		mutating func add (x: UnitType) {
-			upper.combinedWith(x.upper)
-			lower.combinedWith(x.lower)
+			upper = upper.combinedWith(x.upper)
+			lower = lower.combinedWith(x.lower)
 		}
 		
 		func inverse () -> UnitType {
@@ -140,7 +140,8 @@ class Units : Printable, Equatable {
 		while rpower > 0 {
 			let digit = rpower % 10; rpower /= 10
 			let raisedDigit = powers[advance(powers.startIndex, digit)]
-			result = [raisedDigit] + result
+			result.insert(raisedDigit, atIndex: result.startIndex)
+//			result = [raisedDigit] + result
 		}
 		return sign + result
 	}
@@ -190,7 +191,7 @@ class Units : Printable, Equatable {
 		let FOff		 = 32.0
 		let centi		 = 1/100.0
 		let K			 = 1000.0
-		let milli		 = 1/1000.0
+//		let milli		 = 1/1000.0
 		let degFPerdegC  = 9.0/5.0
 		let zeroK		 = 273.16
 		let kgPerLb		 = 0.4535924
@@ -253,7 +254,7 @@ class Units : Printable, Equatable {
 				default: return
 			}
 			
-			for (index, prefix) in enumerate(prefixes) {
+			for (index, prefix) in prefixes.enumerate() {
 				defineUnit(prefix+name, unit: units, abbreviation: abbrevs[index]+abbreviation, toBase: { $0*scale[index] } )
 			}
 		}
@@ -275,12 +276,8 @@ class Units : Printable, Equatable {
 		if let lowerArrays = unitArrays.last?.componentsSeparatedByString(" ") where unitArrays.count > 1 {
 			for unit in lowerArrays {
 				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
-				if let unitDefinition = Units.definitions[abbreviation] {
-					switch unitDefinition {
-						case let .NonBaseUnit(_, unit, _, _): units.add(unit.inverse())
-						case let .AliasUnit(_, unit): units.add(unit.inverse())
-						case let .BaseUnit(_, baseType): units.lower.add(abbreviation)
-					}
+				if abbreviationIsDefined(abbreviation) {
+					units.lower.add(abbreviation)
 				}
 			}
 		}
@@ -289,12 +286,8 @@ class Units : Printable, Equatable {
 		if let upperArrays = unitArrays.first?.componentsSeparatedByString(" ") {
 			for unit in upperArrays {
 				let abbreviation = unit.stringByReplacingOccurrencesOfString(" ", withString: "")
-				if let unitDefinition = Units.definitions[abbreviation] {
-					switch unitDefinition {
-						case let .NonBaseUnit(_, unit, _, _): units.add(unit)
-						case let .AliasUnit(_, unit): units.add(unit)
-						case let .BaseUnit(_, baseType): units.upper.add(abbreviation)
-					}
+				if abbreviationIsDefined(abbreviation) {
+					units.upper.add(abbreviation)
 				}
 			}
 		}
@@ -310,7 +303,7 @@ class Units : Printable, Equatable {
 		units = UnitType()
 		forloop: for (abbrev, definition) in Units.definitions {
 			switch definition {
-				case let .BaseUnit(name, base):
+				case let .BaseUnit(_, base):
 					if base == unit { units.upper.add(abbrev); break forloop }
 				default: break
 			}
@@ -334,7 +327,7 @@ class Units : Printable, Equatable {
 			switch definition {
 				case let .NonBaseUnit(_, unit, _, _): baseUnit = unit
 				case let .AliasUnit(_, unit): baseUnit = unit
-				case let .BaseUnit(_, _): return abbreviation
+				case  .BaseUnit(_, _): return abbreviation
 			}
 			for (abbrev, match) in Units.definitions {
 				switch match {
