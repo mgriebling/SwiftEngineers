@@ -83,16 +83,16 @@ class Units : CustomStringConvertible, Equatable {
 		}
 		
 		func convertToBaseUnits (x: Double) -> Double {
-			let base = baseUnit
+//			let base = baseUnit
 			var number = x
-			for (abbrev, power) in base.upper {
+			for (abbrev, power) in upper {
 				switch Units.definitions[abbrev]! {
 					case let .NonBaseUnit(_, _, _, convertToBase):
 						number = Units.convert(number, power: power, conversion: convertToBase)
 					default: break
 				}
 			}
-			for (abbrev, power) in base.lower {
+			for (abbrev, power) in lower {
 				switch Units.definitions[abbrev]! {
 					case let .NonBaseUnit(_, _, _, convertToBase):
 						number = Units.convert(number, power: -power, conversion: convertToBase)
@@ -161,15 +161,13 @@ class Units : CustomStringConvertible, Equatable {
 	private static let powers = "⁰¹²³⁴⁵⁶⁷⁸⁹"
 	private static func getStringForPower (power: Int) -> String {
 		var result = ""
-		var sign = ""
-		var rpower = power
-		if power < 0 { sign = "⁻"; rpower = abs(power) }
+		let sign = power < 0 ? "⁻" : ""
+		var rpower = abs(power)
 		if rpower <= 1 && power >= 0 { return "" }	// handle case of x^1 = x and x^0 = 1
 		while rpower > 0 {
 			let digit = rpower % 10; rpower /= 10
 			let raisedDigit = powers[advance(powers.startIndex, digit)]
 			result.insert(raisedDigit, atIndex: result.startIndex)
-//			result = [raisedDigit] + result
 		}
 		return sign + result
 	}
@@ -220,7 +218,7 @@ class Units : CustomStringConvertible, Equatable {
 		let centi		 = 1/100.0
 		let K			 = 1000.0
 		let degFPerdegC  = 9.0/5.0
-		let zeroK		 = 273.16
+		let zeroK		 = 273.15
 		let kgPerLb		 = 0.4535924
 		
 		// Define some baseline units where SI units are the baseline
@@ -257,14 +255,24 @@ class Units : CustomStringConvertible, Equatable {
 		defineUnit("celsius",	 base: TK, abbreviation: "°C",  toBase: { $0+zeroK}, fromBase: { $0-zeroK } )
 	
 		// Define some often-used aliases for the SI derived units
-		defineAliasUnit("volt",  unit: UnitType("kg m m / A s s s"),   abbreviation: "V")	// Volt
-		defineAliasUnit("ohm",   unit: UnitType("kg m m / A A s s s"), abbreviation: "Ω")	// Ohm
-		defineAliasUnit("joule", unit: UnitType("kg m m / s s"),	   abbreviation: "J")	// Joule
-		defineAliasUnit("watt",	 unit: UnitType("kg m m / s s s"),	   abbreviation: "W")	// Watt
+		let V = "V"
+		let ohm = "Ω"
+		let J = "J"
+		let W = "W"
+		let l = "l"
+		defineAliasUnit("volt",		  unit: UnitType("kg m m / A s s s"),   abbreviation: V)	// Volt
+		defineAliasUnit("ohm",		  unit: UnitType("kg m m / A A s s s"), abbreviation: ohm)	// Ohm
+		defineAliasUnit("joule",	  unit: UnitType("kg m m / s s"),		abbreviation: J)	// Joule
+		defineAliasUnit("watt",		  unit: UnitType("kg m m / s s s"),		abbreviation: W)	// Watt
+		defineAliasUnit("litre",	  unit: UnitType("m m m"),				abbreviation: l)	// litre
+		defineAliasUnit("fahrenheit", unit: UnitType("°F"),					abbreviation: "F")	// alias for °F
+		defineAliasUnit("celsius",	  unit: UnitType("°C"),					abbreviation: "C")	// alias for °C
 		
-		defineAliasUnit("litre",	  unit: UnitType("m m m"), abbreviation: "l")		// litre
-		defineAliasUnit("fahrenheit", unit: UnitType("°F"),	   abbreviation: "F")		// alias for °F
-		defineAliasUnit("celsius",	  unit: UnitType("°C"),	   abbreviation: "C")		// alias for °C
+		defineMetricUnitsfor(V)
+		defineMetricUnitsfor(ohm)
+		defineMetricUnitsfor(J)
+		defineMetricUnitsfor(W)
+		defineMetricUnitsfor(l)
 	}
 	
 	private static func defineMetricUnitsfor (abbreviation: String) {
@@ -272,7 +280,7 @@ class Units : CustomStringConvertible, Equatable {
 			
 			let prefixes = ["exa", "peta", "tera", "giga", "mega", "kilo", "hecto", "deca", "deci", "centi", "milli", "micro", "nano", "pico"]
 			let abbrevs  = ["E", "P", "T", "G", "M", "k", "h", "da", "d", "c", "m", "μ", "n", "p"]
-			let scale = [1e18, 1e15, 1e12, 1e9, 1e6, 1,000, 100, 10, 1e-1, 1e-2, 1e-3, 1e-6, 1e-9, 1e-12]
+			let scale = [1e18, 1e15, 1e12, 1e9, 1e6, 1000, 100, 10, 1e-1, 1e-2, 1e-3, 1e-6, 1e-9, 1e-12]
 			let name : String
 			
 			switch base {

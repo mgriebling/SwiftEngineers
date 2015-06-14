@@ -73,6 +73,7 @@ class ViewController: NSViewController {
 		let mA = Units("mA")
 		let Amp = Units("A")
 		let volt = Units("V")
+		let mV = Units("mV")
 		var result = Units.convert(10, fromType: hour, toType: seconds)
 		print("10 \(hour) = \(result!) \(seconds)")
 		result = Units.convert(10, fromType:mile, toType: km)
@@ -90,7 +91,8 @@ class ViewController: NSViewController {
 		result = Units.convert(200, fromType:lb, toType: kg)
 		print("200 \(lb) = \(result!) \(kg)")
 		print("200 \(mA) = \(Units.convert(200, fromType:mA, toType: Amp)!) \(Amp)")
-		print("Volt units = \(volt)")
+		print("200 \(mV) = \(Units.convert(200, fromType:mV, toType: volt)!) \(volt)")
+		print("V/A = \(volt/Amp)")
 	}
 
 	override var representedObject: AnyObject? {
