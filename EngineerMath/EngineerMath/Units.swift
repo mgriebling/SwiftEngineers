@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Units : CustomStringConvertible, Equatable {
+class Units : Printable, Equatable {
 
 	typealias UnitBag = Bag<String>
 	
@@ -79,11 +79,21 @@ class Units : CustomStringConvertible, Equatable {
 				let baseAbbreviation = Units.baseUnit(abbrev)
 				if !baseAbbreviation.isEmpty { base.lower.add(baseAbbreviation) }
 			}
+			
+			// find if the base unit can be converted to a derived unit (e.g., m/s -> mps)
+//			for unit in Units.definitions {
+//				switch unit {
+//				case let .AliasUnit(_, baseItem):
+//					if base.isEqualTo(baseItem) {
+//						base = UnitType(u)
+//					}
+//				default: break
+//				}
+//			}
 			return base
 		}
 		
 		func convertToBaseUnits (x: Double) -> Double {
-//			let base = baseUnit
 			var number = x
 			for (abbrev, power) in upper {
 				switch Units.definitions[abbrev]! {
@@ -299,7 +309,7 @@ class Units : CustomStringConvertible, Equatable {
 				default: return  // abort - not a base or alias unit
 			}
 			
-			for (index, prefix) in prefixes.enumerate() {
+			for (index, prefix) in enumerate(prefixes) {
 				defineUnit(prefix+name, base:abbreviation, abbreviation: abbrevs[index]+abbreviation, toBase: { $0*scale[index] } )
 			}
 		}
@@ -330,7 +340,7 @@ class Units : CustomStringConvertible, Equatable {
 	static func baseUnit (abbreviation: String) -> String {
 		if let definition = Units.definitions[abbreviation] {
 			switch definition {
-				case let .NonBaseUnit(_, baseUnit, _, _): return baseUnit
+			case let .NonBaseUnit(_, baseUnit, _, _): return baseUnit
 				case .AliasUnit(_, _): return abbreviation
 				case .BaseUnit(_): return abbreviation
 			}

@@ -18,7 +18,7 @@ extension String {
 	}
 }
 
-public class BigReal : CustomStringConvertible, Comparable, Equatable, Hashable {
+public class BigReal : Printable, Comparable, Equatable, Hashable {
 	
 	internal var number = BigFloat()	// signed extended floating-point number
 	internal var re : BigReal {

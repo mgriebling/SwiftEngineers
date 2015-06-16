@@ -113,7 +113,7 @@ class Equations {
 		coeff[n] = w[n] / b[n,n]
 		var i = n - 1
 		
-		repeat {
+		do {
 			var sum = 0.0
 			for j in i+1...n {
 				sum += b[j,i] * coeff[j]

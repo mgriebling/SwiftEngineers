@@ -96,7 +96,7 @@ class ViewController: NSViewController {
 		print("200 \(mV) = \(Units.convert(200, fromType:mV, toType: volt)!) \(volt)")
 		print("V/A = \(volt/Amp)")
 		print("1 \(lightYear) = \(Units.convert(1, fromType:lightYear, toType: km)!) \(km)")
-//		print("1 \(c) = \(Units.convert(1, fromType:c, toType: kmphr)!) \(kmphr)")
+		print("1 \(c) = \(Units.convert(1, fromType:c, toType: kmphr)!) \(kmphr)")
 	}
 
 	override var representedObject: AnyObject? {
