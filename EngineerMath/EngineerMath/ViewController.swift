@@ -74,6 +74,8 @@ class ViewController: NSViewController {
 		let Amp = Units("A")
 		let volt = Units("V")
 		let mV = Units("mV")
+		let lightYear = Units("ly")
+		let c = Units("c")
 		var result = Units.convert(10, fromType: hour, toType: seconds)
 		print("10 \(hour) = \(result!) \(seconds)")
 		result = Units.convert(10, fromType:mile, toType: km)
@@ -93,6 +95,8 @@ class ViewController: NSViewController {
 		print("200 \(mA) = \(Units.convert(200, fromType:mA, toType: Amp)!) \(Amp)")
 		print("200 \(mV) = \(Units.convert(200, fromType:mV, toType: volt)!) \(volt)")
 		print("V/A = \(volt/Amp)")
+		print("1 \(lightYear) = \(Units.convert(1, fromType:lightYear, toType: km)!) \(km)")
+//		print("1 \(c) = \(Units.convert(1, fromType:c, toType: kmphr)!) \(kmphr)")
 	}
 
 	override var representedObject: AnyObject? {

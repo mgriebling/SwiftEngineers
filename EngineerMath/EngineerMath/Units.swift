@@ -214,12 +214,15 @@ class Units : CustomStringConvertible, Equatable {
 		let minsPerHour  = secsPerMin
 		let secsPerHour  = secsPerMin * minsPerHour
 		let secsPerDay	 = secsPerHour * 24
+		let secsPerYear  = secsPerDay * 365.25		// Julian year (exact)
 		let FOff		 = 32.0
 		let centi		 = 1/100.0
 		let K			 = 1000.0
 		let degFPerdegC  = 9.0/5.0
 		let zeroK		 = 273.15
 		let kgPerLb		 = 0.4535924
+		let cPermps		 = 299_792_458.0			// m / s (exact)
+		let light_year	 = secsPerYear * cPermps	// meters (exact)
 		
 		// Define some baseline units where SI units are the baseline
 		// By convention the base units come first
@@ -243,16 +246,19 @@ class Units : CustomStringConvertible, Equatable {
 		defineMetricUnitsfor(A)  // automatically add all current-related metric scaled units
 		
 		// Only need to define non-metric units
-		defineUnit("pound",		 base: M,  abbreviation: "lb",  toBase: { $0*kgPerLb*K } )
-		defineUnit("foot",		 base: L,  abbreviation: "ft",  toBase: { inchPerFoot*cmPerInch*$0*centi } )
-		defineUnit("inch",		 base: L,  abbreviation: "in",  toBase: { cmPerInch*$0*centi } )
-		defineUnit("mile",		 base: L,  abbreviation: "mi",  toBase: { feetPerMile*inchPerFoot*cmPerInch*$0*centi } )
-		defineUnit("hour",		 base: T,  abbreviation: "hr",  toBase: { $0*secsPerHour } )
-		defineUnit("minute",	 base: T,  abbreviation: "min", toBase: { $0*secsPerMin } )
-		defineUnit("day",		 base: T,  abbreviation: "day", toBase: { $0*secsPerDay } )
-		defineUnit("week",		 base: T,  abbreviation: "wk",  toBase: { $0*secsPerDay*7 } )
-		defineUnit("fahrenheit", base: TK, abbreviation: "°F",  toBase: { ($0-FOff)/degFPerdegC+zeroK}, fromBase: { degFPerdegC*($0-zeroK)+FOff} )
-		defineUnit("celsius",	 base: TK, abbreviation: "°C",  toBase: { $0+zeroK}, fromBase: { $0-zeroK } )
+		defineUnit("pound",		  base: M,     abbreviation: "lb",  toBase: { $0*kgPerLb*K } )
+		defineUnit("foot",		  base: L,     abbreviation: "ft",  toBase: { inchPerFoot*cmPerInch*$0*centi } )
+		defineUnit("inch",		  base: L,     abbreviation: "in",  toBase: { cmPerInch*$0*centi } )
+		defineUnit("mile",		  base: L,     abbreviation: "mi",  toBase: { feetPerMile*inchPerFoot*cmPerInch*$0*centi } )
+		defineUnit("hour",		  base: T,     abbreviation: "hr",  toBase: { $0*secsPerHour } )
+		defineUnit("minute",	  base: T,     abbreviation: "min", toBase: { $0*secsPerMin } )
+		defineUnit("day",		  base: T,     abbreviation: "day", toBase: { $0*secsPerDay } )
+		defineUnit("week",		  base: T,     abbreviation: "wk",  toBase: { $0*secsPerDay*7 } )
+		defineUnit("year",		  base: T,     abbreviation: "y",   toBase: { $0*secsPerYear } )
+		defineUnit("fahrenheit",  base: TK,    abbreviation: "°F",  toBase: { ($0-FOff)/degFPerdegC+zeroK}, fromBase: { degFPerdegC*($0-zeroK)+FOff} )
+		defineUnit("celsius",	  base: TK,	   abbreviation: "°C",  toBase: { $0+zeroK}, fromBase: { $0-zeroK } )
+		defineUnit("fahrenheit",  base: TK,    abbreviation: "F",   toBase: { ($0-FOff)/degFPerdegC+zeroK}, fromBase: { degFPerdegC*($0-zeroK)+FOff} )
+		defineUnit("celsius",	  base: TK,	   abbreviation: "C",   toBase: { $0+zeroK}, fromBase: { $0-zeroK } )
 	
 		// Define some often-used aliases for the SI derived units
 		let V = "V"
@@ -260,19 +266,23 @@ class Units : CustomStringConvertible, Equatable {
 		let J = "J"
 		let W = "W"
 		let l = "l"
-		defineAliasUnit("volt",		  unit: UnitType("kg m m / A s s s"),   abbreviation: V)	// Volt
-		defineAliasUnit("ohm",		  unit: UnitType("kg m m / A A s s s"), abbreviation: ohm)	// Ohm
-		defineAliasUnit("joule",	  unit: UnitType("kg m m / s s"),		abbreviation: J)	// Joule
-		defineAliasUnit("watt",		  unit: UnitType("kg m m / s s s"),		abbreviation: W)	// Watt
-		defineAliasUnit("litre",	  unit: UnitType("m m m"),				abbreviation: l)	// litre
-		defineAliasUnit("fahrenheit", unit: UnitType("°F"),					abbreviation: "F")	// alias for °F
-		defineAliasUnit("celsius",	  unit: UnitType("°C"),					abbreviation: "C")	// alias for °C
+		let mps = "mps"
+		defineAliasUnit("volt",		   unit: UnitType("kg m m / A s s s"),   abbreviation: V)		// Volt
+		defineAliasUnit("ohm",		   unit: UnitType("kg m m / A A s s s"), abbreviation: ohm)		// Ohm
+		defineAliasUnit("joule",	   unit: UnitType("kg m m / s s"),		 abbreviation: J)		// Joule
+		defineAliasUnit("watt",		   unit: UnitType("kg m m / s s s"),	 abbreviation: W)		// Watt
+		defineAliasUnit("litre",	   unit: UnitType("m m m"),				 abbreviation: l)		// litre
+		defineAliasUnit("speed",	   unit: UnitType("m / s"),			     abbreviation: mps)		// meter/second
 		
-		defineMetricUnitsfor(V)
-		defineMetricUnitsfor(ohm)
-		defineMetricUnitsfor(J)
-		defineMetricUnitsfor(W)
-		defineMetricUnitsfor(l)
+		defineMetricUnitsfor(V)		// automatically add all volt-related metric scaled units
+		defineMetricUnitsfor(ohm)	// automatically add all ohm-related metric scaled units
+		defineMetricUnitsfor(J)		// automatically add all joule-related metric scaled units
+		defineMetricUnitsfor(W)		// automatically add all watt-related metric scaled units
+		defineMetricUnitsfor(l)		// automatically add all litre-related metric scaled units
+		
+		// non-standard units for derived quantities
+		defineUnit("speed of light", base: mps, abbreviation: "c",  toBase: { $0*cPermps } )
+		defineUnit("light-year",     base: L,	abbreviation: "ly", toBase: { $0*light_year } )
 	}
 	
 	private static func defineMetricUnitsfor (abbreviation: String) {
