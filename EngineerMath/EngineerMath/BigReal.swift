@@ -1,6 +1,6 @@
 //
-//  BigNumbers.swift
-//  TestEngineerMath
+//  BigReal.swift
+//  EngineerMath
 //
 //  Created by Michael Griebling on 19 May 2015.
 //  Copyright (c) 2015 Computer Inspirations. All rights reserved.
@@ -49,8 +49,7 @@ public class BigReal : CustomStringConvertible, Comparable, Equatable, Hashable 
 	init(_ value: Float) { number = BigFloat(double: Double(value), radix: BigReal.radix) }
 
 	public var description : String {
-		let str = number.toString
-		return str
+		return number.toString
 	}
 	
 	public var hashValue : Int {

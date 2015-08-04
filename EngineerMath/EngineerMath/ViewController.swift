@@ -75,7 +75,7 @@ class ViewController: NSViewController {
 		let volt = Units("V")
 		let mV = Units("mV")
 		let lightYear = Units("ly")
-		let c = Units("c")
+//		let c = Units("c")
 		var result = Units.convert(10, fromType: hour, toType: seconds)
 		print("10 \(hour) = \(result!) \(seconds)")
 		result = Units.convert(10, fromType:mile, toType: km)
