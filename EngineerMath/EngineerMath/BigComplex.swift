@@ -126,7 +126,7 @@ class BigComplex : BigReal, FloatLiteralConvertible, IntegerLiteralConvertible, 
 				if let expRange = vs.rangeOfString(exponent) where expRange.startIndex == range.startIndex.predecessor() {
 					// search beyond the exponent
 					range = range.startIndex.successor()...vs.endIndex
-					if let range = vs.rangeOfCharacterFromSet(signChars, options: .allZeros, range: range) {
+					if let range = vs.rangeOfCharacterFromSet(signChars, options: [], range: range) {
 						// This is likely the start of the second number
 						number += vs.substringToIndex(range.startIndex)
 						inumber = vs.substringFromIndex(range.startIndex)
@@ -461,10 +461,10 @@ func pow(lhs:BigComplex, rhs:BigComplex) -> BigComplex {
     return exp(z)
 }
 func pow(lhs:BigComplex, rhs:BigReal) -> BigComplex {
-    return pow(lhs, BigComplex(rhs, BigReal(0)))
+    return pow(lhs, rhs: BigComplex(rhs, BigReal(0)))
 }
 func pow(lhs:BigReal, rhs:BigComplex) -> BigComplex {
-    return pow(BigComplex(lhs, BigReal(0)), rhs)
+    return pow(BigComplex(lhs, BigReal(0)), rhs: rhs)
 }
 
 // **, **=
@@ -472,13 +472,13 @@ func ** (lhs:BigReal, rhs:BigReal) -> BigComplex {
     return BigComplex(lhs.pow(rhs))
 }
 func ** (lhs:BigComplex, rhs:BigComplex) -> BigComplex {
-    return pow(lhs, rhs)
+    return pow(lhs, rhs: rhs)
 }
 func ** (lhs:BigReal, rhs:BigComplex) -> BigComplex {
-    return pow(lhs, rhs)
+    return pow(lhs, rhs: rhs)
 }
 func ** (lhs:BigComplex, rhs:BigReal) -> BigComplex {
-    return pow(lhs, rhs)
+    return pow(lhs, rhs: rhs)
 }
 func ** (lhs:BigComplex, rhs:Double) -> BigComplex {
 	return lhs ** BigComplex(floatLiteral: rhs)
@@ -499,10 +499,10 @@ func **= (inout lhs:BigReal, rhs:BigReal) {
     lhs = lhs.pow(rhs)
 }
 func **= (inout lhs:BigComplex, rhs:BigComplex) {
-    lhs = pow(lhs, rhs)
+    lhs = pow(lhs, rhs: rhs)
 }
 func **= (inout lhs:BigComplex, rhs:BigReal) {
-    lhs = pow(lhs, rhs)
+    lhs = pow(lhs, rhs: rhs)
 }
 
 // sqrt(z)

@@ -8,7 +8,7 @@
 
 import Foundation
 
-class Units : Printable, Equatable {
+class Units : CustomStringConvertible, Equatable {
 
 	typealias UnitBag = Bag<String>
 	
@@ -309,7 +309,7 @@ class Units : Printable, Equatable {
 				default: return  // abort - not a base or alias unit
 			}
 			
-			for (index, prefix) in enumerate(prefixes) {
+			for (index, prefix) in prefixes.enumerate() {
 				defineUnit(prefix+name, base:abbreviation, abbreviation: abbrevs[index]+abbreviation, toBase: { $0*scale[index] } )
 			}
 		}

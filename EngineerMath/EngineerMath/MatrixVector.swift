@@ -8,7 +8,7 @@
 
 import Accelerate
 
-class Vector : Printable {
+class Vector : CustomStringConvertible {
 	
 	private var vector: [Double]
 	
