@@ -556,84 +556,76 @@ struct Real {
 	// into the calculator. 2's complement numbers have some weird stuff that needs
 	// to be worked through once the digit is appended.
 	//
-	func appendDigit(digit: Character, useComplement complement:Int) -> Bool {
-		//	unsigned long		values[BF_num_values];
-		//
-		//	if (digit == '-')
-		//	{
-		//	bf_is_negative = (bf_is_negative == NO) ? YES : NO;
-		//	}
-		//	else if (digit >= 0 && digit <= 36) // append a regular digit
-		//	{
-		//	// Do nothing if overflow could occur
-		//	if (bf_array[BF_num_values - 1] >= (bf_value_limit / bf_radix))
-		//	return NO;
-		//
-		//	BF_CopyValues(bf_array, values);
-		//
-		//	// Multiply through by the bf_radix and add the digit
-		//	BF_AppendDigitToMantissa(values, digit, bf_radix, bf_value_limit, 1);
-		//
-		//	if (complement)
-		//	{
-		//	BigFloat			*complementNumberFull;
-		//	BigFloat			*complementNumberHalf;
-		//	BigFloat			*mantissaNumber;
-		//	unsigned long long	complementHalf = ((unsigned long long)1 << (complement - 1));
-		//	unsigned long long	complementFull = ((unsigned long long)1 << (complement));
-		//	NSComparisonResult	relative;
-		//
-		//	complementNumberHalf = [[BigFloat alloc] initWithMantissa:complementHalf exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		//
-		//	if (complement == 64)
-		//	{
-		//	complementNumberFull = [complementNumberHalf copy];
-		//	BigFloat *two = [[BigFloat alloc] initWithInt:2 radix:bf_radix];
-		//	[complementNumberFull multiplyBy:two];
-		//	}
-		//	else
-		//	{
-		//	complementNumberFull = [[BigFloat alloc] initWithMantissa:complementFull exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-		//	}
-		//
-		//	mantissaNumber = [complementNumberHalf copy];
-		//	BF_AssignValues(mantissaNumber->bf_array, values);
-		//
-		//	if (!bf_is_negative)
-		//	{
-		//	relative = [mantissaNumber compareWith:complementNumberHalf];
-		//
-		//	if (relative == NSOrderedDescending || relative == NSOrderedSame)
-		//	{
-		//	if  ([mantissaNumber compareWith:complementNumberFull] == NSOrderedAscending)
-		//	{
-		//	[complementNumberFull subtract:mantissaNumber];
-		//	BF_AssignValues(bf_array, complementNumberFull->bf_array);
-		//	if (bf_user_point != 0)
-		//	bf_user_point++;
-		//	bf_is_negative = YES;
-		//
-		//	return YES;
-		//	}
-		//
-		//	// Overflow, don't apply digit
-		//	return NO;
-		//	}
-		//	}
-		//	else
-		//	{
-		//	// Overflow, don't apply digit
-		//	return NO;
-		//	}
-		//
-		//	}
-		//
-		//	BF_AssignValues(bf_array, values);
-		//	
-		//	// Move the decimal point along with the digits
-		//	if (bf_user_point != 0)
-		//	bf_user_point++;
-		//	}
+	mutating func appendDigit(digit: Character, useComplement complement:Int) -> Bool {
+		var values = [Digit](count: bf_array.count, repeatedValue: 0)
+		
+		if digit == "-" {
+			bf_is_negative = (bf_is_negative == false) ? true : false
+		} else if (digit >= "0" && digit <= "9") || (digit >= "A" && digit <= "Z") { // append a regular digit
+			// Do nothing if overflow could occur
+			if bf_array[Real.BF_num_values - 1] >= (bf_value_limit / UInt32(bf_radix)) {
+				return false
+			}
+			
+			Real.BF_CopyValues(bf_array, destination: &values)
+			
+			// Multiply through by the bf_radix and add the digit
+			let idigit: Digit
+			let aChar : Character = "A"
+			if digit <= "9" { idigit = Digit(String(digit))! }
+			else { idigit = Digit(digit.unicodeValue() - aChar.unicodeValue() + 10) }
+			Real.BF_AppendDigitToMantissa(&values, digit: idigit, radix: bf_radix, limit: bf_value_limit)
+			
+			if complement != 0 {
+				var complementNumberFull: Real
+				var complementNumberHalf: Real
+				var mantissaNumber: Real
+				let complementHalf = UInt64(1) << UInt64(complement - 1)
+				let complementFull = UInt64(1) << UInt64(complement)
+				
+				complementNumberHalf = Real(mantissa: complementHalf, exponent: 0, isNegative: false, radix: bf_radix, userPointAt: 0)
+				
+				if complement == 64 {
+					let two = Real(int: 2, radix: bf_radix)
+					complementNumberFull = complementNumberHalf.multiplyBy(two)
+				} else {
+					complementNumberFull = Real(mantissa: complementFull, exponent: 0, isNegative: false, radix: bf_radix, userPointAt: 0)
+				}
+				
+				mantissaNumber = complementNumberHalf
+				Real.BF_CopyValues(mantissaNumber.bf_array, destination: &values)
+				
+				if !bf_is_negative {
+					let relative = mantissaNumber.compareWith(complementNumberHalf)
+					
+					if (relative == .OrderedDescending || relative == .OrderedSame) {
+						if mantissaNumber.compareWith(complementNumberFull) == .OrderedAscending {
+							complementNumberFull = complementNumberFull.subtract(mantissaNumber)
+							Real.BF_CopyValues(bf_array, destination: &complementNumberFull.bf_array);
+							if (bf_user_point != 0) {
+								bf_user_point++
+							}
+							bf_is_negative = true
+							return true
+						}
+						
+						// Overflow, don't apply digit
+						return false
+					}
+				} else {
+					// Overflow, don't apply digit
+					return false
+				}
+				
+			}
+			
+			Real.BF_CopyValues(bf_array, destination: &values)
+			
+			// Move the decimal point along with the digits
+			if bf_user_point != 0 {
+				bf_user_point++
+			}
+		}
 		
 		return true
 	}
@@ -666,5 +658,305 @@ struct Real {
 		setElements(bf_radix, negative:bf_is_negative, exp:bf_exponent, valid:isValid, userPoint:UInt16(pointLocation))
 	}
 	
+	
+	// MARK: - Arithmetic Functions
+	
+	//
+	// I have two apples (one of them used to be yours). I eat yours. How many apples do
+	// I have now?.
+	//
+	func subtract(num: Real) -> Real {
+		return num
+//	int					i, peek;
+//	unsigned long		values[BF_num_values];
+//	unsigned long		otherNum[BF_num_values];
+//	BigFloatElements	thisNumElements;
+//	BigFloatElements	otherNumElements;
+//	NSComparisonResult	compare;
+//	
+//	if ([num radix] != bf_radix)
+//	{
+//	num = [num copy];
+//	[num convertToRadix:bf_radix];
+//	}
+//	
+//	[self copyElements: &thisNumElements];
+//	[num copyElements: &otherNumElements];
+//	
+//	// ignore invalid numbers
+//	if (otherNumElements.bf_is_valid == NO || thisNumElements.bf_is_valid == NO)
+//	{
+//	bf_is_valid = NO;
+//	return;
+//	}
+//	
+//	// Handle differences in sign by calling addition instead
+//	if (otherNumElements.bf_is_negative != thisNumElements.bf_is_negative)
+//	{
+//	bf_is_negative = !bf_is_negative;
+//	[self add: num];
+//	bf_is_negative = !bf_is_negative;
+//	return;
+//	}
+//	
+//	BF_CopyValues(bf_array, values);
+//	BF_CopyValues(num->bf_array, otherNum);
+//	
+//	BF_NormaliseNumbers(values, otherNum, &thisNumElements, &otherNumElements);
+//	
+//	// Compare the two values
+//	compare = NSOrderedSame;
+//	for (i = BF_num_values - 1; i >= 0; i--)
+//	{
+//	if (values[i] > otherNum[i])
+//	{
+//	compare = NSOrderedDescending;
+//	break;
+//	}
+//	else if (values[i] < otherNum[i])
+//	{
+//	compare = NSOrderedAscending;
+//	break;
+//	}
+//	}
+//	
+//	if (compare == NSOrderedDescending)
+//	{
+//	// Perform the subtraction
+//	for (i = 0; i < BF_num_values; i++)
+//	{
+//	// Borrow from the next column if we need to
+//	if (otherNum[i] > values[i])
+//	{
+//	// Since we know that this num is greater than otherNum, then we know
+//	// that this will never exceed the bounds of the array
+//	peek = 1;
+//	while(values[i + peek] == 0)
+//	{
+//	values[i + peek] = thisNumElements.bf_value_limit - 1;
+//	peek++;
+//	}
+//	values[i+peek]--;
+//	values[i] += thisNumElements.bf_value_limit;
+//	}
+//	values[i] = values[i] - otherNum[i];
+//	}
+//	}
+//	else if (compare == NSOrderedAscending)
+//	{
+//	// Change the sign of this num
+//	thisNumElements.bf_is_negative = !thisNumElements.bf_is_negative;
+//	
+//	// Perform the subtraction
+//	for (i = 0; i < BF_num_values; i++)
+//	{
+//	// Borrow from the next column if we need to
+//	if (values[i] > otherNum[i])
+//	{
+//	// Since we know that this num is greater than otherNum, then we know
+//	// that this will never exceed the bounds of the array
+//	peek = 1;
+//	while(otherNum[i + peek] == 0)
+//	{
+//	otherNum[i + peek] = otherNumElements.bf_value_limit - 1;
+//	peek++;
+//	}
+//	otherNum[i+peek]--;
+//	otherNum[i] += otherNumElements.bf_value_limit;
+//	}
+//	values[i] = otherNum[i] - values[i];
+//	}
+//	}
+//	else
+//	{
+//	// Zero the exponent and remove the sign
+//	thisNumElements.bf_exponent = 0;
+//	thisNumElements.bf_is_negative = NO;
+//	
+//	// Subtraction results in zero
+//	BF_ClearValuesArray(values, 1);
+//	}
+//	
+//	// Create a user pont, store all the values back in the class and we're done
+//	BF_AssignValues(bf_array, values);
+//	[self assignElements: &thisNumElements];
+//	[self createUserPoint];
+	
+	}
+	
+	//
+	// multiplyBy
+	//
+	// I take the 8 seeds out of my apple. I plant them in the ground and grow 8 trees.
+	// Each tree has 8 apples, how successful is my orchard?
+	//
+	func multiplyBy(num: Real) -> Real {
+//	int					i, j;
+//	long				carryBits = 0;
+//	unsigned long		result[BF_num_values * 2];
+//	unsigned long		values[BF_num_values];
+//	unsigned long		otherNum[BF_num_values];
+//	BigFloatElements	thisNumElements;
+//	BigFloatElements	otherNumElements;
+//	BOOL				shift = NO;
+//	
+//	if ([num radix] != bf_radix)
+//	{
+//	num = [num copy];
+//	[num convertToRadix:bf_radix];
+//	}
+//	
+//	// Get a working copy of the values that will be multiplied
+//	BF_CopyValues(bf_array, values);
+//	[self copyElements: &thisNumElements];
+//	BF_CopyValues(num->bf_array, otherNum);
+//	[num copyElements: &otherNumElements];
+//	
+//	// ignore invalid numbers
+//	if (otherNumElements.bf_is_valid == NO || thisNumElements.bf_is_valid == NO)
+//	{
+//	bf_is_valid = NO;
+//	return;
+//	}
+//	
+//	// Apply the user's decimal point
+//	thisNumElements.bf_exponent -=thisNumElements. bf_user_point;
+//	thisNumElements.bf_user_point = 0;
+//	otherNumElements.bf_exponent -= otherNumElements.bf_user_point;
+//	otherNumElements.bf_user_point = 0;
+//	
+//	// Multiply exponents through addition
+//	thisNumElements.bf_exponent += otherNumElements.bf_exponent;
+//	
+//	// Two negatives make a positive
+//	if (otherNumElements.bf_is_negative) (thisNumElements.bf_is_negative) ? (thisNumElements.bf_is_negative = NO) : (thisNumElements.bf_is_negative = YES);
+//	
+//	// Clear the result space
+//	BF_ClearValuesArray(result, 2);
+//	
+//	// Now we do the multiplication. Basic stuff:
+//	// Multiply each column of each of the otherNums by each other and sum all of the results
+//	for (j = 0; j < BF_num_values; j++)
+//	{
+//	// Add the product of this column of otherNum with this num
+//	carryBits = 0;
+//	for (i = 0; i < BF_num_values; i++)
+//	{
+//	result[i + j] += (values[i] * otherNum[j]) + carryBits;
+//	carryBits = result[i + j] / thisNumElements.bf_value_limit;
+//	result[i + j] = result[i + j] % thisNumElements.bf_value_limit;
+//	
+//	if (i + j >= BF_num_values && result[i + j] != 0) shift = YES;
+//	}
+//	
+//	// Add the carry for the last multiplication to the next column
+//	result[j + BF_num_values] += carryBits;
+//	if (result[j + BF_num_values] != 0) shift = YES;
+//	}
+//	
+//	// If we have exceeded the precision, divide by the bf_radix until
+//	// we are reeled back in.
+//	while(BF_ArrayIsNonZero(&result[BF_num_values], 1))
+//	{
+//	carryBits = BF_RemoveDigitFromMantissa(result, thisNumElements.bf_radix, thisNumElements.bf_value_limit, 2);
+//	thisNumElements.bf_exponent++;
+//	}
+//	
+//	// Apply round to nearest
+//	if ((double)carryBits >= ((double)bf_radix / 2.0))
+//	{
+//	BF_AddToMantissa(result, 1, thisNumElements.bf_value_limit, 1);
+//	
+//	// If by shear fluke that caused the top digit to overflow, then shift back by one digit
+//	if (result[BF_num_values - 1] > thisNumElements.bf_value_limit)
+//	{
+//	BF_RemoveDigitFromMantissa(result, thisNumElements.bf_radix, thisNumElements.bf_value_limit, 1);
+//	thisNumElements.bf_exponent++;
+//	}
+//	}
+//	
+//	// Create a user pont, store all the values back in the class and we're done
+//	BF_AssignValues(bf_array, result);
+//	[self assignElements: &thisNumElements];
+//	[self createUserPoint];
+		return num
+	}
+	
+	//
+	// Returns the scale of the receiver with respect to num.
+	//
+	func compareWith(num: Real) -> NSComparisonResult {
+//	unsigned long		values[BF_num_values];
+//	unsigned long		otherNum[BF_num_values];
+//	int					i;
+//	BigFloatElements	thisNumElements;
+//	BigFloatElements	otherNumElements;
+//	NSComparisonResult	compare;
+//	
+//	if ([num radix] != bf_radix)
+//	{
+//	num = [num copy];
+//	[num convertToRadix:bf_radix];
+//	}
+//	
+//	BF_CopyValues(bf_array, values);
+//	[self copyElements: &thisNumElements];
+//	BF_CopyValues(num->bf_array, otherNum);
+//	[num copyElements: &otherNumElements];
+//	
+//	// ignore invalid numbers
+//	if (otherNumElements.bf_is_valid == NO || bf_is_valid == NO)
+//	{
+	return .OrderedAscending
+//	}
+//	
+//	// Handle differences in sign
+//	if (otherNumElements.bf_is_negative != bf_is_negative)
+//	{
+//	
+//	if (otherNumElements.bf_is_negative)
+//	return NSOrderedDescending;
+//	else
+//	return NSOrderedAscending;
+//	}
+//	
+//	BF_NormaliseNumbers(values, otherNum, &thisNumElements, &otherNumElements);
+//	
+//	long ownLength = BF_NumDigitsInArray(values, bf_radix, bf_value_precision);
+//	long otherLength = BF_NumDigitsInArray(otherNum, bf_radix, bf_value_precision);
+//	long maxLength = (ownLength > otherLength) ? ownLength : otherLength;
+//	
+//	//
+//	// For a full length number, never compare the last digit because it's
+//	// subject to rounding problems.
+//	//
+//	if (maxLength == bf_value_precision * BF_num_values)
+//	{
+//	values[0] /= bf_radix;
+//	values[0] *= bf_radix;
+//	otherNum[0] /= bf_radix;
+//	otherNum[0] *= bf_radix;
+//	}
+//	
+//	// Now that we're normalised, do the actual comparison
+//	compare = NSOrderedSame;
+//	for (i = BF_num_values - 1; i >= 0; i--)
+//	{
+//	if ((values[i] > otherNum[i] && !bf_is_negative) || (values[i] < otherNum[i] && bf_is_negative))
+//	{
+//	compare = NSOrderedDescending;
+//	break;
+//	}
+//	else if ((values[i] < otherNum[i] && !bf_is_negative) || (values[i] > otherNum[i] && bf_is_negative))
+//	{
+//	compare = NSOrderedAscending;
+//	break;
+//	}
+//	}
+	
+//	return compare;
+	}
+
+
 	
 }
