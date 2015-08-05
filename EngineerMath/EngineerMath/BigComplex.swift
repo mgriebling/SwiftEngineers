@@ -26,15 +26,6 @@
 
 import Foundation
 
-extension Character {
-	
-	func toUnichar () -> unichar {
-		// Caution: this won't work for multi-char Characters
-		return [unichar](String(self).utf16).first!
-	}
-	
-}
-
 class BigComplex : BigReal, FloatLiteralConvertible, IntegerLiteralConvertible, StringLiteralConvertible {
 	
 	typealias ExtendedGraphemeClusterLiteralType = StringLiteralType

@@ -8,16 +8,6 @@
 
 import Foundation
 
-extension String {
-	
-	func stringByTrimmingTrailingCharactersInSet (characterSet: NSCharacterSet) -> String {
-		if let rangeOfLastWantedCharacter = self.rangeOfCharacterFromSet(characterSet.invertedSet, options:.BackwardsSearch) {
-			return self.substringToIndex(rangeOfLastWantedCharacter.endIndex)
-		}
-		return ""
-	}
-}
-
 public class BigReal : CustomStringConvertible, Comparable, Equatable, Hashable {
 	
 	internal var number = BigFloat()	// signed extended floating-point number
