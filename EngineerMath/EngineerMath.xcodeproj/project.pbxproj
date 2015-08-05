@@ -18,6 +18,7 @@
 		2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75D1B0FA38F007C273A /* BigReal.swift */; };
 		2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */ = {isa = PBXBuildFile; fileRef = 2FA1D7511B1E2B7B00778806 /* BigFloat.m */; };
 		2FD25D2D1B1F3EEA0043E9A1 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */; };
+		47357B5A1B7205930044B498 /* Real.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47357B591B7205930044B498 /* Real.swift */; };
 		47D0F3231B205435002C1213 /* Units.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D0F3221B205435002C1213 /* Units.swift */; };
 /* End PBXBuildFile section */
 
@@ -49,6 +50,7 @@
 		2FA1D7501B1E2B7B00778806 /* BigFloat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BigFloat.h; sourceTree = "<group>"; };
 		2FA1D7511B1E2B7B00778806 /* BigFloat.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BigFloat.m; sourceTree = "<group>"; };
 		2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bag.swift; sourceTree = "<group>"; };
+		47357B591B7205930044B498 /* Real.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Real.swift; sourceTree = "<group>"; };
 		47D0F3221B205435002C1213 /* Units.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Units.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -97,6 +99,7 @@
 				2F53A7371B0F79B4007C273A /* Main.storyboard */,
 				2F53A72F1B0F79B4007C273A /* Supporting Files */,
 				2F53A7571B0FA221007C273A /* MatrixVector.swift */,
+				47357B591B7205930044B498 /* Real.swift */,
 				2F53A75B1B0FA385007C273A /* Equations.swift */,
 				2F53A75D1B0FA38F007C273A /* BigReal.swift */,
 				2F53A7591B0FA366007C273A /* BigComplex.swift */,
@@ -238,6 +241,7 @@
 				2F53A75A1B0FA366007C273A /* BigComplex.swift in Sources */,
 				2F53A7341B0F79B4007C273A /* ViewController.swift in Sources */,
 				2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */,
+				47357B5A1B7205930044B498 /* Real.swift in Sources */,
 				2F53A75C1B0FA385007C273A /* Equations.swift in Sources */,
 				2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */,
 				2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */,
