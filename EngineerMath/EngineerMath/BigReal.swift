@@ -36,17 +36,6 @@ public class BigReal : CustomStringConvertible, Comparable, Equatable, Hashable 
 	var isInfinite: Bool { return floatingPointClass == .PositiveInfinity || floatingPointClass == .NegativeInfinity }
 	var isNaN: Bool { return !number.valid || floatingPointClass == .QuietNaN }
 	var isSignaling: Bool { return !number.valid }
-	
-	init(_ value: UInt8) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: Int8) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: UInt16) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: Int16) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: UInt32) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: Int32) { number = BigFloat(int: Int32(value), radix: BigReal.radix)}
-	init(_ value: UInt64) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: Int64) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: UInt) { number = BigFloat(int: Int32(value), radix: BigReal.radix) }
-	init(_ value: Float) { number = BigFloat(double: Double(value), radix: BigReal.radix) }
 
 	public var description : String {
 		return number.toString
