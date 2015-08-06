@@ -12,9 +12,7 @@
 		2F53A7361B0F79B4007C273A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A7351B0F79B4007C273A /* Images.xcassets */; };
 		2F53A7391B0F79B4007C273A /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2F53A7371B0F79B4007C273A /* Main.storyboard */; };
 		2F53A7451B0F79B4007C273A /* EngineerMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7441B0F79B4007C273A /* EngineerMathTests.swift */; };
-		2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7571B0FA221007C273A /* MatrixVector.swift */; };
 		2F53A75A1B0FA366007C273A /* BigComplex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7591B0FA366007C273A /* BigComplex.swift */; };
-		2F53A75C1B0FA385007C273A /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75B1B0FA385007C273A /* Equations.swift */; };
 		2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75D1B0FA38F007C273A /* BigReal.swift */; };
 		2F5A55FC1B724FCD001CB3C6 /* String+Char.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F5A55FB1B724FCD001CB3C6 /* String+Char.swift */; };
 		2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */ = {isa = PBXBuildFile; fileRef = 2FA1D7511B1E2B7B00778806 /* BigFloat.m */; };
@@ -243,9 +241,7 @@
 			files = (
 				2F53A75A1B0FA366007C273A /* BigComplex.swift in Sources */,
 				2F53A7341B0F79B4007C273A /* ViewController.swift in Sources */,
-				2F53A7581B0FA221007C273A /* MatrixVector.swift in Sources */,
 				47357B5A1B7205930044B498 /* Real.swift in Sources */,
-				2F53A75C1B0FA385007C273A /* Equations.swift in Sources */,
 				2F53A75E1B0FA38F007C273A /* BigReal.swift in Sources */,
 				2FA1D7521B1E2B7B00778806 /* BigFloat.m in Sources */,
 				2FD25D2D1B1F3EEA0043E9A1 /* Bag.swift in Sources */,
