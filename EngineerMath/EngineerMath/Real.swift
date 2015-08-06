@@ -1056,284 +1056,227 @@ struct Real {
     // How do you explain your actions to the judge?
     //
     func divideBy(num: Real) -> Real {
-        return self
-//    int					i, j, peek;
-//    unsigned long		carryBits;
-//    unsigned long		values[Real.BF_num_values * 2];
-//    unsigned long		otherNumValues[Real.BF_num_values * 2];
-//    unsigned long		result[Real.BF_num_values * 2];
-//    unsigned long		subValues[Real.BF_num_values * 2];
-//    BigFloatElements	thisNumElements;
-//    BigFloatElements	otherNumElements;
-//    unsigned long		quotient;
-//    NSComparisonResult	compare;
-//    
-//    if ([num radix] != bf_radix)
-//    {
-//    num = [num copy];
-//    [num convertToRadix:bf_radix];
-//    }
-//    
-//    // Clear the working space
-//    BF_ClearValuesArray(otherNumValues, 1);
-//    BF_ClearValuesArray(values, 1);
-//    BF_ClearValuesArray(result, 2);
-//    BF_ClearValuesArray(subValues, 2);
-//    
-//    // Get the numerical values
-//    BF_CopyValues(bf_array, &values[Real.BF_num_values]);
-//    [self copyElements: &thisNumElements];
-//    BF_CopyValues(num->bf_array, &otherNumValues[Real.BF_num_values]);
-//    [num copyElements: &otherNumElements];
-//    
-//    // ignore invalid numbers
-//    if (otherNumElements.bf_is_valid == NO || thisNum.bf_is_valid == NO)
-//    {
-//    bf_is_valid = NO;
-//    return;
-//    }
-//    
-//    // Apply the user's decimal point
-//    thisNum.bf_exponent -= thisNum.bf_user_point;
-//    thisNum.bf_user_point = 0;
-//    otherNumElements.bf_exponent -= otherNumElements.bf_user_point;
-//    otherNumElements.bf_user_point = 0;
-//    
-//    // Two negatives make a positive
-//    if (otherNumElements.bf_is_negative) (thisNum.bf_is_negative) ? (thisNum.bf_is_negative = NO) : (thisNum.bf_is_negative = YES);
-//    
-//    // Normalise this num
-//    // This involves multiplying through by the bf_radix until the number runs up against the
-//    // left edge or MSD (most significant digit)
-//    if (BF_ArrayIsNonZero(values, 2))
-//    {
-//    while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / thisNum.bf_radix))
-//    {
-//    BF_AppendDigitToMantissa(values, 0, thisNum.bf_radix, thisNum.bf_value_limit, 2);
-//    
-//    thisNum.bf_exponent--;
-//    }
-//    }
-//    else
-//    {
-//    BF_AssignValues(bf_array, &values[Real.BF_num_values]);
-//    bf_exponent = 0;
-//    bf_user_point = 0;
-//    bf_is_negative = 0;
-//    
-//    if (!BF_ArrayIsNonZero(otherNumValues, 2))
-//    {
-//    bf_is_valid = NO;
-//    }
-//    
-//    return;
-//    }
-//    
-//    // We have the situation where otherNum had a larger kNumValue'th digit than
-//    // this num did in the first place. So we may have to divide through by bf_radix
-//    // once to normalise otherNum
-//    if (otherNumValues[Real.BF_num_values * 2 - 1] > values[Real.BF_num_values * 2 - 1])
-//    {
-//    carryBits = BF_RemoveDigitFromMantissa(otherNumValues, thisNum.bf_radix, thisNum.bf_value_limit, 2);
-//    otherNumElements.bf_exponent++;
-//    
-//    if ((double)carryBits >= ((double)otherNumElements.bf_radix / 2.0))
-//    {
-//    BF_AddToMantissa(otherNumValues, 1, otherNumElements.bf_value_limit, 2);
-//    }
-//    }
-//    else
-//    {
-//    // Normalise otherNum so that it cannot be greater than this num
-//    // This involves multiplying through by the bf_radix until the number runs up
-//    // against the left edge or MSD (most significant digit)
-//    // If the last multiply will make otherNum greater than this num, then we
-//    // don't do it. This ensures that the first division column will always be non-zero.
-//    if (BF_ArrayIsNonZero(otherNumValues, 2))
-//    {
-//    while
-//    (
-//				(otherNumValues[Real.BF_num_values * 2 - 1] < (otherNumElements.bf_value_limit / otherNumElements.bf_radix))
-//				&&
-//				(otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / otherNumElements.bf_radix))
-//    )
-//    {
-//				BF_AppendDigitToMantissa(otherNumValues, 0, thisNum.bf_radix, thisNum.bf_value_limit, 2);
-//				otherNumElements.bf_exponent--;
-//    }
-//    }
-//    else
-//    {
-//    bf_is_valid = NO;
-//    return;
-//    }
-//    }
-//    
-//    // Subtract the exponents
-//    thisNum.bf_exponent -= otherNumElements.bf_exponent;
-//    
-//    // Account for the de-normalising effect of division
-//    thisNum.bf_exponent -= (Real.BF_num_values - 1) * thisNum.bf_value_precision;
-//    
-//    // Begin the division
-//    // What we are doing here is lining the divisor up under the divisee and subtracting the largest multiple
-//    // of the divisor that we can from the divisee with resulting in a negative number. Basically it is what
-//    // you do without really thinking about it when doing long division by hand.
-//    for (i = Real.BF_num_values * 2 - 1; i >= Real.BF_num_values - 1; i--)
-//    {
-//    // If the divisor is greater or equal to the divisee, leave this result column unchanged.
-//    if (otherNumValues[Real.BF_num_values * 2 - 1] > values[i])
-//    {
-//    if (i > 0)
-//    {
-//				values[i - 1] += values[i] * thisNum.bf_value_limit;
-//    }
-//    continue;
-//    }
-//    
-//    // Determine the quotient of this position (the multiple of  the divisor to use)
-//    quotient = values[i] / otherNumValues[Real.BF_num_values * 2 - 1];
-//    carryBits = 0;
-//    for (j = 0; j <= i; j++)
-//    {
-//    subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits;
-//    carryBits = subValues[j] / thisNum.bf_value_limit;
-//    subValues[j] %= thisNum.bf_value_limit;
-//    }
-//    subValues[i] += carryBits * thisNum.bf_value_limit;
-//    
-//    // Check that values is greater than subValues (ie check that this subtraction won't
-//    // result in a negative number)
-//    compare = NSOrderedSame;
-//    for (j = i; j >= 0; j--)
-//    {
-//    if (values[j] > subValues[j])
-//    {
-//				compare = NSOrderedDescending;
-//				break;
-//    }
-//    else if (values[j] < subValues[j])
-//    {
-//				compare = NSOrderedAscending;
-//				break;
-//    }
-//    }
-//    
-//    // If we have overestimated the quotient, adjust appropriately. This just means that we need
-//    // to reduce the divisor's multiplier by one.
-//    while(compare == NSOrderedAscending)
-//    {
-//    quotient--;
-//    carryBits = 0;
-//    for (j = 0; j <= i; j++)
-//    {
-//				subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits;
-//				carryBits = subValues[j] / thisNum.bf_value_limit;
-//				subValues[j] %= thisNum.bf_value_limit;
-//    }
-//    subValues[i] += carryBits * thisNum.bf_value_limit;
-//    
-//    // Check that values is greater than subValues (ie check that this subtraction won't
-//    // result in a negative number)
-//    compare = NSOrderedSame;
-//    for (j = i; j >= 0; j--)
-//    {
-//				if (values[j] > subValues[j])
-//				{
-//    compare = NSOrderedDescending;
-//    break;
-//				}
-//				else if (values[j] < subValues[j])
-//				{
-//    compare = NSOrderedAscending;
-//    break;
-//				}
-//    }
-//    }
-//    
-//    // We now have the number to place in this column of the result. Yay.
-//    result[i] = quotient;
-//    
-//    // If the subtraction operation will result in no remainder, then finish
-//    if (compare == NSOrderedSame)
-//    {
-//    break;
-//    }
-//    
-//    // Subtract the sub values from values now
-//    for (j = (Real.BF_num_values * 2 - 1); j >= 0; j--)
-//    {
-//    if (subValues[j] > values[j])
-//    {
-//				// Since we know that this num is greater than the sub num, then we know
-//				// that this will never exceed the bounds of the array
-//				peek = 1;
-//				while(values[j + peek] == 0)
-//				{
-//    values[j + peek] = thisNum.bf_value_limit - 1;
-//    peek++;
-//				}
-//				values[j+peek]--;
-//				values[j] += thisNum.bf_value_limit;
-//    }
-//    values[j] -= subValues[j];
-//    }
-//    
-//    // Attach the remainder to the next column on the right so that it will be part of the next
-//    // column's operation
-//    values[i - 1] += values[i] * thisNum.bf_value_limit;
-//    
-//    // Clear the remainder from this column
-//    values[i] = 0;
-//    subValues[i] = 0;
-//    }
-//    
-//    // Normalise the result
-//    // This involves multiplying through by the bf_radix until the number runs up against the
-//    // left edge or MSD (most significant digit)
-//    while(result[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / thisNum.bf_radix))
-//    {
-//    BF_AppendDigitToMantissa(result, 0, thisNum.bf_radix, thisNum.bf_value_limit, 2);
-//    thisNum.bf_exponent--;
-//    }
-//    
-//    // Apply a round to nearest on the last digit
-//    if (((double)result[Real.BF_num_values - 1] / (double)(bf_value_limit / bf_radix)) >= ((double)bf_radix / 2.0))
-//    {
-//    BF_AddToMantissa(&result[Real.BF_num_values], 1, thisNum.bf_value_limit, 1);
-//    
-//    // If by shear fluke that cause the top digit to overflow, then shift back by one digit
-//    if (result[Real.BF_num_values - 1] > thisNum.bf_value_limit)
-//    {
-//    carryBits = BF_RemoveDigitFromMantissa(&result[Real.BF_num_values], thisNum.bf_radix, thisNum.bf_value_limit, 1);
-//    thisNum.bf_exponent++;
-//    if ((double)carryBits >= ((double)thisNum.bf_radix / 2.0))
-//    {
-//				BF_AddToMantissa(&result[Real.BF_num_values], 1, thisNum.bf_value_limit, 1);
-//    }
-//    }
-//    }
-//    
-//    // Remove any trailing zeros in the decimal places by dividing by the bf_radix until they go away
-//    carryBits = 0;
-//    while((thisNum.bf_exponent < 0) && (result[Real.BF_num_values] % thisNum.bf_radix == 0))
-//    {
-//    carryBits = BF_RemoveDigitFromMantissa(&result[Real.BF_num_values], thisNum.bf_radix, thisNum.bf_value_limit, 1);
-//    thisNum.bf_exponent++;
-//    }
-//    if ((double)carryBits >= ((double)thisNum.bf_radix / 2.0))
-//    {
-//    BF_AddToMantissa(&result[Real.BF_num_values], 1, thisNum.bf_value_limit, 1);
-//    }
-//    
-//    
-//    // Create a user pont, store all the values back in the class and we're done
-//    BF_AssignValues(bf_array, &result[Real.BF_num_values]);
-//    [self assignElements: &thisNumElements];
-//    [self createUserPoint];
-    
-    }
-    
+		var values = [Digit](count: Real.BF_num_values * 2, repeatedValue: 0)
+		var otherNumValues = values
+		var result = values
+		var subValues = values
+		var thisNum = self
+		var otherNum = num
+		
+		if num.radix != Int(bf_radix) {
+			otherNum = num.convertToRadix(bf_radix)
+		}
+		
+		// Get the numerical values
+		values[Real.BF_num_values..<values.count] = bf_array[0..<bf_array.count]
+		otherNumValues[Real.BF_num_values..<values.count] = num.bf_array[0..<bf_array.count]
+		
+		// ignore invalid numbers
+		if !otherNum.bf_is_valid || !thisNum.bf_is_valid {
+			thisNum.bf_is_valid = false
+			return thisNum
+		}
+		
+		// Apply the user's decimal point
+		thisNum.bf_exponent -= Int32(thisNum.bf_user_point)
+		thisNum.bf_user_point = 0
+		otherNum.bf_exponent -= Int32(otherNum.bf_user_point)
+		otherNum.bf_user_point = 0
+		
+		// Two negatives make a positive
+		if otherNum.bf_is_negative { thisNum.bf_is_negative = thisNum.bf_is_negative ? false : true }
+		
+		// Normalise this num
+		// This involves multiplying through by the bf_radix until the number runs up against the
+		// left edge or MSD (most significant digit)
+		if Real.BF_ArrayIsNonZero(values) {
+			while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
+				Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+				thisNum.bf_exponent--
+			}
+		} else {
+			thisNum.bf_array = Array(values[Real.BF_num_values..<values.count])
+			thisNum.bf_exponent = 0
+			thisNum.bf_user_point = 0
+			thisNum.bf_is_negative = false
+			
+			if !Real.BF_ArrayIsNonZero(otherNumValues) {
+				thisNum.bf_is_valid = false
+			}
+			
+			return thisNum
+		}
+		
+		// We have the situation where otherNum had a larger kNumValue'th digit than
+		// this num did in the first place. So we may have to divide through by bf_radix
+		// once to normalise otherNum
+		if (otherNumValues[Real.BF_num_values * 2 - 1] > values[Real.BF_num_values * 2 - 1]) {
+			let carryBits = Real.BF_RemoveDigitFromMantissa(&otherNumValues, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+			otherNum.bf_exponent++
+			
+			if (Double(carryBits) >= (Double(otherNum.bf_radix) / 2.0)) {
+				Real.BF_AddToMantissa(&otherNumValues, digit: 1, limit: otherNum.bf_value_limit)
+			}
+		} else {
+			// Normalise otherNum so that it cannot be greater than this num
+			// This involves multiplying through by the bf_radix until the number runs up
+			// against the left edge or MSD (most significant digit)
+			// If the last multiply will make otherNum greater than this num, then we
+			// don't do it. This ensures that the first division column will always be non-zero.
+			if Real.BF_ArrayIsNonZero(otherNumValues) {
+				while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / UInt32(otherNum.bf_radix))) &&
+					  (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / Digit(otherNum.bf_radix)))
+				{
+					Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+					otherNum.bf_exponent--
+				}
+			} else {
+				thisNum.bf_is_valid = false
+				return thisNum
+			}
+		}
+		
+		// Subtract the exponents
+		thisNum.bf_exponent -= otherNum.bf_exponent;
+		
+		// Account for the de-normalising effect of division
+		thisNum.bf_exponent -= (Real.BF_num_values - 1) * Int(thisNum.bf_value_precision)
+		
+		// Begin the division
+		// What we are doing here is lining the divisor up under the divisee and subtracting the largest multiple
+		// of the divisor that we can from the divisee with resulting in a negative number. Basically it is what
+		// you do without really thinking about it when doing long division by hand.
+		var carryBits : Digit = 0
+		for i in Real.BF_num_values-1..<Real.BF_num_values * 2  {
+			// If the divisor is greater or equal to the divisee, leave this result column unchanged.
+			if otherNumValues[Real.BF_num_values * 2 - 1] > values[i] {
+				if i > 0 {
+					values[i - 1] += values[i] * thisNum.bf_value_limit
+				}
+				continue
+			}
+			
+			// Determine the quotient of this position (the multiple of  the divisor to use)
+			var quotient = values[i] / otherNumValues[Real.BF_num_values * 2 - 1];
+			carryBits = 0
+			for j in 0...i {
+				subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits
+				carryBits = subValues[j] / thisNum.bf_value_limit
+				subValues[j] %= thisNum.bf_value_limit
+			}
+			subValues[i] += carryBits * thisNum.bf_value_limit;
+			
+			// Check that values is greater than subValues (ie check that this subtraction won't
+			// result in a negative number)
+			var compare = NSComparisonResult.OrderedSame
+			for j in (0...i).reverse() {
+				if (values[j] > subValues[j]) {
+					compare = .OrderedDescending
+					break
+				} else if (values[j] < subValues[j]) {
+					compare = .OrderedAscending
+					break
+				}
+			}
+			
+			// If we have overestimated the quotient, adjust appropriately. This just means that we need
+			// to reduce the divisor's multiplier by one.
+			while compare == .OrderedAscending {
+				quotient--
+				carryBits = 0
+				for j in 0...i {
+					subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits;
+					carryBits = subValues[j] / thisNum.bf_value_limit;
+					subValues[j] %= thisNum.bf_value_limit;
+				}
+				subValues[i] += carryBits * thisNum.bf_value_limit;
+				
+				// Check that values is greater than subValues (ie check that this subtraction won't
+				// result in a negative number)
+				compare = .OrderedSame
+				for j in (0...i).reverse() {
+					if (values[j] > subValues[j]) {
+						compare = .OrderedDescending
+						break
+					} else if (values[j] < subValues[j]) {
+						compare = .OrderedAscending
+						break
+					}
+				}
+			}
+			
+			// We now have the number to place in this column of the result. Yay.
+			result[i] = quotient
+			
+			// If the subtraction operation will result in no remainder, then finish
+			if (compare == .OrderedSame) {
+				break
+			}
+			
+			// Subtract the sub values from values now
+			for j in (0..<Real.BF_num_values * 2).reverse() {
+				if (subValues[j] > values[j]) {
+					// Since we know that this num is greater than the sub num, then we know
+					// that this will never exceed the bounds of the array
+					var peek = 1
+					while (values[j + peek] == 0) {
+						values[j + peek] = thisNum.bf_value_limit - 1
+						peek++
+					}
+					values[j+peek]--
+					values[j] += thisNum.bf_value_limit
+				}
+				values[j] -= subValues[j]
+			}
+			
+			// Attach the remainder to the next column on the right so that it will be part of the next
+			// column's operation
+			values[i - 1] += values[i] * thisNum.bf_value_limit
+			
+			// Clear the remainder from this column
+			values[i] = 0
+			subValues[i] = 0
+		}
+		
+		// Normalise the result
+		// This involves multiplying through by the bf_radix until the number runs up against the
+		// left edge or MSD (most significant digit)
+		while (result[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
+			Real.BF_AppendDigitToMantissa(&result, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+			thisNum.bf_exponent--
+		}
+		
+		// Apply a round to nearest on the last digit
+		if ((Double(result[Real.BF_num_values - 1]) / Double(bf_value_limit / UInt32(bf_radix))) >= (Double(bf_radix) / 2.0)) {
+			Real.BF_AddToMantissa(&result[Real.BF_num_values], 1, thisNum.bf_value_limit)
+			
+			// If by shear fluke that cause the top digit to overflow, then shift back by one digit
+			if (result[Real.BF_num_values - 1] > thisNum.bf_value_limit) {
+				carryBits = BF_RemoveDigitFromMantissa(&result[Real.BF_num_values], thisNum.bf_radix, thisNum.bf_value_limit)
+				thisNum.bf_exponent++
+				if Double(carryBits) >= (Double(thisNum.bf_radix) / 2.0) {
+					Real.BF_AddToMantissa(result[Real.BF_num_values], 1, thisNum.bf_value_limit)
+				}
+			}
+		}
+		
+		// Remove any trailing zeros in the decimal places by dividing by the bf_radix until they go away
+		while (thisNum.bf_exponent < 0) && (result[Real.BF_num_values] % thisNum.bf_radix == 0) {
+			carryBits = Real.BF_RemoveDigitFromMantissa(&result[Real.BF_num_values], thisNum.bf_radix, thisNum.bf_value_limit, 1);
+			thisNum.bf_exponent++;
+		}
+		if (Double(carryBits) >= (Double(thisNum.bf_radix) / 2.0)) {
+			Real.BF_AddToMantissa(&result[Real.BF_num_values], 1, thisNum.bf_value_limit)
+		}
+		
+		
+		// Create a user pont, store all the values back in the class and we're done
+		Real.BF_AssignValues(bf_array, &result[Real.BF_num_values]);
+		[self assignElements: &thisNumElements];
+		[self createUserPoint];
+		
+	}
+	
     //
     // moduloBy
     //
@@ -1374,7 +1317,7 @@ struct Real {
 //    [num copyElements: &otherNumElements];
 //    
 //    // ignore invalid numbers
-//    if (otherNumElements.bf_is_valid == NO || thisNum.bf_is_valid == NO)
+//    if (otherNum.bf_is_valid == NO || thisNum.bf_is_valid == NO)
 //    {
 //    bf_is_valid = NO;
 //    return;
@@ -1390,11 +1333,11 @@ struct Real {
 //    // Apply the user's decimal point
 //    thisNum.bf_exponent -= thisNum.bf_user_point;
 //    thisNum.bf_user_point = 0;
-//    otherNumElements.bf_exponent -= otherNumElements.bf_user_point;
-//    otherNumElements.bf_user_point = 0;
+//    otherNum.bf_exponent -= otherNum.bf_user_point;
+//    otherNum.bf_user_point = 0;
 //    
 //    // Two negatives make a positive
-//    if (otherNumElements.bf_is_negative) (thisNum.bf_is_negative) ? (thisNum.bf_is_negative = NO) : (thisNum.bf_is_negative = YES);
+//    if (otherNum.bf_is_negative) (thisNum.bf_is_negative) ? (thisNum.bf_is_negative = NO) : (thisNum.bf_is_negative = YES);
 //    
 //    // Normalise this num
 //    // This involves multiplying through by the bf_radix until the number runs up against the
@@ -1426,13 +1369,13 @@ struct Real {
 //    {
 //    while
 //    (
-//    (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNumElements.bf_value_limit / otherNumElements.bf_radix))
+//    (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / otherNum.bf_radix))
 //    &&
-//    (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / otherNumElements.bf_radix))
+//    (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / otherNum.bf_radix))
 //    )
 //    {
 //    BF_AppendDigitToMantissa(otherNumValues, 0, thisNum.bf_radix, thisNum.bf_value_limit, 2);
-//    otherNumElements.bf_exponent--;
+//    otherNum.bf_exponent--;
 //    }
 //    }
 //    else
@@ -1442,7 +1385,7 @@ struct Real {
 //    }
 //    
 //    // Subtract the exponents
-//    divisionExponent = thisNum.bf_exponent - otherNumElements.bf_exponent;
+//    divisionExponent = thisNum.bf_exponent - otherNum.bf_exponent;
 //    
 //    // Account for the de-normalising effect of division
 //    divisionExponent -= (Real.BF_num_values - 1) * thisNum.bf_value_precision;
