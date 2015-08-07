@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class BigReal : CustomStringConvertible, Comparable, Equatable, Hashable {
+public class BigReal : CustomStringConvertible, Comparable, Hashable {
 	
 	internal var number = BigFloat()	// signed extended floating-point number
 	internal var re : BigReal {

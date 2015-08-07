@@ -22,7 +22,7 @@
 
 import Foundation
 
-struct Real {
+struct Real : CustomStringConvertible {
 
     // Basic constants defining the precision used by the class
     static let BF_num_values            =	16   // number of digit limbs
@@ -56,19 +56,19 @@ struct Real {
     //
     // Sets every value in a values array to zero
     //
-    static func BF_ClearValuesArray(inout values: [Digit]) {
+    static func BF_ClearValuesArray(inout values: [Digit], start: Int = 0, scale: Int = 1) {
         // Set the value to zero
-        values = [UInt32](count: values.count, repeatedValue: 0)
-//        for i in 0..<values.count {
-//            values[i] = 0
-//        }
+//        values = [UInt32](count: BF_num_values * scale, repeatedValue: 0)
+        for i in start..<BF_num_values * scale {
+            values[i] = 0
+        }
     }
     
     //
     // Scans a values array looking for any non-zero digits.
     //
-    static func BF_ArrayIsNonZero(values: [Digit]) -> Bool {
-        for i in 0..<values.count {
+    static func BF_ArrayIsNonZero(values: [Digit], start: Int = 0, scale: Int = 1) -> Bool {
+        for i in start..<BF_num_values * scale {
             if values[i] != 0 { return true }
         }
         
@@ -78,18 +78,22 @@ struct Real {
     //
     // Copies the source values to the destination values.
     //
-    static func BF_CopyValues(source: [Digit], inout destination: [Digit]) {
+    static func BF_CopyValues(source: [Digit], inout destination: [Digit], start: Int = 0, scale: Int = 1) {
         // Do a basic copy of the values into the destination
-        for i in 0..<destination.count {
+        for i in start..<BF_num_values * scale {
             destination[i] = source[i]
         }
+    }
+    
+    static func BF_AssignValues(inout destination: [Digit], source: [Digit], start: Int = 0, scale: Int = 1) {
+        BF_CopyValues(source, destination: &destination, start: start, scale: scale)
     }
     
     //
     // Adds a single UInt32 to an array of values.
     //
-    static func BF_AddToMantissa(inout values: [Digit], var digit: Digit, limit: Digit) {
-        for i in 0..<values.count {
+    static func BF_AddToMantissa(inout values: [Digit], var digit: Digit, limit: Digit, start: Int = 0) {
+        for i in start..<values.count {
             values[i] += digit
             digit      = values[i] / limit
             values[i] %= limit
@@ -115,11 +119,11 @@ struct Real {
     //
     // Chops a single digit off the end of the values array by dividing through by the radix.
     //
-    static func BF_RemoveDigitFromMantissa(inout values: [Digit], radix: UInt8, limit: Digit) -> Digit  {
+    static func BF_RemoveDigitFromMantissa(inout values: [Digit], radix: UInt8, limit: Digit, start: Int = 0) -> Digit  {
         // Truncate a digit by dividing through by the bf_radix
         var carryBits : Digit = 0
         
-        for i in (0..<values.count).reverse() {
+        for i in (start..<values.count).reverse() {
             values[i] = values[i] + (carryBits * limit)
             carryBits = values[i] % UInt32(radix)
             values[i] = values[i] / UInt32(radix)
@@ -391,7 +395,7 @@ struct Real {
 			nextDigit = Int(intPart)
 			
 			// Only add the digit if it is non-zero
-			if (nextDigit != 0) {
+			if nextDigit != 0 {
 				// Guard against overflow
 				if UInt64.max / UInt64(newRadix) >= mantissa {
 					mantissa = mantissa * UInt64(pow(Double(newRadix), Double(i - numDigits + 1))) + UInt64(nextDigit)
@@ -1248,33 +1252,31 @@ struct Real {
 		
 		// Apply a round to nearest on the last digit
 		if ((Double(result[Real.BF_num_values - 1]) / Double(bf_value_limit / UInt32(bf_radix))) >= (Double(bf_radix) / 2.0)) {
-			Real.BF_AddToMantissa(&result[Real.BF_num_values], 1, thisNum.bf_value_limit)
+            Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
 			
 			// If by shear fluke that cause the top digit to overflow, then shift back by one digit
 			if (result[Real.BF_num_values - 1] > thisNum.bf_value_limit) {
-				carryBits = BF_RemoveDigitFromMantissa(&result[Real.BF_num_values], thisNum.bf_radix, thisNum.bf_value_limit)
+				carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
 				thisNum.bf_exponent++
 				if Double(carryBits) >= (Double(thisNum.bf_radix) / 2.0) {
-					Real.BF_AddToMantissa(result[Real.BF_num_values], 1, thisNum.bf_value_limit)
+					Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
 				}
 			}
 		}
 		
 		// Remove any trailing zeros in the decimal places by dividing by the bf_radix until they go away
-		while (thisNum.bf_exponent < 0) && (result[Real.BF_num_values] % thisNum.bf_radix == 0) {
-			carryBits = Real.BF_RemoveDigitFromMantissa(&result[Real.BF_num_values], thisNum.bf_radix, thisNum.bf_value_limit, 1);
-			thisNum.bf_exponent++;
+		while (thisNum.bf_exponent < 0) && (result[Real.BF_num_values] % Digit(thisNum.bf_radix) == 0) {
+			carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
+			thisNum.bf_exponent++
 		}
 		if (Double(carryBits) >= (Double(thisNum.bf_radix) / 2.0)) {
-			Real.BF_AddToMantissa(&result[Real.BF_num_values], 1, thisNum.bf_value_limit)
+			Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
 		}
 		
-		
-		// Create a user pont, store all the values back in the class and we're done
-		Real.BF_AssignValues(bf_array, &result[Real.BF_num_values]);
-		[self assignElements: &thisNumElements];
-		[self createUserPoint];
-		
+		// Create a user point, store all the values back in the class and we're done
+        thisNum.bf_array = Array(result[Real.BF_num_values..<result.count])
+		thisNum.createUserPoint()
+		return thisNum
 	}
 	
     //
@@ -1284,262 +1286,220 @@ struct Real {
     // remaining tree is given to charity.
     //
     func moduloBy(num: Real) -> Real {
-        return self
-//    int					i, j, peek;
-//    unsigned long		carryBits;
-//    unsigned long		values[Real.BF_num_values * 2];
-//    unsigned long		otherNumValues[Real.BF_num_values * 2];
-//    unsigned long		result[Real.BF_num_values * 2];
-//    unsigned long		subValues[Real.BF_num_values * 2];
-//    BigFloatElements	otherNumElements;
-//    BigFloatElements	thisNumElements;
-//    unsigned long		quotient;
-//    NSComparisonResult	compare;
-//    int					divisionExponent;
-//    BigFloat			*subNum;
-//    
-//    if ([num radix] != bf_radix)
-//    {
-//    num = [num copy];
-//    [num convertToRadix:bf_radix];
-//    }
-//    
-//    // Clear the working space
-//    BF_ClearValuesArray(otherNumValues, 1);
-//    BF_ClearValuesArray(values, 1);
-//    BF_ClearValuesArray(result, 2);
-//    BF_ClearValuesArray(subValues, 2);
-//    
-//    // Get the numerical values
-//    BF_CopyValues(bf_array, &values[Real.BF_num_values]);
-//    [self copyElements: &thisNumElements];
-//    BF_CopyValues(num->bf_array, &otherNumValues[Real.BF_num_values]);
-//    [num copyElements: &otherNumElements];
-//    
-//    // ignore invalid numbers
-//    if (otherNum.bf_is_valid == NO || thisNum.bf_is_valid == NO)
-//    {
-//    bf_is_valid = NO;
-//    return;
-//    }
-//    
-//    compare = [self compareWith: num];
-//    if (compare == NSOrderedAscending)
-//    {
-//    // return unchanged if num is less than the modulor
-//    return;
-//    }
-//    
-//    // Apply the user's decimal point
-//    thisNum.bf_exponent -= thisNum.bf_user_point;
-//    thisNum.bf_user_point = 0;
-//    otherNum.bf_exponent -= otherNum.bf_user_point;
-//    otherNum.bf_user_point = 0;
-//    
-//    // Two negatives make a positive
-//    if (otherNum.bf_is_negative) (thisNum.bf_is_negative) ? (thisNum.bf_is_negative = NO) : (thisNum.bf_is_negative = YES);
-//    
-//    // Normalise this num
-//    // This involves multiplying through by the bf_radix until the number runs up against the
-//    // left edge or MSD (most significant digit)
-//    if (BF_ArrayIsNonZero(values, 2))
-//    {
-//    while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / thisNum.bf_radix))
-//    {
-//    BF_AppendDigitToMantissa(values, 0, thisNum.bf_radix, thisNum.bf_value_limit, 2);
-//    
-//    thisNum.bf_exponent--;
-//    }
-//    }
-//    else
-//    {
-//    BF_AssignValues(bf_array, &values[Real.BF_num_values]);
-//    bf_exponent = 0;
-//    bf_user_point = 0;
-//    bf_is_negative = 0;
-//    return;
-//    }
-//    
-//    // Normalise otherNum so that it cannot be greater than this num
-//    // This involves multiplying through by the bf_radix until the number runs up
-//    // against the left edge or MSD (most significant digit)
-//    // If the last multiply will make otherNum greater than this num, then we
-//    // don't do it. This ensures that the first division column will always be non-zero.
-//    if (BF_ArrayIsNonZero(otherNumValues, 2))
-//    {
-//    while
-//    (
-//    (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / otherNum.bf_radix))
-//    &&
-//    (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / otherNum.bf_radix))
-//    )
-//    {
-//    BF_AppendDigitToMantissa(otherNumValues, 0, thisNum.bf_radix, thisNum.bf_value_limit, 2);
-//    otherNum.bf_exponent--;
-//    }
-//    }
-//    else
-//    {
-//    bf_is_valid = NO;
-//    return;
-//    }
-//    
-//    // Subtract the exponents
-//    divisionExponent = thisNum.bf_exponent - otherNum.bf_exponent;
-//    
-//    // Account for the de-normalising effect of division
-//    divisionExponent -= (Real.BF_num_values - 1) * thisNum.bf_value_precision;
-//    
-//    // Set the re-normalised values so that we can subtract from self later
-//    BF_AssignValues(bf_array, &values[Real.BF_num_values]);
-//    [self assignElements: &thisNumElements];
-//    
-//    // Begin the division
-//    // What we are doing here is lining the divisor up under the divisee and subtracting the largest multiple
-//    // of the divisor that we can from the divisee with resulting in a negative number. Basically it is what
-//    // you do without really thinking about it when doing long division by hand.
-//    for (i = Real.BF_num_values * 2 - 1; i >= Real.BF_num_values - 1; i--)
-//    {
-//    // If the divisor is greater or equal to the divisee, leave this result column unchanged.
-//    if (otherNumValues[Real.BF_num_values * 2 - 1] > values[i])
-//    {
-//    if (i > 0)
-//    {
-//				values[i - 1] += values[i] * thisNum.bf_value_limit;
-//    }
-//    continue;
-//    }
-//    
-//    // Determine the quotient of this position (the multiple of  the divisor to use)
-//    quotient = values[i] / otherNumValues[Real.BF_num_values * 2 - 1];
-//    carryBits = 0;
-//    for (j = 0; j <= i; j++)
-//    {
-//    subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits;
-//    carryBits = subValues[j] / bf_value_limit;
-//    subValues[j] %= bf_value_limit;
-//    }
-//    subValues[i] += carryBits * bf_value_limit;
-//    
-//    // Check that values is greater than subValues (ie check that this subtraction won't
-//    // result in a negative number)
-//    compare = NSOrderedSame;
-//    for (j = i; j >= 0; j--)
-//    {
-//    if (values[j] > subValues[j])
-//    {
-//				compare = NSOrderedDescending;
-//				break;
-//    }
-//    else if (values[j] < subValues[j])
-//    {
-//				compare = NSOrderedAscending;
-//				break;
-//    }
-//    }
-//    
-//    // If we have overestimated the quotient, adjust appropriately. This just means that we need
-//    // to reduce the divisor's multiplier by one.
-//    while(compare == NSOrderedAscending)
-//    {
-//    quotient--;
-//    carryBits = 0;
-//    for (j = 0; j <= i; j++)
-//    {
-//				subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits;
-//				carryBits = subValues[j] / thisNum.bf_value_limit;
-//				subValues[j] %= thisNum.bf_value_limit;
-//    }
-//    subValues[i] += carryBits * thisNum.bf_value_limit;
-//    
-//    // Check that values is greater than subValues (ie check that this subtraction won't
-//    // result in a negative number)
-//    compare = NSOrderedSame;
-//    for (j = i; j >= 0; j--)
-//    {
-//				if (values[j] > subValues[j])
-//				{
-//    compare = NSOrderedDescending;
-//    break;
-//				}
-//				else if (values[j] < subValues[j])
-//				{
-//    compare = NSOrderedAscending;
-//    break;
-//				}
-//    }
-//    }
-//    
-//    // We now have the number to place in this column of the result. Yay.
-//    result[i] = quotient;
-//    
-//    // If the subtraction operation will result in no remainder, then finish
-//    if (compare == NSOrderedSame)
-//    {
-//    break;
-//    }
-//    
-//    // Subtract the sub values from values now
-//    for (j = 0; j < Real.BF_num_values * 2; j++)
-//    {
-//    if (subValues[j] > values[j])
-//    {
-//				// Since we know that this num is greater than the sub num, then we know
-//				// that this will never exceed the bounds of the array
-//				peek = 1;
-//				while(values[j + peek] == 0)
-//				{
-//    values[j + peek] = bf_value_limit - 1;
-//    peek++;
-//				}
-//				values[j + peek]--;
-//				values[j] += bf_value_limit;
-//    }
-//    values[j] -= subValues[j];
-//    }
-//    
-//    // Attach the remainder to the next column on the right so that it will be part of the next
-//    // column's operation
-//    values[i - 1] += values[i] * bf_value_limit;
-//    
-//    // Clear the remainder from this column
-//    values[i] = 0;
-//    subValues[i] = 0;
-//    }
-//    
-//    // Remove the fractional part of the division result
-//    // We know that there must be a non-fractional part since the modulor was tested to
-//    // be less or equal to the modulee
-//    while(divisionExponent < 0)
-//    {
-//    carryBits = BF_RemoveDigitFromMantissa(&result[Real.BF_num_values], thisNum.bf_radix, thisNum.bf_value_limit, 1);
-//    result[Real.BF_num_values - 1] += carryBits * thisNum.bf_value_limit;
-//    carryBits = BF_RemoveDigitFromMantissa(result, thisNum.bf_radix, thisNum.bf_value_limit, 1);
-//    divisionExponent++;
-//    }
-//    
-//    // Now create a number that is this dividend times the modulor and subtract it from the
-//    // modulee to obtain the result
-//    subNum = [[BigFloat alloc] initWithInt:0 radix:thisNum.bf_radix];
-//    [subNum setElements:thisNum.bf_radix negative:thisNum.bf_is_negative exp:divisionExponent valid:YES userPoint:0];
-//    BF_CopyValues(&result[Real.BF_num_values], subNum->bf_array);
-//    
-//    [subNum multiplyBy: num];
-//    [self subtract: subNum];
-//    
-//    // Remove any trailing zeros in the decimal places by dividing by the bf_radix until they go away
-//    BF_CopyValues(bf_array, values);
-//    [self copyElements: &thisNumElements];
-//    while((thisNum.bf_exponent < 0) && (values[0] % thisNum.bf_radix == 0))
-//    {
-//    carryBits = BF_RemoveDigitFromMantissa(values, thisNum.bf_radix, thisNum.bf_value_limit, 1);
-//    bf_exponent++;
-//    }
-//    
-//    // Create a user pont, store all the values back in the class and we're done
-//    BF_AssignValues(bf_array, values);
-//    [self assignElements: &thisNumElements];
-//    [self createUserPoint];
+        var values = [Digit](count: Real.BF_num_values * 2, repeatedValue: 0)
+        var otherNumValues = values
+        var result = values
+        var subValues = values
+        var thisNum = self
+        var otherNum = num
+        
+        if num.radix != Int(bf_radix) {
+            otherNum = num.convertToRadix(bf_radix)
+        }
+        
+        // Get the numerical values
+        values[Real.BF_num_values..<values.count] = bf_array[0..<bf_array.count]
+        otherNumValues[Real.BF_num_values..<values.count] = num.bf_array[0..<bf_array.count]
+        
+        // ignore invalid numbers
+        if !otherNum.bf_is_valid || !thisNum.bf_is_valid {
+            thisNum.bf_is_valid = false
+            return thisNum
+        }
+        
+        
+        let compare = self.compareWith(num)
+        if compare == .OrderedAscending {
+            // return unchanged if num is less than the modulor
+            return self
+        }
+        
+        // Apply the user's decimal point
+        thisNum.bf_exponent -= Int32(thisNum.bf_user_point)
+        thisNum.bf_user_point = 0
+        otherNum.bf_exponent -= Int32(otherNum.bf_user_point)
+        otherNum.bf_user_point = 0
+ 
+        // Two negatives make a positive
+        if otherNum.bf_is_negative { thisNum.bf_is_negative = thisNum.bf_is_negative ? false : true }
+        
+        // Normalise this num
+        // This involves multiplying through by the bf_radix until the number runs up against the
+        // left edge or MSD (most significant digit)
+        if Real.BF_ArrayIsNonZero(values) {
+            while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
+                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+                thisNum.bf_exponent--
+            }
+        } else {
+            thisNum.bf_array = Array(values[Real.BF_num_values..<values.count])
+            thisNum.bf_exponent = 0
+            thisNum.bf_user_point = 0
+            thisNum.bf_is_negative = false
+            
+            if !Real.BF_ArrayIsNonZero(otherNumValues) {
+                thisNum.bf_is_valid = false
+            }
+            
+            return thisNum
+        }
+        
+        // Normalise otherNum so that it cannot be greater than this num
+        // This involves multiplying through by the bf_radix until the number runs up
+        // against the left edge or MSD (most significant digit)
+        // If the last multiply will make otherNum greater than this num, then we
+        // don't do it. This ensures that the first division column will always be non-zero.
+        if Real.BF_ArrayIsNonZero(otherNumValues) {
+            while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / UInt32(otherNum.bf_radix))) &&
+                (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / Digit(otherNum.bf_radix)))
+            {
+                Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+                otherNum.bf_exponent--
+            }
+        } else {
+            thisNum.bf_is_valid = false
+            return thisNum
+        }
+        
+        // Subtract the exponents
+        var divisionExponent = thisNum.bf_exponent - otherNum.bf_exponent
+        
+        // Account for the de-normalising effect of division
+        divisionExponent -= (Real.BF_num_values - 1) * Int(thisNum.bf_value_precision)
+        
+        // Set the re-normalised values so that we can subtract from self later
+        var nself = thisNum
+        nself.bf_array = Array(values[Real.BF_num_values..<values.count])
+//        BF_AssignValues(bf_array, &values[Real.BF_num_values]);
+//        [self assignElements: &thisNumElements];
+     
+        // Begin the division
+        // What we are doing here is lining the divisor up under the divisee and subtracting the largest multiple
+        // of the divisor that we can from the divisee with resulting in a negative number. Basically it is what
+        // you do without really thinking about it when doing long division by hand.
+        var carryBits : Digit = 0
+        for i in Real.BF_num_values-1..<Real.BF_num_values * 2  {
+            // If the divisor is greater or equal to the divisee, leave this result column unchanged.
+            if otherNumValues[Real.BF_num_values * 2 - 1] > values[i] {
+                if i > 0 {
+                    values[i - 1] += values[i] * thisNum.bf_value_limit
+                }
+                continue
+            }
+            
+            // Determine the quotient of this position (the multiple of  the divisor to use)
+            var quotient = values[i] / otherNumValues[Real.BF_num_values * 2 - 1];
+            carryBits = 0
+            for j in 0...i {
+                subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits
+                carryBits = subValues[j] / thisNum.bf_value_limit
+                subValues[j] %= thisNum.bf_value_limit
+            }
+            subValues[i] += carryBits * thisNum.bf_value_limit;
+            
+            // Check that values is greater than subValues (ie check that this subtraction won't
+            // result in a negative number)
+            var compare = NSComparisonResult.OrderedSame
+            for j in (0...i).reverse() {
+                if (values[j] > subValues[j]) {
+                    compare = .OrderedDescending
+                    break
+                } else if (values[j] < subValues[j]) {
+                    compare = .OrderedAscending
+                    break
+                }
+            }
+            
+            // If we have overestimated the quotient, adjust appropriately. This just means that we need
+            // to reduce the divisor's multiplier by one.
+            while compare == .OrderedAscending {
+                quotient--
+                carryBits = 0
+                for j in 0...i {
+                    subValues[j] = otherNumValues[j + (Real.BF_num_values * 2 - 1 - i)] * quotient + carryBits;
+                    carryBits = subValues[j] / thisNum.bf_value_limit;
+                    subValues[j] %= thisNum.bf_value_limit;
+                }
+                subValues[i] += carryBits * thisNum.bf_value_limit;
+                
+                // Check that values is greater than subValues (ie check that this subtraction won't
+                // result in a negative number)
+                compare = .OrderedSame
+                for j in (0...i).reverse() {
+                    if (values[j] > subValues[j]) {
+                        compare = .OrderedDescending
+                        break
+                    } else if (values[j] < subValues[j]) {
+                        compare = .OrderedAscending
+                        break
+                    }
+                }
+            }
+            
+            // We now have the number to place in this column of the result. Yay.
+            result[i] = quotient
+            
+            // If the subtraction operation will result in no remainder, then finish
+            if (compare == .OrderedSame) {
+                break
+            }
+            
+            // Subtract the sub values from values now
+            for j in 0..<Real.BF_num_values * 2 {
+                if (subValues[j] > values[j]) {
+                    // Since we know that this num is greater than the sub num, then we know
+                    // that this will never exceed the bounds of the array
+                    var peek = 1
+                    while (values[j + peek] == 0) {
+                        values[j + peek] = thisNum.bf_value_limit - 1
+                        peek++
+                    }
+                    values[j+peek]--
+                    values[j] += thisNum.bf_value_limit
+                }
+                values[j] -= subValues[j]
+            }
+            
+            // Attach the remainder to the next column on the right so that it will be part of the next
+            // column's operation
+            values[i - 1] += values[i] * thisNum.bf_value_limit
+            
+            // Clear the remainder from this column
+            values[i] = 0
+            subValues[i] = 0
+        }
+        
+        // Remove the fractional part of the division result
+        // We know that there must be a non-fractional part since the modulor was tested to
+        // be less or equal to the modulee
+        while divisionExponent < 0 {
+            carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
+            result[Real.BF_num_values - 1] += carryBits * thisNum.bf_value_limit;
+            carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+            divisionExponent++
+        }
+        
+        // Now create a number that is this dividend times the modulor and subtract it from the
+        // modulee to obtain the result
+        var subNum = Real(int: 0, radix: thisNum.bf_radix)
+        subNum.setElements(thisNum.bf_radix, negative:thisNum.bf_is_negative, exp:divisionExponent, valid:true, userPoint:0)
+        subNum.bf_array = Array(result[Real.BF_num_values..<result.count])
+        subNum = subNum.multiplyBy(num)
+        nself = nself.subtract(subNum)
+        
+        // Remove any trailing zeros in the decimal places by dividing by the bf_radix until they go away
+        thisNum = nself
+        Real.BF_CopyValues(nself.bf_array, destination: &values)
+        while (thisNum.bf_exponent < 0) && (values[0] % Digit(thisNum.bf_radix) == 0) {
+            carryBits = Real.BF_RemoveDigitFromMantissa(&values, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+            nself.bf_exponent++
+        }
+        
+        // Create a user point, store all the values back in the class and we're done
+        nself = thisNum
+        Real.BF_AssignValues(&nself.bf_array, source: values)
+        nself.createUserPoint()
+        return nself
     }
 
 	
@@ -1618,9 +1578,6 @@ struct Real {
     }
     
     //
-    // fractionalPart
-    //
-    //
     // Sets the receiver to the receiver modulo 1.
     //
     func fractionalPart() -> Real {
@@ -1630,8 +1587,6 @@ struct Real {
         return self.moduloBy(one)
     }
     
-    //
-    // wholePart
     //
     // Sets the receiver to (receiver - (receiver modulo 1))
     //
@@ -1645,6 +1600,387 @@ struct Real {
         whole.bf_is_negative = isNegative
         return whole
     }
+    
+    // MARK: - Accessor Functions
+    //
+    // Returns the mantissa and exponent of the receiver as strings with specific formatting
+    // according to the information provided.
+    //
+    
+    private func limitedString(lengthLimit: Int, fixedPlaces places:Int, fillLimit fill:Bool, complement:UInt, inout mantissa mantissaOut:String, exponent exponentOut:String) {
+        var digits = [unichar](count: Real.BF_num_values, repeatedValue: "0")
+        unsigned long 		values[BF_num_values];
+ 
+        
+        var zeros = 0
+        let point = NSLocale.currentLocale().objectForKey(NSLocaleDecimalSeparator)
+        
+        // Handle the "not-a-number" case
+        if !bf_is_valid {
+            mantissaOut = "NaN"
+            exponentOut = ""
+            return
+        }
+        
+        // Limit the length of the output string
+        if (lengthLimit > BF_num_values * bf_value_precision)
+        {
+            lengthLimit = BF_num_values * bf_value_precision;
+        }
+        if (lengthLimit < 2)
+        {
+            // Leave at least room for 2 digits and a decimal point
+            lengthLimit = 2;
+        }
+        if (places > lengthLimit - 1)
+        places = lengthLimit - 1;
+        
+        // Trace through the number looking the the most significant non-zero digit
+        digitsInNumber = [self mantissaLength];
+        
+        // Copy the values
+        BF_CopyValues(bf_array, values);
+        exponentCopy = bf_exponent;
+        userPointCopy = bf_user_point;
+        
+        // Ensure that we don't have too many leading zeros
+        if (userPointCopy + 2 > lengthLimit + digitsInNumber)
+        {
+            bf_exponent -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+            exponentCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+            
+            bf_user_point -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+            userPointCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+            
+            if (exponentCopy < 0 && userPointCopy >= digitsInNumber)
+            {
+                bf_exponent -= userPointCopy - digitsInNumber + 1;
+                exponentCopy -= userPointCopy - digitsInNumber + 1;
+                
+                bf_user_point -= userPointCopy - digitsInNumber + 1;
+                userPointCopy -= userPointCopy - digitsInNumber + 1;
+            }
+        }
+        
+        // Handle a fixed number of decimal places
+        if (places != 0)
+        {
+            exponentCopy += places- userPointCopy;
+            userPointCopy = places;
+            
+            // If there is not enough room to display the number in the current fixed precision, bail out
+            if (digitsInNumber + exponentCopy > lengthLimit)
+            {
+                *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
+                *exponentOut = @"";
+                return;
+            }
+            
+            // Result is zero
+            if (digitsInNumber + exponentCopy <= 0 || digitsInNumber == 0)
+            {
+                int d = 0;
+                
+                digits[0] = L'0';
+                while (d < [point length])
+                {
+                    digits[1 + d] = [point characterAtIndex:d];
+                    d++;
+                }
+                for (i = 1 + d; i < places + 2; i++)
+                {
+                    digits[i] = L'0';
+                }
+                
+                *mantissaOut = [NSString stringWithCharacters:digits length:places + 2];
+                *exponentOut = @"";
+                return;
+            }
+            
+            // Too many digits so strip them back
+            carryBits = 0;
+            while (exponentCopy < 0)
+            {
+                carryBits = BF_RemoveDigitFromMantissa(values, bf_radix, bf_value_limit, 1);
+                exponentCopy++;
+                digitsInNumber--;
+            }
+            
+            // Apply round to nearest
+            if ((double)carryBits >= ((double)bf_radix / 2.0))
+            {
+                BF_AddToMantissa(values, 1, bf_value_limit, 1);
+                
+                // In the incredibly unlikely case that this rounding increases the number of digits
+                // in the number past the precision, then bail out.
+                if (values[BF_num_values - 1] / bf_value_limit != 0)
+                {
+                    *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
+                    *exponentOut = @"";
+                    return;
+                }
+            }
+            
+            // Not enough digits so pad them out
+            while (exponentCopy > 0)
+            {
+                BF_AppendDigitToMantissa(values, 0, bf_radix, bf_value_limit, 1);
+                exponentCopy--;
+                digitsInNumber++;
+            }
+            
+            if (digitsInNumber > lengthLimit)
+            {
+                *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
+                *exponentOut = @"";
+                return;
+            }
+        }
+        else if (digitsInNumber == 0)
+        {
+            // If there are no non-zero digits, return a zero string
+            *mantissaOut = @"0";
+            *exponentOut = [self exponentStringFromInt:exponentCopy];
+            return;
+        }
+        else if (digitsInNumber > lengthLimit || (userPointCopy + 1 > (signed)lengthLimit))
+        {
+            // If we have more digits than we can display, truncate the values
+            carryBits = 0;
+            while(digitsInNumber > (signed)lengthLimit || (userPointCopy + 1 > (signed)lengthLimit))
+            {
+                carryBits = BF_RemoveDigitFromMantissa(values, bf_radix, bf_value_limit, 1);
+                
+                digitsInNumber--;
+                if (userPointCopy > 0)
+                userPointCopy--;
+                else
+                exponentCopy++;
+                
+                // If all we removed was a zero, then remove it completely from the number
+                if (carryBits == 0)
+                {
+                    BF_RemoveDigitFromMantissa(bf_array, bf_radix, bf_value_limit, 1);
+                    
+                    if (bf_user_point > 0)
+                    bf_user_point--;
+                    else
+                    bf_exponent++;
+                }
+            }
+            
+            // Apply round to nearest
+            if ((double)carryBits >= ((double)bf_radix / 2.0))
+            {
+                BF_AddToMantissa(values, 1, bf_value_limit, 1);
+                
+                // If by shear fluke that cause the top digit to overflow, then shift back by one digit
+                if (values[BF_num_values - 1] / bf_value_limit != 0)
+                {
+                    BF_RemoveDigitFromMantissa(values, bf_radix, bf_value_limit, 1);
+                    
+                    if (userPointCopy > 0)
+                    userPointCopy--;
+                    else
+                    exponentCopy++;
+                }
+                
+                // We may have changed the number of digits... recount
+                digitsInNumber = (int)BF_NumDigitsInArray(values, bf_radix, bf_value_precision);
+            }
+        }
+        
+        // Scientific notation weirdisms
+        if (fill && places == 0)
+        {
+            int diff = (digitsInNumber - 1) - userPointCopy;
+            userPointCopy += diff;
+            exponentCopy += diff;
+            
+            // Not enough digits so pad them out
+            while (digitsInNumber < lengthLimit)
+            {
+                BF_AppendDigitToMantissa(values, 0, bf_radix, bf_value_limit, 1);
+                digitsInNumber++;
+                userPointCopy++;
+            }
+        }
+        
+        // Handle stuff related to negative numbers
+        currentChar = digits;
+        if (complement > 0)
+        {
+            BigFloat				*complementNumber;
+            BigFloat				*mantissaNumber;
+            unsigned long long	complementBits = ((unsigned long long)1 << (unsigned long long)(complement - 1));
+            
+            complementNumber = [[BigFloat alloc] initWithMantissa:complementBits exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
+            mantissaNumber = [complementNumber copy];
+            BF_CopyValues(mantissaNumber->bf_array, values);
+            
+            carryBits = 0;
+            while
+                (
+                    (
+                        [mantissaNumber compareWith:complementNumber] == NSOrderedDescending
+                            ||
+                            (
+                                [mantissaNumber compareWith:complementNumber] == NSOrderedSame
+                                    &&
+                                    !bf_is_negative
+                        )
+                        )
+                        &&
+                        ![mantissaNumber isZero]
+                )
+            {
+                carryBits = BF_RemoveDigitFromMantissa(mantissaNumber->bf_array, bf_radix, bf_value_limit, 1);
+                
+                if (userPointCopy > 0)
+                userPointCopy--;
+                else
+                exponentCopy++;
+            }
+            // Apply round to nearest
+            if ((double)carryBits >= ((double)bf_radix / 2.0))
+            {
+                BF_AddToMantissa(mantissaNumber->bf_array, 1, bf_value_limit, 1);
+                
+                // If by shear fluke that cause the top digit to overflow, then shift back by one digit
+                if (values[BF_num_values - 1] / bf_value_limit != 0)
+                {
+                    BF_RemoveDigitFromMantissa(mantissaNumber->bf_array, bf_radix, bf_value_limit, 1);
+                    
+                    if (userPointCopy > 0)
+                    userPointCopy--;
+                    else
+                    exponentCopy++;
+                }
+            }
+            if
+                (
+                    [mantissaNumber compareWith:complementNumber] == NSOrderedDescending
+                        ||
+                        (
+                            [mantissaNumber compareWith:complementNumber] == NSOrderedSame
+                                &&
+                                !bf_is_negative
+                    )
+                )
+            {
+                *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
+                *exponentOut = @"";
+                return;
+            }
+            
+            if (bf_is_negative)
+            {
+                BigFloat *two = [BigFloat bigFloatWithInt:2 radix:bf_radix];
+                [complementNumber multiplyBy:two];
+                [complementNumber subtract:mantissaNumber];
+                BF_CopyValues(complementNumber->bf_array, values);
+                digitsInNumber = [complementNumber mantissaLength];
+            }
+            else
+            {
+                BF_CopyValues(mantissaNumber->bf_array, values);
+                digitsInNumber = [mantissaNumber mantissaLength];
+            }
+            
+        }
+        else if (bf_is_negative)
+        {
+            *currentChar = L'-';
+            currentChar++;
+        }
+        
+        // Write any leading zeros to the string
+        if (userPointCopy >= digitsInNumber)
+        {
+            *currentChar = L'0';
+            currentChar++;
+            
+            if (userPointCopy - digitsInNumber > 0)
+            {
+                int d = 0;
+                
+                while (d < [point length])
+                {
+                    *currentChar++ = [point characterAtIndex:d];
+                    d++;
+                }
+            }
+            
+            for (i = 0; i < userPointCopy - digitsInNumber; i++)
+            {
+                *currentChar = L'0';
+                currentChar++;
+            }
+        }
+        
+        // Write the digits out to the string
+        digitsInNumber--;
+        while(digitsInNumber >= 0)
+        {
+            nextDigit = [BF_digits characterAtIndex:((int)(values[digitsInNumber / bf_value_precision] / pow(bf_radix, digitsInNumber % bf_value_precision)) % bf_radix)];
+            
+            if (userPointCopy <= digitsInNumber)
+            {
+                if (userPointCopy != 0 && userPointCopy == (digitsInNumber + 1))
+                {
+                    int d = 0;
+                    
+                    while (d < [point length])
+                    {
+                        *currentChar++ = [point characterAtIndex:d];
+                        d++;
+                    }
+                }
+                
+                *currentChar = nextDigit;
+                currentChar++;
+            }
+            else if (nextDigit == L'0' && !fill && complement == 0 && userPointCopy > digitsInNumber)
+            {
+                zeros++;
+            }
+            else
+            {
+                if (userPointCopy != 0 && userPointCopy == (digitsInNumber + 1 + zeros))
+                {
+                    int d = 0;
+                    
+                    while (d < [point length])
+                    {
+                        *currentChar++ = [point characterAtIndex:d];
+                        d++;
+                    }
+                }
+                
+                for (i = 0; i < zeros; i++)
+                {
+                    *currentChar = L'0';
+                    currentChar++;
+                }
+                *currentChar = nextDigit;
+                currentChar++;
+                zeros = 0;
+            }
+            
+            digitsInNumber--;
+        }
+        
+        *mantissaOut = [NSString stringWithCharacters:digits length:(currentChar - digits)];
+        *exponentOut = [self exponentStringFromInt:exponentCopy];
+    }
+    
+    
+    static func Test () {
+        // Basic tests of the functionality
+        let a = Real(int: 123456, radix: 10)
+        print("a = \(a)")
+    }
 
+    
 	
 }
