@@ -1168,7 +1168,7 @@ struct Real : CustomStringConvertible {
 				carryBits = subValues[j] / thisNum.bf_value_limit
 				subValues[j] %= thisNum.bf_value_limit
 			}
-			subValues[i] += carryBits * thisNum.bf_value_limit;
+			subValues[i] += carryBits * thisNum.bf_value_limit
 			
 			// Check that values is greater than subValues (ie check that this subtraction won't
 			// result in a negative number)
@@ -1602,18 +1602,72 @@ struct Real : CustomStringConvertible {
     }
     
     // MARK: - Accessor Functions
+	
+	//
+	// Interprets the given int as an exponent and formats it as a string. Why did I do this?
+	//
+	func exponentStringFromInt(exp: Int32) -> String {
+		return ""
+//	signed int			workingExponent = exp;
+//	BOOL				exponentIsNegative = NO;
+//	unichar				digits[BF_max_exponent_length];
+//	unichar				*returnString;
+//	int					currentPosition = BF_max_exponent_length - 1;
+//	// index of the end of the string
+//	int					lastNonZero = currentPosition;
+//	
+//	if (workingExponent == 0)
+//	{
+//	return @"";
+//	}
+//	
+//	// Check for a negative exponent
+//	if (workingExponent < 0)
+//	{
+//	workingExponent *= -1;
+//	exponentIsNegative = YES;
+//	}
+//	
+//	// Work right to left and fill in the digits
+//	while(currentPosition > (BF_max_exponent_length - bf_exponent_precision - 2))
+//	{
+//	digits[currentPosition] = [BF_digits characterAtIndex:(workingExponent % bf_radix)];
+//	
+//	// Keep checking for the leftmost non-zero digit
+//	if (digits[currentPosition] != L'0')
+//	lastNonZero = currentPosition;
+//	
+//	workingExponent /= bf_radix;
+//	currentPosition--;
+//	}
+//	
+//	// If all the digits were zeros, force the display of at least one zero
+//	if (lastNonZero == BF_max_exponent_length)
+//	lastNonZero--;
+//	
+//	// Don't display any superfluous leading zeros
+//	returnString = digits + lastNonZero;
+//	
+//	// Apply the sign
+//	if (exponentIsNegative)
+//	{
+//	returnString--;
+//	returnString[0] = L'-';
+//	}
+//	
+//	// Return the string
+//	return [NSString stringWithCharacters:returnString length:&digits[BF_max_exponent_length] - returnString];
+	}
+	
     //
     // Returns the mantissa and exponent of the receiver as strings with specific formatting
     // according to the information provided.
     //
-    
-    private func limitedString(lengthLimit: Int, fixedPlaces places:Int, fillLimit fill:Bool, complement:UInt, inout mantissa mantissaOut:String, exponent exponentOut:String) {
-        var digits = [unichar](count: Real.BF_num_values, repeatedValue: "0")
-        unsigned long 		values[BF_num_values];
- 
-        
+    private func limitedString(var lengthLimit: Int, var fixedPlaces places:Int, fillLimit fill:Bool, complement:UInt, inout mantissa mantissaOut:String, inout exponent exponentOut:String) {
+        var digits = [Character](count: Real.BF_num_values, repeatedValue: "0")
+        var values = [Digit](count: Real.BF_num_values, repeatedValue: 0)
         var zeros = 0
-        let point = NSLocale.currentLocale().objectForKey(NSLocaleDecimalSeparator)
+        let point = NSLocale.currentLocale().objectForKey(NSLocaleDecimalSeparator) as! String
         
         // Handle the "not-a-number" case
         if !bf_is_valid {
@@ -1622,356 +1676,294 @@ struct Real : CustomStringConvertible {
             return
         }
         
-        // Limit the length of the output string
-        if (lengthLimit > BF_num_values * bf_value_precision)
-        {
-            lengthLimit = BF_num_values * bf_value_precision;
-        }
-        if (lengthLimit < 2)
-        {
-            // Leave at least room for 2 digits and a decimal point
-            lengthLimit = 2;
-        }
-        if (places > lengthLimit - 1)
-        places = lengthLimit - 1;
-        
+		// Limit the length of the output string
+		if lengthLimit > Real.BF_num_values * Int(bf_value_precision) {
+			lengthLimit = Real.BF_num_values * Int(bf_value_precision)
+		}
+		if lengthLimit < 2 {
+			// Leave at least room for 2 digits and a decimal point
+			lengthLimit = 2
+		}
+		if (places > lengthLimit - 1) {
+			places = lengthLimit - 1;
+		}
+		
         // Trace through the number looking the the most significant non-zero digit
-        digitsInNumber = [self mantissaLength];
-        
+        var digitsInNumber = self.mantissaLength
+		
         // Copy the values
-        BF_CopyValues(bf_array, values);
-        exponentCopy = bf_exponent;
-        userPointCopy = bf_user_point;
+        Real.BF_CopyValues(bf_array, destination: &values)
+        var exponentCopy = bf_exponent;
+		var userPointCopy = Int(bf_user_point)
         
         // Ensure that we don't have too many leading zeros
-        if (userPointCopy + 2 > lengthLimit + digitsInNumber)
-        {
-            bf_exponent -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
-            exponentCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+        if userPointCopy + 2 > lengthLimit + digitsInNumber {
+//            bf_exponent -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+            exponentCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2
             
-            bf_user_point -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
-            userPointCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+//            bf_user_point -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
+            userPointCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2
             
-            if (exponentCopy < 0 && userPointCopy >= digitsInNumber)
-            {
-                bf_exponent -= userPointCopy - digitsInNumber + 1;
-                exponentCopy -= userPointCopy - digitsInNumber + 1;
+            if (exponentCopy < 0 && userPointCopy >= digitsInNumber) {
+ //               bf_exponent -= userPointCopy - digitsInNumber + 1;
+                exponentCopy -= userPointCopy - digitsInNumber + 1
                 
-                bf_user_point -= userPointCopy - digitsInNumber + 1;
-                userPointCopy -= userPointCopy - digitsInNumber + 1;
+ //               bf_user_point -= userPointCopy - digitsInNumber + 1;
+                userPointCopy -= userPointCopy - digitsInNumber + 1
             }
         }
         
         // Handle a fixed number of decimal places
-        if (places != 0)
-        {
-            exponentCopy += places- userPointCopy;
-            userPointCopy = places;
+		if places != 0 {
+            exponentCopy += places - userPointCopy
+            userPointCopy = places
             
             // If there is not enough room to display the number in the current fixed precision, bail out
-            if (digitsInNumber + exponentCopy > lengthLimit)
-            {
-                *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
-                *exponentOut = @"";
-                return;
+            if digitsInNumber + exponentCopy > Int32(lengthLimit) {
+                mantissaOut = "∞"
+                exponentOut = ""
+                return
             }
             
             // Result is zero
-            if (digitsInNumber + exponentCopy <= 0 || digitsInNumber == 0)
-            {
-                int d = 0;
+            if digitsInNumber + exponentCopy <= 0 || digitsInNumber == 0 {
+                var d = 0
                 
-                digits[0] = L'0';
-                while (d < [point length])
-                {
-                    digits[1 + d] = [point characterAtIndex:d];
-                    d++;
+                digits[0] = "0"
+                while d < point.count() {
+                    digits[1 + d] = point[d]
+                    d++
                 }
-                for (i = 1 + d; i < places + 2; i++)
-                {
-                    digits[i] = L'0';
+                for i in 1+d..<places+2 {
+                    digits[i] = "0"
                 }
                 
-                *mantissaOut = [NSString stringWithCharacters:digits length:places + 2];
-                *exponentOut = @"";
-                return;
+				mantissaOut = String(digits[0..<places+2])
+                exponentOut = ""
+                return
             }
             
             // Too many digits so strip them back
-            carryBits = 0;
-            while (exponentCopy < 0)
-            {
-                carryBits = BF_RemoveDigitFromMantissa(values, bf_radix, bf_value_limit, 1);
-                exponentCopy++;
-                digitsInNumber--;
+			var carryBits : Digit = 0
+            while exponentCopy < 0 {
+                carryBits = Real.BF_RemoveDigitFromMantissa(&values, radix: bf_radix, limit: bf_value_limit)
+                exponentCopy++
+                digitsInNumber--
             }
             
             // Apply round to nearest
-            if ((double)carryBits >= ((double)bf_radix / 2.0))
-            {
-                BF_AddToMantissa(values, 1, bf_value_limit, 1);
+            if Double(carryBits) >= (Double(bf_radix) / 2.0) {
+                Real.BF_AddToMantissa(&values, digit: 1, limit: bf_value_limit)
                 
                 // In the incredibly unlikely case that this rounding increases the number of digits
                 // in the number past the precision, then bail out.
-                if (values[BF_num_values - 1] / bf_value_limit != 0)
-                {
-                    *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
-                    *exponentOut = @"";
-                    return;
+                if (values[Real.BF_num_values - 1] / bf_value_limit != 0) {
+					mantissaOut = "∞"
+                    exponentOut = ""
+                    return
                 }
             }
             
             // Not enough digits so pad them out
-            while (exponentCopy > 0)
-            {
-                BF_AppendDigitToMantissa(values, 0, bf_radix, bf_value_limit, 1);
-                exponentCopy--;
-                digitsInNumber++;
+            while (exponentCopy > 0) {
+                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: bf_radix, limit: bf_value_limit)
+                exponentCopy--
+                digitsInNumber++
             }
             
-            if (digitsInNumber > lengthLimit)
-            {
-                *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
-                *exponentOut = @"";
-                return;
+            if digitsInNumber > lengthLimit {
+				mantissaOut = "∞"
+                exponentOut = ""
+                return
             }
-        }
-        else if (digitsInNumber == 0)
-        {
+        } else if digitsInNumber == 0 {
             // If there are no non-zero digits, return a zero string
-            *mantissaOut = @"0";
-            *exponentOut = [self exponentStringFromInt:exponentCopy];
-            return;
-        }
-        else if (digitsInNumber > lengthLimit || (userPointCopy + 1 > (signed)lengthLimit))
-        {
-            // If we have more digits than we can display, truncate the values
-            carryBits = 0;
-            while(digitsInNumber > (signed)lengthLimit || (userPointCopy + 1 > (signed)lengthLimit))
-            {
-                carryBits = BF_RemoveDigitFromMantissa(values, bf_radix, bf_value_limit, 1);
-                
-                digitsInNumber--;
-                if (userPointCopy > 0)
-                userPointCopy--;
-                else
-                exponentCopy++;
-                
-                // If all we removed was a zero, then remove it completely from the number
-                if (carryBits == 0)
-                {
-                    BF_RemoveDigitFromMantissa(bf_array, bf_radix, bf_value_limit, 1);
-                    
-                    if (bf_user_point > 0)
-                    bf_user_point--;
-                    else
-                    bf_exponent++;
-                }
-            }
-            
+            mantissaOut = "0"
+            exponentOut = self.exponentStringFromInt(exponentCopy)
+            return
+		} else if (digitsInNumber > lengthLimit || (userPointCopy + 1 > lengthLimit)) {
+			// If we have more digits than we can display, truncate the values
+			var carryBits : Digit = 0
+			while digitsInNumber > lengthLimit || (userPointCopy + 1 > lengthLimit) {
+				carryBits = Real.BF_RemoveDigitFromMantissa(&values, radix: bf_radix, limit: bf_value_limit)
+				
+				digitsInNumber--
+				if userPointCopy > 0 {
+					userPointCopy--
+				} else {
+					exponentCopy++
+				}
+				
+				// If all we removed was a zero, then remove it completely from the number
+//				if carryBits == 0 {
+//					Real.BF_RemoveDigitFromMantissa(bf_array, bf_radix, bf_value_limit)
+//					
+//					if (bf_user_point > 0)
+//					bf_user_point--;
+//					else
+//					bf_exponent++;
+//				}
+			}
+			
             // Apply round to nearest
-            if ((double)carryBits >= ((double)bf_radix / 2.0))
-            {
-                BF_AddToMantissa(values, 1, bf_value_limit, 1);
-                
-                // If by shear fluke that cause the top digit to overflow, then shift back by one digit
-                if (values[BF_num_values - 1] / bf_value_limit != 0)
-                {
-                    BF_RemoveDigitFromMantissa(values, bf_radix, bf_value_limit, 1);
-                    
-                    if (userPointCopy > 0)
-                    userPointCopy--;
-                    else
-                    exponentCopy++;
-                }
-                
+			if Double(carryBits) >= (Double(bf_radix) / 2.0) {
+				Real.BF_AddToMantissa(&values, digit: 1, limit: bf_value_limit)
+				
+				// If by shear fluke that cause the top digit to overflow, then shift back by one digit
+				if (values[Real.BF_num_values - 1] / bf_value_limit != 0) {
+					Real.BF_RemoveDigitFromMantissa(&values, radix: bf_radix, limit: bf_value_limit)
+					
+					if (userPointCopy > 0) {
+						userPointCopy--;
+					} else {
+						exponentCopy++
+					}
+				}
+				
                 // We may have changed the number of digits... recount
-                digitsInNumber = (int)BF_NumDigitsInArray(values, bf_radix, bf_value_precision);
+                digitsInNumber = Int(Real.BF_NumDigitsInArray(values, radix: bf_radix, precision: bf_value_precision))
             }
         }
         
         // Scientific notation weirdisms
-        if (fill && places == 0)
-        {
-            int diff = (digitsInNumber - 1) - userPointCopy;
-            userPointCopy += diff;
-            exponentCopy += diff;
+        if fill && places == 0 {
+            let diff = (digitsInNumber - 1) - userPointCopy
+            userPointCopy += diff
+            exponentCopy += diff
             
             // Not enough digits so pad them out
-            while (digitsInNumber < lengthLimit)
-            {
-                BF_AppendDigitToMantissa(values, 0, bf_radix, bf_value_limit, 1);
-                digitsInNumber++;
-                userPointCopy++;
+            while (digitsInNumber < lengthLimit) {
+                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: bf_radix, limit: bf_value_limit)
+                digitsInNumber++
+                userPointCopy++
             }
         }
         
         // Handle stuff related to negative numbers
-        currentChar = digits;
-        if (complement > 0)
-        {
-            BigFloat				*complementNumber;
-            BigFloat				*mantissaNumber;
-            unsigned long long	complementBits = ((unsigned long long)1 << (unsigned long long)(complement - 1));
+        var currentChar = 0  // digits
+        if complement > 0 {
+			var complementNumber: Real
+			var mantissaNumber: Real
+            let complementBits = UInt64(1) << UInt64(complement - 1)
             
-            complementNumber = [[BigFloat alloc] initWithMantissa:complementBits exponent:0 isNegative:0 radix:bf_radix userPointAt:0];
-            mantissaNumber = [complementNumber copy];
-            BF_CopyValues(mantissaNumber->bf_array, values);
+			complementNumber = Real(mantissa: complementBits, exponent: 0, isNegative: false, radix: bf_radix, userPointAt: 0)
+            mantissaNumber = complementNumber
+            Real.BF_CopyValues(mantissaNumber.bf_array, destination: &values)
             
-            carryBits = 0;
-            while
-                (
-                    (
-                        [mantissaNumber compareWith:complementNumber] == NSOrderedDescending
-                            ||
-                            (
-                                [mantissaNumber compareWith:complementNumber] == NSOrderedSame
-                                    &&
-                                    !bf_is_negative
-                        )
-                        )
-                        &&
-                        ![mantissaNumber isZero]
-                )
-            {
-                carryBits = BF_RemoveDigitFromMantissa(mantissaNumber->bf_array, bf_radix, bf_value_limit, 1);
-                
-                if (userPointCopy > 0)
-                userPointCopy--;
-                else
-                exponentCopy++;
-            }
+			var carryBits : Digit = 0
+			while (
+				(mantissaNumber.compareWith(complementNumber) == .OrderedDescending  ||
+					(mantissaNumber.compareWith(complementNumber) == .OrderedSame  && !bf_is_negative)) && !mantissaNumber.isZero
+				)
+			{
+				carryBits = Real.BF_RemoveDigitFromMantissa(&mantissaNumber.bf_array, radix: bf_radix, limit: bf_value_limit)
+				
+				if (userPointCopy > 0) {
+					userPointCopy--;
+				} else {
+					exponentCopy++
+				}
+			}
             // Apply round to nearest
-            if ((double)carryBits >= ((double)bf_radix / 2.0))
-            {
-                BF_AddToMantissa(mantissaNumber->bf_array, 1, bf_value_limit, 1);
+            if (Double(carryBits) >= (Double(bf_radix) / 2.0)) {
+                Real.BF_AddToMantissa(&mantissaNumber.bf_array, digit: 1, limit: bf_value_limit)
                 
                 // If by shear fluke that cause the top digit to overflow, then shift back by one digit
-                if (values[BF_num_values - 1] / bf_value_limit != 0)
-                {
-                    BF_RemoveDigitFromMantissa(mantissaNumber->bf_array, bf_radix, bf_value_limit, 1);
+                if (values[Real.BF_num_values - 1] / bf_value_limit != 0) {
+                    Real.BF_RemoveDigitFromMantissa(&mantissaNumber.bf_array, radix: bf_radix, limit: bf_value_limit)
                     
-                    if (userPointCopy > 0)
-                    userPointCopy--;
-                    else
-                    exponentCopy++;
+					if (userPointCopy > 0) {
+						userPointCopy--;
+					} else {
+						exponentCopy++
+					}
                 }
             }
-            if
-                (
-                    [mantissaNumber compareWith:complementNumber] == NSOrderedDescending
-                        ||
-                        (
-                            [mantissaNumber compareWith:complementNumber] == NSOrderedSame
-                                &&
-                                !bf_is_negative
-                    )
-                )
+            if (mantissaNumber.compareWith(complementNumber) == .OrderedDescending ||
+               (mantissaNumber.compareWith(complementNumber) == .OrderedSame && !bf_is_negative))
             {
-                *mantissaOut = [[NSBundle bundleForClass:[self class]] localizedStringForKey:@"Value Exceeds Precision" value:nil table:nil];
-                *exponentOut = @"";
-                return;
+				mantissaOut = "∞"
+                exponentOut = ""
+                return
             }
             
-            if (bf_is_negative)
-            {
-                BigFloat *two = [BigFloat bigFloatWithInt:2 radix:bf_radix];
-                [complementNumber multiplyBy:two];
-                [complementNumber subtract:mantissaNumber];
-                BF_CopyValues(complementNumber->bf_array, values);
-                digitsInNumber = [complementNumber mantissaLength];
-            }
-            else
-            {
-                BF_CopyValues(mantissaNumber->bf_array, values);
-                digitsInNumber = [mantissaNumber mantissaLength];
+            if bf_is_negative {
+                let two = Real(int: 2, radix: bf_radix)
+                complementNumber = complementNumber.multiplyBy(two)
+                complementNumber = complementNumber.subtract(mantissaNumber)
+                Real.BF_CopyValues(complementNumber.bf_array, destination: &values)
+                digitsInNumber = complementNumber.mantissaLength
+            } else {
+                Real.BF_CopyValues(mantissaNumber.bf_array, destination: &values)
+                digitsInNumber = mantissaNumber.mantissaLength
             }
             
-        }
-        else if (bf_is_negative)
-        {
-            *currentChar = L'-';
-            currentChar++;
+        } else if bf_is_negative {
+            digits[currentChar] = "-"
+            currentChar++
         }
         
         // Write any leading zeros to the string
-        if (userPointCopy >= digitsInNumber)
-        {
-            *currentChar = L'0';
-            currentChar++;
+        if userPointCopy >= digitsInNumber {
+            digits[currentChar] = "0"
+            currentChar++
             
-            if (userPointCopy - digitsInNumber > 0)
-            {
-                int d = 0;
+            if (userPointCopy - digitsInNumber > 0) {
+                var d = 0
                 
-                while (d < [point length])
-                {
-                    *currentChar++ = [point characterAtIndex:d];
-                    d++;
+                while d < point.count() {
+                    digits[currentChar++] = point[d]
+                    d++
                 }
             }
             
-            for (i = 0; i < userPointCopy - digitsInNumber; i++)
-            {
-                *currentChar = L'0';
-                currentChar++;
+            for _ in 0..<userPointCopy - digitsInNumber {
+                digits[currentChar] = "0"
+                currentChar++
             }
         }
         
         // Write the digits out to the string
-        digitsInNumber--;
-        while(digitsInNumber >= 0)
-        {
-            nextDigit = [BF_digits characterAtIndex:((int)(values[digitsInNumber / bf_value_precision] / pow(bf_radix, digitsInNumber % bf_value_precision)) % bf_radix)];
+        digitsInNumber--
+        while digitsInNumber >= 0 {
+            let nextDigit = Real.BF_digits[(Int(Double(values[digitsInNumber / Int(bf_value_precision)]) / pow(Double(bf_radix), Double(digitsInNumber % Int(bf_value_precision)))) % Int(bf_radix))]
             
-            if (userPointCopy <= digitsInNumber)
-            {
-                if (userPointCopy != 0 && userPointCopy == (digitsInNumber + 1))
-                {
-                    int d = 0;
-                    
-                    while (d < [point length])
-                    {
-                        *currentChar++ = [point characterAtIndex:d];
-                        d++;
+            if userPointCopy <= digitsInNumber {
+                if userPointCopy != 0 && userPointCopy == (digitsInNumber + 1) {
+                    var d = 0
+                    while d < point.count() {
+                        digits[currentChar++] = point[d]
+                        d++
                     }
                 }
                 
-                *currentChar = nextDigit;
-                currentChar++;
-            }
-            else if (nextDigit == L'0' && !fill && complement == 0 && userPointCopy > digitsInNumber)
-            {
-                zeros++;
-            }
-            else
-            {
-                if (userPointCopy != 0 && userPointCopy == (digitsInNumber + 1 + zeros))
-                {
-                    int d = 0;
-                    
-                    while (d < [point length])
-                    {
-                        *currentChar++ = [point characterAtIndex:d];
-                        d++;
-                    }
+                digits[currentChar] = nextDigit
+                currentChar++
+            } else if (nextDigit == "0" && !fill && complement == 0 && userPointCopy > digitsInNumber) {
+                zeros++
+            } else {
+                if (userPointCopy != 0 && userPointCopy == (digitsInNumber + 1 + zeros)) {
+                    var d = 0
+					while d < point.count() {
+						digits[currentChar++] = point[d]
+						d++
+					}
                 }
-                
-                for (i = 0; i < zeros; i++)
-                {
-                    *currentChar = L'0';
-                    currentChar++;
+				
+                for _ in 0..<zeros {
+                    digits[currentChar] = "0"
+                    currentChar++
                 }
-                *currentChar = nextDigit;
-                currentChar++;
-                zeros = 0;
+                digits[currentChar] = nextDigit
+                currentChar++
+                zeros = 0
             }
             
-            digitsInNumber--;
+            digitsInNumber--
         }
         
-        *mantissaOut = [NSString stringWithCharacters:digits length:(currentChar - digits)];
-        *exponentOut = [self exponentStringFromInt:exponentCopy];
+        mantissaOut = String(digits[0..<currentChar])  // [NSString stringWithCharacters:digits length:(currentChar - digits)];
+        exponentOut = self.exponentStringFromInt(exponentCopy)
     }
     
     
