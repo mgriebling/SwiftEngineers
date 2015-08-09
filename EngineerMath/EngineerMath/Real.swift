@@ -22,7 +22,24 @@
 
 import Foundation
 
-struct Real : CustomStringConvertible {
+// Comparable compliance
+public func == (lhs: Real, rhs: Real) -> Bool { return lhs.compareWith(rhs) == .OrderedSame }
+public func < (lhs: Real, rhs: Real) -> Bool { return lhs.compareWith(rhs) == .OrderedAscending }
+
+prefix func + (z:Real) -> Real { return z }
+public func + (lhs: Real, rhs: Real) -> Real { return lhs.add(rhs) }
+public func += (inout lhs: Real, rhs: Real) { lhs = lhs + rhs }
+prefix func - (z:Real) -> Real { return z.negate() }
+public func - (lhs: Real, rhs: Real) -> Real { return lhs.subtract(rhs) }
+public func -= (inout lhs: Real, rhs: Real) { lhs = lhs - rhs }
+public func * (lhs: Real, rhs: Real) -> Real { return lhs.multiplyBy(rhs) }
+public func *= (inout lhs: Real, rhs: Real) { lhs = lhs * rhs }
+public func / (lhs: Real, rhs: Real) -> Real { return lhs.divideBy(rhs) }
+public func /= (inout lhs: Real, rhs: Real) { lhs = lhs / rhs }
+public func % (lhs: Real, rhs: Real) -> Real { return lhs.moduloBy(rhs) }
+public func %= (inout lhs: Real, rhs: Real) { lhs = lhs % rhs }
+
+public struct Real : CustomStringConvertible, Comparable {
 
     // Basic constants defining the precision used by the class
     static let BF_num_values            =	16   // number of digit limbs
@@ -56,19 +73,16 @@ struct Real : CustomStringConvertible {
     //
     // Sets every value in a values array to zero
     //
-    static func BF_ClearValuesArray(inout values: [Digit], start: Int = 0, scale: Int = 1) {
+    static func BF_ClearValuesArray(inout values: [Digit]) {
         // Set the value to zero
-//        values = [UInt32](count: BF_num_values * scale, repeatedValue: 0)
-        for i in start..<BF_num_values * scale {
-            values[i] = 0
-        }
+        values = [UInt32](count: values.count, repeatedValue: 0)
     }
     
     //
     // Scans a values array looking for any non-zero digits.
     //
-    static func BF_ArrayIsNonZero(values: [Digit], start: Int = 0, scale: Int = 1) -> Bool {
-        for i in start..<BF_num_values * scale {
+    static func BF_ArrayIsNonZero(values: [Digit], start: Int = 0) -> Bool {
+        for i in start..<values.count {
             if values[i] != 0 { return true }
         }
         
@@ -78,22 +92,22 @@ struct Real : CustomStringConvertible {
     //
     // Copies the source values to the destination values.
     //
-    static func BF_CopyValues(source: [Digit], inout destination: [Digit], start: Int = 0, scale: Int = 1) {
+    static func BF_CopyValues(source: [Digit], inout destination: [Digit], sstart: Int = 0, dstart: Int = 0) {
         // Do a basic copy of the values into the destination
-        for i in start..<BF_num_values * scale {
-            destination[i] = source[i]
+        for i in 0..<BF_num_values {
+            destination[i+dstart] = source[i+sstart]
         }
     }
     
-    static func BF_AssignValues(inout destination: [Digit], source: [Digit], start: Int = 0, scale: Int = 1) {
-        BF_CopyValues(source, destination: &destination, start: start, scale: scale)
+    static func BF_AssignValues(inout destination: [Digit], source: [Digit], sstart: Int = 0, dstart: Int = 0) {
+        BF_CopyValues(source, destination: &destination, sstart: sstart, dstart: dstart)
     }
     
     //
     // Adds a single UInt32 to an array of values.
     //
-    static func BF_AddToMantissa(inout values: [Digit], var digit: Digit, limit: Digit, start: Int = 0) {
-        for i in start..<values.count {
+    static func BF_AddToMantissa(inout values: [Digit], var digit: Digit, limit: Digit, start: Int = 0, scale: Int = 1) {
+        for i in start..<start+BF_num_values*scale {
             values[i] += digit
             digit      = values[i] / limit
             values[i] %= limit
@@ -106,9 +120,9 @@ struct Real : CustomStringConvertible {
     // Appends a single radix digit to the least significant end of the values array. Space
     // is made for the digit by multiplying through by the radix first.
     //
-    static func BF_AppendDigitToMantissa(inout values: [Digit], var digit: Digit, radix: UInt8, limit: Digit) {
+    static func BF_AppendDigitToMantissa(inout values: [Digit], var digit: Digit, radix: UInt8, limit: Digit, scale: Int = 1) {
         // Multiply through by the bf_radix and add the digit
-        for i in 0..<values.count {
+        for i in 0..<BF_num_values * scale {
             values[i] = (values[i] * UInt32(radix)) + digit
             digit	  = values[i] / limit
             values[i] = values[i] % limit
@@ -119,11 +133,11 @@ struct Real : CustomStringConvertible {
     //
     // Chops a single digit off the end of the values array by dividing through by the radix.
     //
-    static func BF_RemoveDigitFromMantissa(inout values: [Digit], radix: UInt8, limit: Digit, start: Int = 0) -> Digit  {
+    static func BF_RemoveDigitFromMantissa(inout values: [Digit], radix: UInt8, limit: Digit, start: Int = 0, scale: Int = 1) -> Digit  {
         // Truncate a digit by dividing through by the bf_radix
         var carryBits : Digit = 0
         
-        for i in (start..<values.count).reverse() {
+        for i in (start..<BF_num_values*scale).reverse() {
             values[i] = values[i] + (carryBits * limit)
             carryBits = values[i] % UInt32(radix)
             values[i] = values[i] / UInt32(radix)
@@ -739,8 +753,8 @@ struct Real : CustomStringConvertible {
         values.bf_value_limit = UInt32(pow(Double(newRadix), Double(values.bf_value_precision)))
         
         // Clear the working space
-        var reversed = [Digit](count:self.bf_array.count*2, repeatedValue:0)
-        var result = [Digit](count:self.bf_array.count*2, repeatedValue:0)
+        var reversed = [Digit](count:Real.BF_max_radix*2, repeatedValue:0)
+        var result = [Digit](count:Real.BF_max_radix*2, repeatedValue:0)
         
         // Re-encode the mantissa
         for _ in 0..<(Int(values.bf_value_precision) * Real.BF_num_values * 2) {
@@ -748,21 +762,21 @@ struct Real : CustomStringConvertible {
             let carryBits = Real.BF_RemoveDigitFromMantissa(&values.bf_array, radix: newRadix, limit: bf_value_limit)
             
             // Put all the digits in the new number
-            Real.BF_AppendDigitToMantissa(&reversed, digit: carryBits, radix: newRadix, limit: values.bf_value_limit)
+            Real.BF_AppendDigitToMantissa(&reversed, digit: carryBits, radix: newRadix, limit: values.bf_value_limit, scale:2)
         }
         
         // Which is fine, except that all the digits are now reversed
         for _ in 0..<(Int(values.bf_value_precision) * Real.BF_num_values * 2) {
             // Take out backwards
-            let carryBits = Real.BF_RemoveDigitFromMantissa(&reversed, radix: newRadix, limit: values.bf_value_limit)
+            let carryBits = Real.BF_RemoveDigitFromMantissa(&reversed, radix: newRadix, limit: values.bf_value_limit, scale:2)
             
             // And put in forwards
-            Real.BF_AppendDigitToMantissa(&result, digit: carryBits, radix: newRadix, limit: values.bf_value_limit)
+            Real.BF_AppendDigitToMantissa(&result, digit: carryBits, radix: newRadix, limit: values.bf_value_limit, scale:2)
         }
         
         // if result is too big, truncate until it fits into the allowed space
         while result[Real.BF_num_values] > 0 {
-            Real.BF_RemoveDigitFromMantissa(&result, radix: newRadix, limit: values.bf_value_limit)
+            Real.BF_RemoveDigitFromMantissa(&result, radix: newRadix, limit: values.bf_value_limit, scale:2)
             values.bf_exponent++
         }
         
@@ -782,9 +796,9 @@ struct Real : CustomStringConvertible {
 	// MARK: - Arithmetic Functions
     
     //
-    // Takes the third root of the receiver
+    // Takes the receiver to the nth power.
     //
-    func raiseToIntPower(n: Int) -> Real {
+    public func raiseToIntPower(n: Int) -> Real {
         var Z = Real(0, radix: bf_radix)
         var N = Swift.abs(n)
         var Y = Real(1, radix: bf_radix)
@@ -816,7 +830,7 @@ struct Real : CustomStringConvertible {
 	//
 	// If I have one apple and you give me another apple, how many apples do I have.
 	//
-	func add(num: Real) -> Real {
+	public func add(num: Real) -> Real {
 		var thisNum = self
 		var otherNum = num
 		
@@ -881,7 +895,7 @@ struct Real : CustomStringConvertible {
 	// I have two apples (one of them used to be yours). I eat yours. How many apples do
 	// I have now?.
 	//
-	func subtract(num: Real) -> Real {
+	public func subtract(num: Real) -> Real {
 		var thisNum = self
 		var otherNum = num
 		
@@ -974,7 +988,7 @@ struct Real : CustomStringConvertible {
 	// I take the 8 seeds out of my apple. I plant them in the ground and grow 8 trees.
 	// Each tree has 8 apples, how successful is my orchard?
 	//
-	func multiplyBy(num: Real) -> Real {
+	public func multiplyBy(num: Real) -> Real {
 		var thisNum = self
 		var otherNum = num
 		var result = [Digit](count: Real.BF_num_values * 2, repeatedValue: 0)
@@ -1027,8 +1041,8 @@ struct Real : CustomStringConvertible {
 		
 		// If we have exceeded the precision, divide by the bf_radix until
 		// we are reeled back in.
-		while Real.BF_ArrayIsNonZero(Array(result[Real.BF_num_values..<result.count])) {
-			carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+        while Real.BF_ArrayIsNonZero(result, start:Real.BF_num_values) {
+			carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 			thisNum.bf_exponent++
 		}
 		
@@ -1055,7 +1069,7 @@ struct Real : CustomStringConvertible {
     // You see my orchard and get jealous. You start a fire that takes out half my crop.
     // How do you explain your actions to the judge?
     //
-    func divideBy(num: Real) -> Real {
+    public func divideBy(num: Real) -> Real {
 		var values = [Digit](count: Real.BF_num_values * 2, repeatedValue: 0)
 		var otherNumValues = values
 		var result = values
@@ -1068,8 +1082,8 @@ struct Real : CustomStringConvertible {
 		}
 		
 		// Get the numerical values
-		values[Real.BF_num_values..<values.count] = bf_array[0..<bf_array.count]
-		otherNumValues[Real.BF_num_values..<values.count] = num.bf_array[0..<bf_array.count]
+        Real.BF_CopyValues(bf_array, destination: &values, dstart: Real.BF_num_values)
+        Real.BF_CopyValues(otherNum.bf_array, destination: &otherNumValues, dstart: Real.BF_num_values)
 		
 		// ignore invalid numbers
 		if !otherNum.bf_is_valid || !thisNum.bf_is_valid {
@@ -1089,18 +1103,18 @@ struct Real : CustomStringConvertible {
 		// Normalise this num
 		// This involves multiplying through by the bf_radix until the number runs up against the
 		// left edge or MSD (most significant digit)
-        if Real.BF_ArrayIsNonZero(values, start: 0, scale:2) {
+        if Real.BF_ArrayIsNonZero(values) {
 			while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
-				Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 				thisNum.bf_exponent--
 			}
 		} else {
-			thisNum.bf_array = Array(values[Real.BF_num_values..<values.count])
+            Real.BF_AssignValues(&thisNum.bf_array, source: values, sstart:Real.BF_num_values)
 			thisNum.bf_exponent = 0
 			thisNum.bf_user_point = 0
 			thisNum.bf_is_negative = false
 			
-			if !Real.BF_ArrayIsNonZero(otherNumValues, start: 0, scale:2) {
+			if !Real.BF_ArrayIsNonZero(otherNumValues) {
 				thisNum.bf_is_valid = false
 			}
 			
@@ -1111,11 +1125,11 @@ struct Real : CustomStringConvertible {
 		// this num did in the first place. So we may have to divide through by bf_radix
 		// once to normalise otherNum
 		if (otherNumValues[Real.BF_num_values * 2 - 1] > values[Real.BF_num_values * 2 - 1]) {
-			let carryBits = Real.BF_RemoveDigitFromMantissa(&otherNumValues, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+            let carryBits = Real.BF_RemoveDigitFromMantissa(&otherNumValues, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 			otherNum.bf_exponent++
 			
 			if (Double(carryBits) >= (Double(otherNum.bf_radix) / 2.0)) {
-				Real.BF_AddToMantissa(&otherNumValues, digit: 1, limit: otherNum.bf_value_limit)
+				Real.BF_AddToMantissa(&otherNumValues, digit: 1, limit: otherNum.bf_value_limit, scale:2)
 			}
 		} else {
 			// Normalise otherNum so that it cannot be greater than this num
@@ -1123,11 +1137,11 @@ struct Real : CustomStringConvertible {
 			// against the left edge or MSD (most significant digit)
 			// If the last multiply will make otherNum greater than this num, then we
 			// don't do it. This ensures that the first division column will always be non-zero.
-			if Real.BF_ArrayIsNonZero(otherNumValues, start: 0, scale:2) {
+			if Real.BF_ArrayIsNonZero(otherNumValues) {
 				while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / UInt32(otherNum.bf_radix))) &&
 					  (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / Digit(otherNum.bf_radix)))
 				{
-					Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+					Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 					otherNum.bf_exponent--
 				}
 			} else {
@@ -1147,7 +1161,7 @@ struct Real : CustomStringConvertible {
 		// of the divisor that we can from the divisee with resulting in a negative number. Basically it is what
 		// you do without really thinking about it when doing long division by hand.
 		var carryBits : Digit = 0
-		for i in Real.BF_num_values-1..<Real.BF_num_values * 2  {
+		for i in (Real.BF_num_values-1..<Real.BF_num_values * 2).reverse() {
 			// If the divisor is greater or equal to the divisee, leave this result column unchanged.
 			if otherNumValues[Real.BF_num_values * 2 - 1] > values[i] {
 				if i > 0 {
@@ -1215,11 +1229,11 @@ struct Real : CustomStringConvertible {
 			
 			// Subtract the sub values from values now
 			for j in (0..<Real.BF_num_values * 2).reverse() {
-				if (subValues[j] > values[j]) {
+				if subValues[j] > values[j] {
 					// Since we know that this num is greater than the sub num, then we know
 					// that this will never exceed the bounds of the array
 					var peek = 1
-					while (values[j + peek] == 0) {
+					while values[j + peek] == 0 {
 						values[j + peek] = thisNum.bf_value_limit - 1
 						peek++
 					}
@@ -1241,8 +1255,8 @@ struct Real : CustomStringConvertible {
 		// Normalise the result
 		// This involves multiplying through by the bf_radix until the number runs up against the
 		// left edge or MSD (most significant digit)
-		while (result[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
-			Real.BF_AppendDigitToMantissa(&result, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+		while result[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix)) {
+			Real.BF_AppendDigitToMantissa(&result, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 			thisNum.bf_exponent--
 		}
 		
@@ -1261,6 +1275,7 @@ struct Real : CustomStringConvertible {
 		}
 		
 		// Remove any trailing zeros in the decimal places by dividing by the bf_radix until they go away
+        carryBits = 0
 		while (thisNum.bf_exponent < 0) && (result[Real.BF_num_values] % Digit(thisNum.bf_radix) == 0) {
 			carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
 			thisNum.bf_exponent++
@@ -1270,7 +1285,8 @@ struct Real : CustomStringConvertible {
 		}
 		
 		// Create a user point, store all the values back in the class and we're done
-        thisNum.bf_array = Array(result[Real.BF_num_values..<result.count])
+        Real.BF_AssignValues(&thisNum.bf_array, source: result, sstart: Real.BF_num_values)
+//        thisNum.bf_array = Array(result[Real.BF_num_values..<result.count])
 		thisNum.createUserPoint()
 		return thisNum
 	}
@@ -1281,7 +1297,7 @@ struct Real : CustomStringConvertible {
     // The judge orders that that the orchard be divided between you, me and the judge. The
     // remaining tree is given to charity.
     //
-    func moduloBy(num: Real) -> Real {
+    public func moduloBy(num: Real) -> Real {
         var values = [Digit](count: Real.BF_num_values * 2, repeatedValue: 0)
         var otherNumValues = values
         var result = values
@@ -1294,8 +1310,8 @@ struct Real : CustomStringConvertible {
         }
         
         // Get the numerical values
-        values[Real.BF_num_values..<values.count] = bf_array[0..<bf_array.count]
-        otherNumValues[Real.BF_num_values..<values.count] = num.bf_array[0..<bf_array.count]
+        Real.BF_CopyValues(bf_array, destination: &values, dstart: Real.BF_num_values)
+        Real.BF_CopyValues(otherNum.bf_array, destination: &otherNumValues, dstart: Real.BF_num_values)
         
         // ignore invalid numbers
         if !otherNum.bf_is_valid || !thisNum.bf_is_valid {
@@ -1322,9 +1338,9 @@ struct Real : CustomStringConvertible {
         // Normalise this num
         // This involves multiplying through by the bf_radix until the number runs up against the
         // left edge or MSD (most significant digit)
-        if Real.BF_ArrayIsNonZero(values, start: 0, scale:2) {
+        if Real.BF_ArrayIsNonZero(values) {
             while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
-                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
                 thisNum.bf_exponent--
             }
         } else {
@@ -1345,11 +1361,11 @@ struct Real : CustomStringConvertible {
         // against the left edge or MSD (most significant digit)
         // If the last multiply will make otherNum greater than this num, then we
         // don't do it. This ensures that the first division column will always be non-zero.
-        if Real.BF_ArrayIsNonZero(otherNumValues, start: 0, scale:2) {
+        if Real.BF_ArrayIsNonZero(otherNumValues) {
             while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / UInt32(otherNum.bf_radix))) &&
                 (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / Digit(otherNum.bf_radix)))
             {
-                Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit)
+                Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
                 otherNum.bf_exponent--
             }
         } else {
@@ -1365,16 +1381,14 @@ struct Real : CustomStringConvertible {
         
         // Set the re-normalised values so that we can subtract from self later
         var nself = thisNum
-        nself.bf_array = Array(values[Real.BF_num_values..<values.count])
-//        BF_AssignValues(bf_array, &values[Real.BF_num_values]);
-//        [self assignElements: &thisNumElements];
+        Real.BF_AssignValues(&nself.bf_array, source:values, sstart:Real.BF_num_values)
      
         // Begin the division
         // What we are doing here is lining the divisor up under the divisee and subtracting the largest multiple
         // of the divisor that we can from the divisee with resulting in a negative number. Basically it is what
         // you do without really thinking about it when doing long division by hand.
         var carryBits : Digit = 0
-        for i in Real.BF_num_values-1..<Real.BF_num_values * 2  {
+        for i in (Real.BF_num_values-1..<Real.BF_num_values * 2).reverse()  {
             // If the divisor is greater or equal to the divisee, leave this result column unchanged.
             if otherNumValues[Real.BF_num_values * 2 - 1] > values[i] {
                 if i > 0 {
@@ -1502,7 +1516,7 @@ struct Real : CustomStringConvertible {
 	//
 	// Returns the scale of the receiver with respect to num.
 	//
-	func compareWith(num: Real) -> NSComparisonResult {
+	public func compareWith(num: Real) -> NSComparisonResult {
         var values : Real = self
         var otherNum : Real = num
         var compare: NSComparisonResult
@@ -1559,7 +1573,7 @@ struct Real : CustomStringConvertible {
     //
     // Performs 1/receiver.
     //
-    func inverse() -> Real {
+    public func inverse() -> Real {
         var inverseValue: Real
         
         if !bf_is_valid { return self }
@@ -1576,7 +1590,7 @@ struct Real : CustomStringConvertible {
     //
     // Sets the receiver to the receiver modulo 1.
     //
-    func fractionalPart() -> Real {
+    public func fractionalPart() -> Real {
         if !bf_is_valid { return self}
         
         let one = Real(1, radix:bf_radix)
@@ -1586,7 +1600,7 @@ struct Real : CustomStringConvertible {
     //
     // Sets the receiver to (receiver - (receiver modulo 1))
     //
-    func wholePart() -> Real {
+    public func wholePart() -> Real {
         if !bf_is_valid { return self }
         
         let isNegative = bf_is_negative
@@ -1602,7 +1616,7 @@ struct Real : CustomStringConvertible {
 	//
 	// Interprets the given int as an exponent and formats it as a string. Why did I do this?
 	//
-	func exponentStringFromInt(exp: Int32) -> String {
+	public func exponentStringFromInt(exp: Int32) -> String {
         var workingExponent = exp;
         var exponentIsNegative = false
         var digits = [Character](count: Real.BF_max_exponent_length, repeatedValue: "0")
@@ -1650,7 +1664,7 @@ struct Real : CustomStringConvertible {
     //
     // Returns the exponent of the receiver formatted as a string
     //
-    var exponentString : String {
+    public var exponentString : String {
         // Check to see if the exponent exists
         if !bf_is_valid {
             // Return an empty string instead of nil because its a little safer
@@ -1662,7 +1676,7 @@ struct Real : CustomStringConvertible {
     //
     // Returns the mantissa of the receiver as a string.
     //
-    var mantissaString: String {
+    public var mantissaString: String {
         var mantissa = ""
         var exponent = ""
         
@@ -1674,7 +1688,7 @@ struct Real : CustomStringConvertible {
     //
     // Returns an approximate string representation of the receiver
     //
-    var description: String {
+    public var description: String {
         // Get the mantissa string
         let mantissa = mantissaString
         
@@ -1689,7 +1703,7 @@ struct Real : CustomStringConvertible {
     //
     // Returns a very short approximate value of the receiver as a string
     //
-    func toShortString(precision: Int) -> String {
+    public func toShortString(precision: Int) -> String {
         var string = ""
         var exponent = ""
         
@@ -2007,7 +2021,7 @@ struct Real : CustomStringConvertible {
             digitsInNumber--
         }
         
-        mantissaOut = String(digits[0..<currentChar])  // [NSString stringWithCharacters:digits length:(currentChar - digits)];
+        mantissaOut = String(digits[0..<currentChar])
         exponentOut = self.exponentStringFromInt(exponentCopy)
     }
     
@@ -2015,12 +2029,35 @@ struct Real : CustomStringConvertible {
     static func Test () {
         // Basic tests of the functionality
         let a = Real(123456.78e10)
+        let a1 = BigFloat(double: 123456.78e10, radix: 10)
         let b = Real("1234567890.12345678901234567890e1000")
-        print("a = \(a), b = \(b)")
-        print("a+b = \(a.add(b))")
-        print("a-b = \(a.subtract(b))")
-        print("a*b = \(a.multiplyBy(b))")
-        print("a/b = \(a.divideBy(b))")
+        let b1 = BigFloat(string: "1234567890.12345678901234567890e1000", radix: 10)
+        print("a  = \(a), b  = \(b)")
+        print("a1 = \(a1), b1 = \(b1)")
+        print("a+b   = \(a+b)")
+        var c = BigFloat(); c.assign(a1); c.add(b1)
+        print("a1+b1 = \(c)")
+        print("a-b   = \(a-b)")
+        c.assign(a1); c.subtract(b1)
+        print("a1-b1 = \(c)")
+        print("a*b   = \(a*b)")
+        c.assign(a1); c.multiplyBy(b1)
+        print("a1*b1 = \(c)")
+        print("a/b   = \(a/b)")
+        c.assign(a1); c.divideBy(b1)
+        print("a1/b1 = \(c)")
+        print("a%b   = \(a%b)")
+        c.assign(a1); c.moduloBy(b1)
+        print("a1%b1 = \(c)")
     }
 	
+}
+
+extension BigFloat {
+    
+    // Just needed for Real.Test()
+    override public var description : String {
+        return self.toString
+    }
+    
 }
