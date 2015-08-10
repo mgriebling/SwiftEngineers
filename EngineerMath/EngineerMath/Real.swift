@@ -137,7 +137,7 @@ public struct Real : CustomStringConvertible, Comparable {
         // Truncate a digit by dividing through by the bf_radix
         var carryBits : Digit = 0
         
-        for i in (start..<BF_num_values*scale).reverse() {
+        for i in (start..<start+BF_num_values*scale).reverse() {
             values[i] = values[i] + (carryBits * limit)
             carryBits = values[i] % UInt32(radix)
             values[i] = values[i] / UInt32(radix)
@@ -1076,6 +1076,10 @@ public struct Real : CustomStringConvertible, Comparable {
 		var subValues = values
 		var thisNum = self
 		var otherNum = num
+        
+        if num == Real(2249) {
+            print("Dividing \(self) / \(num)")
+        }
 		
 		if num.radix != Int(bf_radix) {
 			otherNum = num.convertToRadix(bf_radix)
@@ -1104,7 +1108,7 @@ public struct Real : CustomStringConvertible, Comparable {
 		// This involves multiplying through by the bf_radix until the number runs up against the
 		// left edge or MSD (most significant digit)
         if Real.BF_ArrayIsNonZero(values) {
-			while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
+			while values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix)) {
                 Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 				thisNum.bf_exponent--
 			}
@@ -1223,7 +1227,7 @@ public struct Real : CustomStringConvertible, Comparable {
 			result[i] = quotient
 			
 			// If the subtraction operation will result in no remainder, then finish
-			if (compare == .OrderedSame) {
+			if compare == .OrderedSame {
 				break
 			}
 			
@@ -1344,15 +1348,10 @@ public struct Real : CustomStringConvertible, Comparable {
                 thisNum.bf_exponent--
             }
         } else {
-            thisNum.bf_array = Array(values[Real.BF_num_values..<values.count])
+            Real.BF_AssignValues(&thisNum.bf_array, source: values, sstart: Real.BF_num_values)
             thisNum.bf_exponent = 0
             thisNum.bf_user_point = 0
             thisNum.bf_is_negative = false
-            
-            if !Real.BF_ArrayIsNonZero(otherNumValues) {
-                thisNum.bf_is_valid = false
-            }
-            
             return thisNum
         }
         
@@ -1571,6 +1570,246 @@ public struct Real : CustomStringConvertible, Comparable {
     // MARK: - Extended Mathematics Functions
     
     //
+    // Returns the value e^x where x is the value of the receiver.
+    //
+    func powerOfE() -> Real {
+//        BigFloat	*prevIteration;
+//        BigFloat	*powerCopy;
+//        BigFloat	*nextTerm;
+//        BigFloat	*original;
+//        BigFloat	*factorialValue;
+//        BigFloat	*one;
+//        BigFloat	*two;
+//        var use_inverse = false
+//       BigFloat	*i;
+        var squares = 0
+        var result = self
+        
+        if !bf_is_valid { return result }
+        
+        // Pre-scale the number to aid convergeance
+        if bf_is_negative {
+            result.bf_is_negative = false
+        }
+        
+        let one = Real(1, radix:bf_radix) //[[BigFloat alloc] initWithInt:1 radix:bf_radix];
+        let two = Real(2, radix:bf_radix) //[[BigFloat alloc] initWithInt:2 radix:bf_radix];
+        while result > one {
+            result /= two
+            squares++
+        }
+        
+        // Initialise stuff
+        var factorialValue = one
+        var prevIteration = one
+        let original = result
+        var powerCopy = result
+        
+        // Set the current value to 1 (the zeroth term)
+        result = one
+        
+        // Add the second term
+        result += original
+        
+        // otherwise iterate the Taylor Series until we obtain a stable solution
+        var i = Real(2, radix:bf_radix)
+        var nextTerm = factorialValue
+        while result != prevIteration {
+            // Get a copy of the current value so that we can see if it changes
+            prevIteration = result
+            
+            // Determine the next term of the series
+            powerCopy *= original
+            
+            factorialValue *= i
+            nextTerm = powerCopy / factorialValue
+            
+            // Add the next term if it is valid
+            if nextTerm.isValid {
+                result += nextTerm
+            }
+            
+            i += one
+        }
+        
+        // Reverse the prescaling
+        while squares > 0 {
+            result *= result
+            squares--
+        }
+        
+        if bf_is_negative {
+            return result.inverse()
+        }
+        return result
+    }
+    
+    func sqrt() -> Real { return nRoot(2) }
+    
+    //
+    // Takes the nth root of the receiver
+    //
+    func nRoot(n: Int) -> Real {
+        let one = Real(1, radix:bf_radix)
+        var result = self
+        
+        if !bf_is_valid || self.isZero { return self }
+        
+        // oddly-numbered roots of negative numbers should work
+        if self.isNegative && (n & 1) == 0 {
+            result.bf_is_valid = false
+            return result
+        }
+        result.bf_is_negative = false     // we'll fix this later
+        
+        let original = result
+        let root = Real(n, radix: bf_radix)
+        
+        // Count the number of digits left of the point
+        var numDigits = Real.BF_num_values * Int(bf_value_precision) + Int(bf_exponent) - Int(bf_user_point)
+        var digitNotFound = true
+        for i in (0..<Real.BF_num_values).reverse() where digitNotFound {
+            for j in (0..<bf_value_precision).reverse() where digitNotFound {
+                if ((bf_array[i] / Digit(pow(Double(bf_radix), Double(j))) % Digit(bf_radix)) == 0) {
+                    numDigits--
+                } else {
+                    digitNotFound = false
+                }
+            }
+        }
+        
+        // The first guess will be the scaled exponent of this number
+        result.bf_exponent -= numDigits / n
+        var prevGuess = result + one
+        var newGuess = result
+        
+        // Do some Newton's method iterations until we converge
+        var maxIterations = 1000
+        var power = Real(0, radix:bf_radix)
+        while newGuess != prevGuess && maxIterations > 0 {
+            prevGuess = newGuess
+            
+            newGuess = original
+            power = prevGuess.raiseToIntPower(n-1)
+            newGuess /= power
+            newGuess -= prevGuess
+            newGuess /= root
+            newGuess += prevGuess
+            maxIterations--
+        }
+        if maxIterations <= 0 { NSLog("Exceeded iteration limit on root evaluation: Error is likely") }
+        
+        // Use the last guess
+        result = newGuess
+        
+        //
+        // This method has problems actually giving "1" as a result. If we're
+        // within n * smallest digit size, then round to one.
+        //
+        let twoEpsilon = Real(mantissa: 2, exponent: -(Real.BF_num_values * Int(bf_value_precision)) + 1, isNegative: false, radix: bf_radix, userPointAt: 0)
+        if result > one {
+            //
+            // If we're slightly greater than 1, check if we should round down
+            //
+            let difference = result - one
+            if difference < twoEpsilon {
+                result = one
+            }
+        } else {
+            //
+            // If we're slightly less than 1, check if we should round up
+            //
+            let difference = one - result
+            if difference < twoEpsilon {
+                result = one
+            }
+        }
+        
+        // fix the sign
+        result.bf_is_negative = bf_is_negative
+        return result
+    }
+
+    
+    //
+    // Returns the natural logarithm of the receiver.
+    //
+    func ln() -> Real {
+        if !bf_is_valid { return self }
+        
+        var prevIteration = Real(0, radix: bf_radix)
+        let one = Real( 1, radix: bf_radix)
+        var i = Real(2, radix: bf_radix)
+        let eighth = Real(0.125, radix: bf_radix)
+        var result = self
+        var inverse = false
+        var outputFactor : UInt64 = 1
+        
+        // ln(x) for x <= 0 is inValid
+        if self <= prevIteration {
+            result.bf_is_valid = false
+            return result
+        }
+        
+        // ln(x) for x > 1 == -ln(1/x)
+        if self > one {
+            result = self.inverse()
+            inverse = true
+        }
+        
+        // Shift the number into a range between 1/8th and 1 (helps convergeance to a solution)
+        while result < eighth {
+            result = result.sqrt()
+            outputFactor *= 2
+        }
+        
+        // The base of our power is (x-1)
+        // This value is also the first term
+        result -= one
+        let original = result
+        var powerCopy = result
+        var nextTerm = result
+        
+        // iterate the Taylor Series until we obtain a stable solution
+        while result != prevIteration {
+            // Get a copy of the current value so that we can see if it changes
+            prevIteration = result
+            
+            // Determine the next term of the series
+            powerCopy *= original
+            nextTerm = powerCopy
+            nextTerm /= i
+            
+            // Subtract the next term if it is valid
+            if nextTerm.isValid {
+                result -= nextTerm
+            }
+            
+            i += one
+            
+            // Determine the next term of the series
+            powerCopy *= original
+            nextTerm = powerCopy
+            nextTerm /= i
+            
+            // Add the next term if it is valid
+            if nextTerm.isValid {
+                result += nextTerm
+            }
+            
+            i += one
+        }
+        
+        if inverse {
+            result.appendDigit("-", useComplement:0)
+        }
+        
+        // Descale the result
+        let factorNum = Real(Int(outputFactor), radix: bf_radix)
+        return result * factorNum
+    }
+    
+    //
     // Performs 1/receiver.
     //
     public func inverse() -> Real {
@@ -1757,17 +1996,11 @@ public struct Real : CustomStringConvertible, Comparable {
         
         // Ensure that we don't have too many leading zeros
         if userPointCopy + 2 > lengthLimit + digitsInNumber {
-//            bf_exponent -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
             exponentCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2
-            
-//            bf_user_point -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2;
             userPointCopy -= (userPointCopy - (lengthLimit + digitsInNumber)) + 2
             
             if (exponentCopy < 0 && userPointCopy >= digitsInNumber) {
- //               bf_exponent -= userPointCopy - digitsInNumber + 1;
                 exponentCopy -= userPointCopy - digitsInNumber + 1
-                
- //               bf_user_point -= userPointCopy - digitsInNumber + 1;
                 userPointCopy -= userPointCopy - digitsInNumber + 1
             }
         }
@@ -1852,16 +2085,6 @@ public struct Real : CustomStringConvertible, Comparable {
 				} else {
 					exponentCopy++
 				}
-				
-				// If all we removed was a zero, then remove it completely from the number
-//				if carryBits == 0 {
-//					Real.BF_RemoveDigitFromMantissa(bf_array, bf_radix, bf_value_limit)
-//					
-//					if (bf_user_point > 0)
-//					bf_user_point--;
-//					else
-//					bf_exponent++;
-//				}
 			}
 			
             // Apply round to nearest
@@ -2035,7 +2258,7 @@ public struct Real : CustomStringConvertible, Comparable {
         print("a  = \(a), b  = \(b)")
         print("a1 = \(a1), b1 = \(b1)")
         print("a+b   = \(a+b)")
-        var c = BigFloat(); c.assign(a1); c.add(b1)
+        let c = BigFloat(); c.assign(a1); c.add(b1)
         print("a1+b1 = \(c)")
         print("a-b   = \(a-b)")
         c.assign(a1); c.subtract(b1)
@@ -2049,6 +2272,16 @@ public struct Real : CustomStringConvertible, Comparable {
         print("a%b   = \(a%b)")
         c.assign(a1); c.moduloBy(b1)
         print("a1%b1 = \(c)")
+        let one = Real(1)
+        let one1 = BigFloat(int: 1, radix: 10)
+        one1.powerOfE()
+        one1.ln()
+        print("exp1(1) = \(one1)")
+        let e = one.powerOfE()
+        print("exp(1)  = \(e)")
+        let two = Real(2)
+        print("sqrt(2) = \(two.sqrt())")
+        print("ln(e) = \(e.ln())")
     }
 	
 }
