@@ -1745,11 +1745,6 @@ BF_NormaliseNumbers
 	BF_ClearValuesArray(values, 1);
 	BF_ClearValuesArray(result, 2);
 	BF_ClearValuesArray(subValues, 2);
-    
-    BigFloat *n = [[BigFloat alloc]initWithInt:2249 radix:bf_radix];
-    if ([num compareWith:n] == NSOrderedSame) {
-        NSLog(@"Hit break");
-    }
 
 	// Get the numerical values
 	BF_CopyValues(bf_array, &values[BF_num_values]);

@@ -1003,14 +1003,6 @@ public struct Real : CustomStringConvertible, Comparable {
 			return thisNum
 		}
 		
-		// Handle differences in sign by calling addition instead
-		if otherNum.bf_is_negative != thisNum.bf_is_negative {
-			thisNum.bf_is_negative = !bf_is_negative
-			thisNum = thisNum.add(otherNum)
-			thisNum.bf_is_negative = !thisNum.bf_is_negative
-			return thisNum
-		}
-		
 		// Apply the user's decimal point
 		thisNum.bf_exponent -= Int32(thisNum.bf_user_point)
 		thisNum.bf_user_point = 0
@@ -1573,15 +1565,6 @@ public struct Real : CustomStringConvertible, Comparable {
     // Returns the value e^x where x is the value of the receiver.
     //
     func powerOfE() -> Real {
-//        BigFloat	*prevIteration;
-//        BigFloat	*powerCopy;
-//        BigFloat	*nextTerm;
-//        BigFloat	*original;
-//        BigFloat	*factorialValue;
-//        BigFloat	*one;
-//        BigFloat	*two;
-//        var use_inverse = false
-//       BigFloat	*i;
         var squares = 0
         var result = self
         
@@ -1592,9 +1575,9 @@ public struct Real : CustomStringConvertible, Comparable {
             result.bf_is_negative = false
         }
         
-        let one = Real(1, radix:bf_radix) //[[BigFloat alloc] initWithInt:1 radix:bf_radix];
-        let two = Real(2, radix:bf_radix) //[[BigFloat alloc] initWithInt:2 radix:bf_radix];
-        while result > one {
+        let one = Real(1, radix:bf_radix)
+        let two = Real(2, radix:bf_radix)
+		while result > one {
             result /= two
             squares++
         }
@@ -2253,8 +2236,8 @@ public struct Real : CustomStringConvertible, Comparable {
         // Basic tests of the functionality
         let a = Real(123456.78e10)
         let a1 = BigFloat(double: 123456.78e10, radix: 10)
-        let b = Real("1234567890.12345678901234567890e1000")
-        let b1 = BigFloat(string: "1234567890.12345678901234567890e1000", radix: 10)
+        let b = Real("-1234567890.12345678901234567890e1000")
+        let b1 = BigFloat(string: "-1234567890.12345678901234567890e1000", radix: 10)
         print("a  = \(a), b  = \(b)")
         print("a1 = \(a1), b1 = \(b1)")
         print("a+b   = \(a+b)")
@@ -2275,7 +2258,6 @@ public struct Real : CustomStringConvertible, Comparable {
         let one = Real(1)
         let one1 = BigFloat(int: 1, radix: 10)
         one1.powerOfE()
-        one1.ln()
         print("exp1(1) = \(one1)")
         let e = one.powerOfE()
         print("exp(1)  = \(e)")
