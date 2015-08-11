@@ -308,6 +308,43 @@ public struct Real : CustomStringConvertible, Comparable {
 			bf_is_valid = false
 		}
 	}
+    
+    func toRadiansFrom(mode: BFTrigMode) -> Real {
+        let result: Real
+        if mode != .BF_radians {
+            if (mode == .BF_degrees) {
+                let oneEighty = Real(180, radix: bf_radix)
+                let threeSixty = Real(360, radix: bf_radix)
+                result = (self / oneEighty) % threeSixty
+            } else if (mode == .BF_gradians) {
+                let twoHundred = Real(200, radix: bf_radix)
+                let fourHundred = Real(400, radix: bf_radix)
+                result = (self / twoHundred) % fourHundred
+            }
+            return result * self.pi
+        } else {
+            let two_pi = Real(2, radix: bf_radix) * self.pi
+            return self % two_pi
+        }
+        return self
+    }
+    
+    func radiansToMode(mode: BFTrigMode) -> Real {
+        let result: Real
+        if (mode != .BF_radians) {
+            if (mode == .BF_degrees) {
+                let oneEighty = Real(180, radix: bf_radix)
+                result = self * oneEighty
+            } else if (mode == .BF_gradians) {
+                let twoHundred = Real(200, radix: bf_radix)
+                result = self * twoHundred
+            }
+            
+            return result / self.pi
+        }
+        return self
+    }
+
 
     // MARK: - Contructors
 
@@ -558,6 +595,91 @@ public struct Real : CustomStringConvertible, Comparable {
     var isInteger: Bool {
         let tmp = self.abs().fractionalPart()
         return tmp.isZero
+    }
+    
+    //
+    // Calculate π for the current bf_radix and cache it in the array
+    // Uses the following iterative method to calculate π (quartically convergeant):
+    //
+    //	Initial: Set y = sqrt(sqrt(2)-1), c = 0 and p = sqrt(2) - 1
+    //	Loop: Set c = c+1
+    // 			Set a = (1-y^4)^(1/4)
+    //			Set y = (1-a)/(1+a)
+    //			Set p = p(1+y)^4-y(1+y+y^2)sqrt(2)4^(c+1)
+    //	π = 1/p
+    //
+    //	(for those of you playing at home... this is the Ramanujan II formula for π)
+    //
+    func calculatePi() -> Real {
+        // Setup the initial conditions
+        let one 		= Real(1, radix: bf_radix)
+        let two 		= Real(2, radix: bf_radix)
+        let four 		= Real(4, radix: bf_radix)
+        let two_sqrt	= two.sqrt()
+        let quarter 	= Real(0.25, radix: bf_radix)
+        var p 			= two_sqrt - one
+        var y			= p.sqrt()
+        
+        // Just allocate everything that is initially undefined
+        a 		= [one copy];
+        x 		= [one copy];
+        v 		= [one copy];
+        w 		= [one copy];
+        prevIteration	= [one copy];
+        
+        // Do the loopy bit
+        while([p compareWith: prevIteration] != NSOrderedSame || ![p isValid])
+        {
+            [prevIteration assign: p];
+            
+            // c = c + 1
+            
+            // a = (1-y^4)^(1/4)
+            [x assign: y];
+            [x multiplyBy: x];
+            [x multiplyBy: x];
+            [a assign: one];
+            [a subtract: x];
+            [a raiseToPower: quarter];
+            
+            // y = (1-a)/(1+a)
+            [y assign: one];
+            [y subtract: a];
+            [a add: one];
+            [y divideBy: a];
+            
+            // p = p(1+y)^4-y(1+y+y^2)sqrt(2)4^(c+1)
+            [w assign: y];
+            [w multiplyBy: w];
+            [x assign: y];
+            [x add: one];
+            [w add: x];
+            [x multiplyBy: x];
+            [x multiplyBy: x];
+            [w multiplyBy: y];
+            [v multiplyBy: four];
+            [w multiplyBy: v];
+            [w multiplyBy: two_sqrt];
+            
+            if ([x isValid] && [w isValid])
+            {
+                [p multiplyBy: x];
+                [p subtract: w];
+            }
+        }
+        
+        // pi_array is retained permanently (until the program quits)
+        pi_array[bf_radix] = [p copy];
+        [pi_array[bf_radix] inverse];
+    }
+    
+    static var piArray = [Real?](count: 36, repeatedValue: nil)
+    var pi: Real {
+        if let mpi = Real.piArray[Int(bf_radix)] {
+            return mpi
+        } else {
+            return self.calculatePi()
+        }
     }
     
     //
@@ -1844,6 +1966,81 @@ public struct Real : CustomStringConvertible, Comparable {
     }
     
     //
+    // Calculates a factorial in the most basic way.
+    //
+    func factorial() -> Real {
+        if !bf_is_valid { return self }
+        
+        var result = self
+        
+        // Negative numbers have no factorial equivalent
+        if bf_is_negative || !fractionalPart().isZero {
+            result.bf_is_valid = false
+            return result
+        }
+        
+        let zero = Real(0, radix: bf_radix)
+        let one = Real(1, radix: bf_radix)
+        
+        // Factorial zero is 1
+        if isZero {
+            return one
+        } else {
+            // Copy this num and start subtracting down to one
+            var counter = self - one
+            
+            // Perform the basic factorial
+            while counter > zero && result.bf_is_valid {
+                result *= counter
+                counter -= one
+            }
+            return result
+        }
+    }
+    
+    //
+    // Permutation of receiver samples made from a range of r options
+    //
+    func nPr(r: Real) -> Real {
+        if !bf_is_valid { return self }
+        if !r.isValid { return r }
+        
+        var result = self.wholePart()
+        if result < r {
+            return Real(0, radix:bf_radix)
+        }
+        
+        let self_minus_r = result - r.wholePart()
+        
+        result = result.factorial()
+        result /= self_minus_r.factorial()
+        return result
+        
+    }
+    
+    //
+    // Calculates receiver combinations of samples taken from a choice of r candidates.
+    //
+    func nCr (r: Real) -> Real {
+        if !bf_is_valid { return self }
+        if !r.isValid { return r }
+        
+        var result = self.wholePart()
+        if result < r {
+            return Real(0, radix:bf_radix)
+        }
+        
+        let rcopy = r.wholePart()
+        let self_minus_r = result - rcopy
+        
+        result = result.factorial()
+        result /= self_minus_r.factorial()
+        result /= rcopy.factorial()
+        return result
+    }
+
+    
+    //
     // Performs 1/receiver.
     //
     public func inverse() -> Real {
@@ -2347,6 +2544,7 @@ public struct Real : CustomStringConvertible, Comparable {
         print("ln(e) = \(e.ln())")
         print("2**32 = \(two.raiseToPower(c32))")
         print("2**32.5 = \(two.raiseToPower(c32+Real(0.5)))")
+        print("32! = \(c32.factorial())")
     }
 	
 }
