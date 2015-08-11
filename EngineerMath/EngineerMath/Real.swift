@@ -597,7 +597,7 @@ public struct Real : CustomStringConvertible, Comparable {
     
     //
     // Calculate π for the current bf_radix and cache it in the array
-    // Uses the following iterative method to calculate π (quartically convergeant):
+    // Uses the following iterative method to calculate π (quartically convergent):
     //
     //	Initial: Set y = sqrt(sqrt(2)-1), c = 0 and p = sqrt(2) - 1
     //	Loop: Set c = c+1
