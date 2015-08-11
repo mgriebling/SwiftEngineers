@@ -621,34 +621,22 @@ public struct Real : CustomStringConvertible, Comparable {
         var y			= p.sqrt()
         
         // Just allocate everything that is initially undefined
-        a 		= [one copy];
-        x 		= [one copy];
-        v 		= [one copy];
-        w 		= [one copy];
-        prevIteration	= [one copy];
+        var prevIteration = one
         
         // Do the loopy bit
-        while([p compareWith: prevIteration] != NSOrderedSame || ![p isValid])
-        {
-            [prevIteration assign: p];
+        while p != prevIteration || !p.isValid {
+            prevIteration = p
             
             // c = c + 1
             
             // a = (1-y^4)^(1/4)
-            [x assign: y];
-            [x multiplyBy: x];
-            [x multiplyBy: x];
-            [a assign: one];
-            [a subtract: x];
-            [a raiseToPower: quarter];
+            let a = (one - y.raiseToIntPower(4)).raiseToPower(quarter)
             
             // y = (1-a)/(1+a)
-            [y assign: one];
-            [y subtract: a];
-            [a add: one];
-            [y divideBy: a];
+            y = (one - a)/(one + a)
             
             // p = p(1+y)^4-y(1+y+y^2)sqrt(2)4^(c+1)
+            
             [w assign: y];
             [w multiplyBy: w];
             [x assign: y];
@@ -669,8 +657,8 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // pi_array is retained permanently (until the program quits)
-        pi_array[bf_radix] = [p copy];
-        [pi_array[bf_radix] inverse];
+        Real.piArray[Int(bf_radix)] = p.inverse()
+        return Real.piArray[Int(bf_radix)]!
     }
     
     static var piArray = [Real?](count: 36, repeatedValue: nil)
