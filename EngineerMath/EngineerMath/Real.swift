@@ -1282,7 +1282,6 @@ public struct Real : CustomStringConvertible, Comparable {
 		
 		// Create a user point, store all the values back in the class and we're done
         Real.BF_AssignValues(&thisNum.bf_array, source: result, sstart: Real.BF_num_values)
-//        thisNum.bf_array = Array(result[Real.BF_num_values..<result.count])
 		thisNum.createUserPoint()
 		return thisNum
 	}
@@ -1562,6 +1561,57 @@ public struct Real : CustomStringConvertible, Comparable {
     // MARK: - Extended Mathematics Functions
     
     //
+    // Raises the receiver to the exponent "num".
+    //
+    func raiseToPower(num: Real) -> Real {
+        var numCopy = num
+        var result = self
+        var negative = false
+        
+        if !bf_is_valid { return self }
+        
+        if !num.isValid {
+            result.bf_is_valid = false
+            return result
+        }
+        
+        let one = Real(1, radix: bf_radix)
+        
+        if self.isZero {
+            // Zero raised to anything except zero is zero (provided exponent is valid)
+            numCopy.bf_is_valid = num.isValid
+            if num.isZero { return one }
+            return self
+        }
+        
+        let exp = Int(num.doubleValue)
+        if num.fractionalPart().isZero && Swift.abs(exp) < 0x8000 {
+            return self.raiseToIntPower(exp)
+        }
+        
+        if bf_is_negative {
+            result.bf_is_negative = false
+            negative = true
+        }
+        
+        result = (result.ln() * num).powerOfE()
+        if negative {
+            let two = Real(2, radix: bf_radix)
+            if numCopy.isNegative {
+                numCopy = -numCopy
+            }
+            numCopy %= two
+            if numCopy == one {
+                result.bf_is_negative = true
+            } else if !numCopy.isZero {
+                result.bf_is_valid = false
+            }
+            
+        }
+        return result
+    }
+    
+    //
     // Returns the value e^x where x is the value of the receiver.
     //
     func powerOfE() -> Real {
@@ -1628,6 +1678,7 @@ public struct Real : CustomStringConvertible, Comparable {
     }
     
     func sqrt() -> Real { return nRoot(2) }
+    func cbrt() -> Real { return nRoot(3) }
     
     //
     // Takes the nth root of the receiver
@@ -1834,6 +1885,35 @@ public struct Real : CustomStringConvertible, Comparable {
     }
     
     // MARK: - Accessor Functions
+    
+    //
+    // Returns the approximate value of the receiver as a double
+    //
+    var doubleValue: Double {
+        // Return NaN if number is not valid
+        if !bf_is_valid {
+            return Double.NaN
+        }
+        
+        // Extract all the digits out and put them in the double
+        var retVal = 0.0
+        for i in (0..<Real.BF_num_values).reverse() {
+            let currentValue = Int64(bf_array[i])
+            for j in (0..<bf_value_precision).reverse() {
+                let digit = currentValue / Int64(pow(Double(bf_radix), Double(j))) % Int64(bf_radix)
+                retVal = (retVal * Double(bf_radix)) + Double(digit)
+            }
+        }
+        
+        // Apply the sign
+        if bf_is_negative {
+            retVal *= -1.0
+        }
+        
+        // Apply the exponent
+        retVal *= pow(Double(bf_radix), Double(bf_exponent - Int32(bf_user_point)))
+        return retVal
+    }
 	
 	//
 	// Interprets the given int as an exponent and formats it as a string. Why did I do this?
@@ -2262,8 +2342,11 @@ public struct Real : CustomStringConvertible, Comparable {
         let e = one.powerOfE()
         print("exp(1)  = \(e)")
         let two = Real(2)
+        let c32 = Real(32)
         print("sqrt(2) = \(two.sqrt())")
         print("ln(e) = \(e.ln())")
+        print("2**32 = \(two.raiseToPower(c32))")
+        print("2**32.5 = \(two.raiseToPower(c32+Real(0.5)))")
     }
 	
 }
