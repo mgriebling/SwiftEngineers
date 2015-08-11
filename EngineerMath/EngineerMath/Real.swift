@@ -310,13 +310,13 @@ public struct Real : CustomStringConvertible, Comparable {
 	}
     
     func toRadiansFrom(mode: BFTrigMode) -> Real {
-        let result: Real
+        var result = self
         if mode != .BF_radians {
-            if (mode == .BF_degrees) {
+            if mode == .BF_degrees {
                 let oneEighty = Real(180, radix: bf_radix)
                 let threeSixty = Real(360, radix: bf_radix)
                 result = (self / oneEighty) % threeSixty
-            } else if (mode == .BF_gradians) {
+            } else if mode == .BF_gradians {
                 let twoHundred = Real(200, radix: bf_radix)
                 let fourHundred = Real(400, radix: bf_radix)
                 result = (self / twoHundred) % fourHundred
@@ -326,20 +326,18 @@ public struct Real : CustomStringConvertible, Comparable {
             let two_pi = Real(2, radix: bf_radix) * self.pi
             return self % two_pi
         }
-        return self
     }
     
     func radiansToMode(mode: BFTrigMode) -> Real {
-        let result: Real
-        if (mode != .BF_radians) {
-            if (mode == .BF_degrees) {
+        var result = self
+        if mode != .BF_radians {
+            if mode == .BF_degrees {
                 let oneEighty = Real(180, radix: bf_radix)
                 result = self * oneEighty
-            } else if (mode == .BF_gradians) {
+            } else if mode == .BF_gradians {
                 let twoHundred = Real(200, radix: bf_radix)
                 result = self * twoHundred
             }
-            
             return result / self.pi
         }
         return self
@@ -619,6 +617,9 @@ public struct Real : CustomStringConvertible, Comparable {
         let quarter 	= Real(0.25, radix: bf_radix)
         var p 			= two_sqrt - one
         var y			= p.sqrt()
+		var v			= one
+		var x			= one
+		var w			= one
         
         // Just allocate everything that is initially undefined
         var prevIteration = one
@@ -627,8 +628,6 @@ public struct Real : CustomStringConvertible, Comparable {
         while p != prevIteration || !p.isValid {
             prevIteration = p
             
-            // c = c + 1
-            
             // a = (1-y^4)^(1/4)
             let a = (one - y.raiseToIntPower(4)).raiseToPower(quarter)
             
@@ -636,23 +635,15 @@ public struct Real : CustomStringConvertible, Comparable {
             y = (one - a)/(one + a)
             
             // p = p(1+y)^4-y(1+y+y^2)sqrt(2)4^(c+1)
+			x = y+one
+            w = (y*y+x)*y
+			x = x.raiseToIntPower(4)
+            v *= four
+            w *= v * two_sqrt
             
-            [w assign: y];
-            [w multiplyBy: w];
-            [x assign: y];
-            [x add: one];
-            [w add: x];
-            [x multiplyBy: x];
-            [x multiplyBy: x];
-            [w multiplyBy: y];
-            [v multiplyBy: four];
-            [w multiplyBy: v];
-            [w multiplyBy: two_sqrt];
-            
-            if ([x isValid] && [w isValid])
-            {
-                [p multiplyBy: x];
-                [p subtract: w];
+            if x.isValid && w.isValid {
+                p *= x
+                p -= w
             }
         }
         
@@ -2533,6 +2524,7 @@ public struct Real : CustomStringConvertible, Comparable {
         print("2**32 = \(two.raiseToPower(c32))")
         print("2**32.5 = \(two.raiseToPower(c32+Real(0.5)))")
         print("32! = \(c32.factorial())")
+		print("pi = \(two.pi)")
     }
 	
 }
