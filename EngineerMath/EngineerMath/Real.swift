@@ -2082,16 +2082,12 @@ public struct Real : CustomStringConvertible, Comparable {
         return result.radiansToMode(mode)
     }
     
-    public func acosh() -> Real {
+    public func acosh(mode: BFTrigMode) -> Real {
         // arccos = π/2 - arcsin
-        original = [self copy];
-        [original sinWithTrigMode: BF_radians inv: true hyp: false];
-        factorial = self.pi;
-        [factorial divideBy:two];
-        [factorial subtract: original];
-        
-        [self assign: factorial];
-        [self radiansToMode:mode];
+        let two = Real(2, radix: bf_radix)
+        var original = self.asin(.BF_radians)
+        original = self.pi / two - original
+        return original.radiansToMode(mode)
     }
     
     public func sinh() -> Real {
@@ -2108,33 +2104,31 @@ public struct Real : CustomStringConvertible, Comparable {
     
     public func cosh() -> Real {
         if (!bf_is_valid) { return self }
-        original = [self copy];
-        [original powerOfE];
-        bf_is_negative = (bf_is_negative == false) ? true : false
-        [self powerOfE];
-        [original add:self];
-        [original divideBy:two];
-        [self assign: original];
+        let two = Real(2, radix: bf_radix)
+        var original = self.powerOfE()
+		var result = self
+        result.bf_is_negative = !bf_is_negative ? true : false
+        original += result.powerOfE()
+        original /= two
+        return original
     }
     
     public func asinh() -> Real {
         if (!bf_is_valid) { return self }
         let one = Real(1, radix: bf_radix)
         var original = self
-        var result = (self * self + one).sqrt()
+        let result = (self * self + one).sqrt()
         original += result
         return original.ln()
     }
     
     public func acosh() -> Real {
         if (!bf_is_valid) { return self }
-        original = [self copy];
-        [self multiplyBy:self];
-        [self subtract:one];
-        [self sqrt];
-        [original add: self];
-        [original ln];
-        [self assign:original];
+        let one = Real(1, radix: bf_radix)
+        var original = self
+		let result = (self * self - one).sqrt()
+        original += result
+		return original.ln()
     }
     
     //
@@ -2145,14 +2139,13 @@ public struct Real : CustomStringConvertible, Comparable {
         if (!bf_is_valid) { return self }
         
         let one = Real(1, radix: bf_radix)
-        let two = Real(2, radix: bf_radix)
         let zero = Real(0, radix: bf_radix)
         
         var result = self.toRadiansFrom(mode)
         
         var prevIteration = zero
         var factorial = one
-        var original = result
+        let original = result
         var powerCopy = factorial
         var nextTerm = factorial
         
