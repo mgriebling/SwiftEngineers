@@ -2082,6 +2082,18 @@ public struct Real : CustomStringConvertible, Comparable {
         return result.radiansToMode(mode)
     }
     
+    public func acosh() -> Real {
+        // arccos = π/2 - arcsin
+        original = [self copy];
+        [original sinWithTrigMode: BF_radians inv: true hyp: false];
+        factorial = self.pi;
+        [factorial divideBy:two];
+        [factorial subtract: original];
+        
+        [self assign: factorial];
+        [self radiansToMode:mode];
+    }
+    
     public func sinh() -> Real {
         if (!bf_is_valid) { return self }
         let two = Real(2, radix: bf_radix)
@@ -2094,6 +2106,17 @@ public struct Real : CustomStringConvertible, Comparable {
         return original
     }
     
+    public func cosh() -> Real {
+        if (!bf_is_valid) { return self }
+        original = [self copy];
+        [original powerOfE];
+        bf_is_negative = (bf_is_negative == false) ? true : false
+        [self powerOfE];
+        [original add:self];
+        [original divideBy:two];
+        [self assign: original];
+    }
+    
     public func asinh() -> Real {
         if (!bf_is_valid) { return self }
         let one = Real(1, radix: bf_radix)
@@ -2103,143 +2126,75 @@ public struct Real : CustomStringConvertible, Comparable {
         return original.ln()
     }
     
-    //
-    // cosWithTrigMode
+    public func acosh() -> Real {
+        if (!bf_is_valid) { return self }
+        original = [self copy];
+        [self multiplyBy:self];
+        [self subtract:one];
+        [self sqrt];
+        [original add: self];
+        [original ln];
+        [self assign:original];
+    }
+    
     //
     // Really this is four different functions in one:
     //		cos, arccos, hypcos and hyparccos
     //
-//    - (void)cosWithTrigMode: (BFTrigMode)mode inv: (BOOL)useInverse hyp: (BOOL)useHyp
-//    {
-//    unsigned long		values[BF_num_values];
-//    unsigned long		otherNum[BF_num_values];
-//    BigFloatElements	thisNumElements;
-//    BigFloatElements	otherNumElements;
-//    BigFloat				*prevIteration;
-//    BigFloat				*powerCopy;
-//    BigFloat				*nextTerm;
-//    BigFloat				*factorial;
-//    BigFloat				*original;
-//    BigFloat				*value;
-//    BigFloat				*one;
-//    BigFloat				*two;
-//    BigFloat				*zero;
-//    unsigned long	i;
-//    
-//    if (!bf_is_valid)
-//    return;
-//    
-//    one = Real(1 radix: bf_radix];
-//    two = Real(2 radix: bf_radix];
-//    zero = Real(0 radix: bf_radix];
-//    
-//    if (useHyp == false)
-//    {
-//    if (useInverse == false)
-//    {
-//    [self toRadiansFrom:mode];
-//    
-//    prevIteration = [zero copy];
-//    factorial = [one copy];
-//    original = [self copy];
-//    powerCopy = [factorial copy];
-//    nextTerm = [factorial copy];
-//    
-//    [self assign: factorial];
-//    
-//    i = 1;
-//    while([self compareWith: prevIteration] != NSOrderedSame)
-//    {
-//				BigFloat *twoN;
-//				BigFloat *twoNMinusOne;
-//    
-//				// Get a copy of the current value so that we can see if it changes
-//				[prevIteration assign: self];
-//    
-//				// Determine the next term of the series
-//				// Numerator is x^(2n)
-//				[powerCopy multiplyBy: original];
-//				[powerCopy multiplyBy: original];
-//				[nextTerm assign:powerCopy];
-//				
-//				// Divide the term by (2n)!
-//				twoN = Real( (int)(i * 2) radix:bf_radix];
-//				twoNMinusOne = Real((int)(i * 2 - 1) radix:bf_radix];
-//				[factorial multiplyBy:twoN];
-//				[factorial multiplyBy:twoNMinusOne];
-//				[nextTerm divideBy: factorial];
-//    
-//				// Add/subtract the next term if it is valid
-//				if ([nextTerm isValid])
-//				{
-//    if (i % 2 == 0)
-//    [self add: nextTerm];
-//    else
-//    [self subtract: nextTerm];
-//				}
-//				
-//				i++;
-//    }
-//    
-//    // Check that accurracy hasn't caused something illegal
-//    value = [self copy];
-//    [value abs];
-//    if ([value compareWith:one] == NSOrderedDescending)
-//    {
-//				[self divideBy:value];
-//    }
-//    
-//    // Normalise to remove built up error (makes a zero output possible)
-//    nextTerm = Real(10000 radix:bf_radix];
-//    BF_CopyValues(bf_array, values);
-//    [self copyElements: &thisNumElements];
-//    BF_CopyValues(nextTerm->bf_array, otherNum);
-//    [nextTerm copyElements: &otherNumElements];
-//    BF_NormaliseNumbers(values, otherNum, &thisNumElements, &otherNumElements);
-//    BF_AssignValues(bf_array, values);
-//    [self assignElements: &thisNumElements];
-//    [self createUserPoint];
-//    
-//    }
-//    else // Inverse cosine
-//    {
-//    // arccos = π/2 - arcsin
-//    original = [self copy];
-//    [original sinWithTrigMode: BF_radians inv: true hyp: false];
-//    factorial = self.pi;
-//    [factorial divideBy:two];
-//    [factorial subtract: original];
-//    
-//    [self assign: factorial];
-//    [self radiansToMode:mode];
-//    }
-//    }
-//    else	// hyperbolic cosine
-//    {
-//    if (useInverse == false)
-//    {
-//    original = [self copy];
-//    [original powerOfE];
-//    bf_is_negative = (bf_is_negative == false) ? true : false
-//    [self powerOfE];
-//    [original add:self];
-//    [original divideBy:two];
-//    [self assign: original];
-//    }
-//    else // inverse hyerbolic cosine
-//    {
-//    original = [self copy];
-//    [self multiplyBy:self];
-//    [self subtract:one];
-//    [self sqrt];
-//    [original add: self];
-//    [original ln];
-//    [self assign:original];
-//    }
-//    
-//    }
-//    
-//    }
+    func cosWithTrigMode(mode: BFTrigMode) -> Real {
+        if (!bf_is_valid) { return self }
+        
+        let one = Real(1, radix: bf_radix)
+        let two = Real(2, radix: bf_radix)
+        let zero = Real(0, radix: bf_radix)
+        
+        var result = self.toRadiansFrom(mode)
+        
+        var prevIteration = zero
+        var factorial = one
+        var original = result
+        var powerCopy = factorial
+        var nextTerm = factorial
+        
+        result = factorial
+        
+        var i = 1
+        while result != prevIteration {
+            // Get a copy of the current value so that we can see if it changes
+            prevIteration = result
+            
+            // Determine the next term of the series
+            // Numerator is x^(2n)
+            powerCopy *= original
+            powerCopy *= original
+            nextTerm = powerCopy
+            
+            // Divide the term by (2n)!
+            let twoN = Real(i * 2, radix:bf_radix)
+            let twoNMinusOne = Real(i * 2 - 1, radix:bf_radix)
+            factorial *= twoN
+            factorial *= twoNMinusOne
+            nextTerm /= factorial
+            
+            // Add/subtract the next term if it is valid
+            if nextTerm.isValid {
+                if i % 2 == 0 { result += nextTerm }
+                else          { result -= nextTerm }
+            }
+            
+            i++
+        }
+        
+        // Check that accurracy hasn't caused something illegal
+        let value = result.abs()
+        if value > one { result /= value }
+        
+        // Normalise to remove built up error (makes a zero output possible)
+        nextTerm = Real(10000, radix:bf_radix)
+        Real.BF_NormaliseNumbers(&result, otherNum: &nextTerm)
+        result.createUserPoint()
+        return result
+    }
     
     //
     // tanWithTrigMode
