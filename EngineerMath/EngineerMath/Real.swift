@@ -53,7 +53,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	static let BF_digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     
     // Mode for trigonometric operations
-    enum BFTrigMode { case BF_degrees, BF_radians, BF_gradians }
+    public enum BFTrigMode { case BF_degrees, BF_radians, BF_gradians }
     
     typealias Digit = UInt32
     
@@ -350,7 +350,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	// Hey look, its the default constructor. Bet you've never seen one of these before.
 	// By default you get a base 10 zero.
 	//
-	init() {
+	public init() {
 		Real.BF_ClearValuesArray(&bf_array)
 		setElements(10, negative:false, exp:0, valid:true, userPoint:0)
 	}
@@ -358,7 +358,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// Allows fairly explicit contruction of a Real
 	//
-	init(var mantissa: UInt64, exponent exp: Int32, isNegative flag: Bool, radix newRadix: UInt8, userPointAt pointLocation: UInt16) {
+	public init(var mantissa: UInt64, exponent exp: Int32, isNegative flag: Bool, radix newRadix: UInt8, userPointAt pointLocation: UInt16) {
 		Real.BF_ClearValuesArray(&bf_array)
 		setElements(newRadix, negative:flag, exp:exp, valid:true, userPoint:pointLocation)
 		
@@ -383,7 +383,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// The most common constructor. Simple and delicious.
 	//
-	init (var _ newValue: Int, radix newRadix: UInt8 = 10) {
+	public init (var _ newValue: Int, radix newRadix: UInt8 = 10) {
 		let negative = newValue < 0
 		if negative { newValue = -newValue }
 		
@@ -393,7 +393,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// Also good but not as fast as initWithInt.
 	//
-	init(var _ newValue: Double, radix newRadix: UInt8 = 10) {
+	public init(var _ newValue: Double, radix newRadix: UInt8 = 10) {
 		var mantissa : UInt64 = 0
 		var newExponent: Int32
 		var numDigits = 0
@@ -483,12 +483,12 @@ public struct Real : CustomStringConvertible, Comparable {
 //	//
 //	- (instancetype)initPiWithRadix:(unsigned short)newRadix
 //	{
-//	self = [self initWithInt:0 radix:newRadix];
+//	self = [self initWithInt:0 radix:newRadix)
 //	
 //	if (self != nil)
 //	{
 //	// Don't actually return our private PI (in case the caller messes it up)
-//	[self assign:self.pi];   // automatically calculate new pi for unknown radices
+//	[self assign:self.pi)   // automatically calculate new pi for unknown radices
 //	}
 //	}
 //	
@@ -502,20 +502,20 @@ public struct Real : CustomStringConvertible, Comparable {
 //	unsigned long	*values;
 //	NSUInteger		length;
 //	
-//	self = [super init];
+//	self = [super init)
 //	
-//	values = (unsigned long *)[coder decodeBytesForKey:@"BFArray" returnedLength:&length];
+//	values = (unsigned long *)[coder decodeBytesForKey:@"BFArray" returnedLength:&length)
 //	NSAssert(length == sizeof(unsigned long)*BF_num_values, @"Value array is wrong length");
 //	BF_AssignValues(bf_array, values);
 //	
-//	bf_exponent = [coder decodeIntForKey:@"BFExponent"];
-//	bf_user_point = [coder decodeIntForKey:@"BFUserPoint"];
-//	bf_is_negative = [coder decodeBoolForKey:@"BFIsNegative"];
-//	bf_radix = [coder decodeIntForKey:@"BFRadix"];
-//	bf_value_precision = [coder decodeIntForKey:@"BFValuePrecision"];
-//	bf_value_limit = [coder decodeIntForKey:@"BFValueLimit"];
-//	bf_exponent_precision = [coder decodeIntForKey:@"BFExponentPrecision"];
-//	bf_is_valid = [coder decodeBoolForKey:@"BFIsValid"];
+//	bf_exponent = [coder decodeIntForKey:@"BFExponent")
+//	bf_user_point = [coder decodeIntForKey:@"BFUserPoint")
+//	bf_is_negative = [coder decodeBoolForKey:@"BFIsNegative")
+//	bf_radix = [coder decodeIntForKey:@"BFRadix")
+//	bf_value_precision = [coder decodeIntForKey:@"BFValuePrecision")
+//	bf_value_limit = [coder decodeIntForKey:@"BFValueLimit")
+//	bf_exponent_precision = [coder decodeIntForKey:@"BFExponentPrecision")
+//	bf_is_valid = [coder decodeBoolForKey:@"BFIsValid")
 //	
 //	return self;
 //	}
@@ -524,7 +524,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	// The most requested constructor for those numbers that don't fit in 19 digits.
 	// BTW: I'll go with the Swift convention and use a 'p' exponent for radices other than 10.
 	//
-	init(_ newValue: String, radix newRadix: UInt8 = 10) {
+	public init(_ newValue: String, radix newRadix: UInt8 = 10) {
 		
 		func getCharFromString(inout string: String) -> Character {
 			if !string.isEmpty {
@@ -590,8 +590,8 @@ public struct Real : CustomStringConvertible, Comparable {
 	
 	// MARK: - Public utility functions
     
-    var isInteger: Bool {
-        let tmp = self.abs().fractionalPart()
+    public var isInteger: Bool {
+        let tmp = self.abs().fractionalPart
         return tmp.isZero
     }
     
@@ -648,12 +648,12 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // pi_array is retained permanently (until the program quits)
-        Real.piArray[Int(bf_radix)] = p.inverse()
+        Real.piArray[Int(bf_radix)] = p.inverse
         return Real.piArray[Int(bf_radix)]!
     }
     
-    static var piArray = [Real?](count: 36, repeatedValue: nil)
-    var pi: Real {
+    private static var piArray = [Real?](count: 36, repeatedValue: nil)
+    public var pi: Real {
         if let mpi = Real.piArray[Int(bf_radix)] {
             return mpi
         } else {
@@ -664,47 +664,47 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Reports what the current fractional point's location is.
     //
-    var userPoint: Int { return Int(bf_user_point) }
+    public var userPoint: Int { return Int(bf_user_point) }
     
     //
     // Returns the number of digits in the number.
     //
-    var mantissaLength: Int {
+    public var mantissaLength: Int {
         return Int(Real.BF_NumDigitsInArray(bf_array, radix: bf_radix, precision: Digit(bf_value_precision)))
     }
     
     //
     // Returns the radix of the current number
     //
-    var radix : Int { return Int(bf_radix) }
+    public var radix : Int { return Int(bf_radix) }
     
     //
     // Returns whether or not this number is valid (overflow or divide by zero make numbers
     // invalid).
     //
-    var isValid: Bool { return bf_is_valid }
+    public var isValid: Bool { return bf_is_valid }
     
     //
     // Returns the sign of the current number.
     //
-    var isNegative: Bool { return bf_is_negative }
+    public var isNegative: Bool { return bf_is_negative }
     
     //
     // Returns the presence of an exponent.
     //
-    var hasExponent: Bool { return bf_exponent != 0 }
+    public var hasExponent: Bool { return bf_exponent != 0 }
     
     //
     // True if the number is empty.
     //
-    var isZero: Bool {
+    public var isZero: Bool {
         return !Real.BF_ArrayIsNonZero(bf_array)
     }
     
     //
     // Sets the sign of the number to positive.
     //
-    func abs() -> Real {
+    public func abs() -> Real {
         var temp = self
         temp.bf_is_negative = false
         return temp
@@ -713,7 +713,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Sets the sign of the number to positive.
     //
-    func negate() -> Real {
+    public func negate() -> Real {
         var temp = self
         temp.bf_is_negative = !bf_is_negative
         return temp
@@ -724,7 +724,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	// into the calculator. 2's complement numbers have some weird stuff that needs
 	// to be worked through once the digit is appended.
 	//
-	mutating func appendDigit(digit: Character, useComplement complement:Int) -> Bool {
+	public mutating func appendDigit(digit: Character, useComplement complement:Int) -> Bool {
 		var values = [Digit](count: bf_array.count, repeatedValue: 0)
 		
 		if digit == "-" {
@@ -801,7 +801,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// Puts another digit on the exponent
 	//
-	mutating func appendExpDigit (digit: Character) {
+	public mutating func appendExpDigit (digit: Character) {
 		// Change the sign when '+/-' is pressed
 		if digit == "-" {
 			bf_exponent = -bf_exponent
@@ -822,11 +822,11 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// Puts a fractional point into the number
 	//
-	mutating func setUserPoint(pointLocation: Int) {
+	public mutating func setUserPoint(pointLocation: Int) {
 		setElements(bf_radix, negative:bf_is_negative, exp:bf_exponent, valid:isValid, userPoint:UInt16(pointLocation))
 	}
     
-    func convertToRadix(newRadix: UInt8) -> Real {
+    public func convertToRadix(newRadix: UInt8) -> Real {
         // Get a copy of the relevant stuff
         var values = self
         
@@ -923,7 +923,7 @@ public struct Real : CustomStringConvertible, Comparable {
             Z = Z.multiplyBy(Z)
         }
         if isNegativePower {
-            return Y.inverse()
+            return Y.inverse
         }
         return Y
     }
@@ -1664,7 +1664,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Raises the receiver to the exponent "num".
     //
-    func raiseToPower(num: Real) -> Real {
+    public func raiseToPower(num: Real) -> Real {
         var numCopy = num
         var result = self
         var negative = false
@@ -1686,7 +1686,7 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         let exp = Int(num.doubleValue)
-        if num.fractionalPart().isZero && Swift.abs(exp) < 0x8000 {
+        if num.fractionalPart.isZero && Swift.abs(exp) < 0x8000 {
             return self.raiseToIntPower(exp)
         }
         
@@ -1715,7 +1715,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Returns the value e^x where x is the value of the receiver.
     //
-    func powerOfE() -> Real {
+    public func powerOfE() -> Real {
         var squares = 0
         var result = self
         
@@ -1773,18 +1773,18 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         if bf_is_negative {
-            return result.inverse()
+            return result.inverse
         }
         return result
     }
     
-    func sqrt() -> Real { return nRoot(2) }
-    func cbrt() -> Real { return nRoot(3) }
+    public func sqrt() -> Real { return nRoot(2) }
+    public func cbrt() -> Real { return nRoot(3) }
     
     //
     // Takes the nth root of the receiver
     //
-    func nRoot(n: Int) -> Real {
+    public func nRoot(n: Int) -> Real {
         let one = Real(1, radix:bf_radix)
         var result = self
         
@@ -1869,7 +1869,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Returns the natural logarithm of the receiver.
     //
-    func ln() -> Real {
+    public func ln() -> Real {
         if !bf_is_valid { return self }
         
         var prevIteration = Real(0, radix: bf_radix)
@@ -1888,7 +1888,7 @@ public struct Real : CustomStringConvertible, Comparable {
         
         // ln(x) for x > 1 == -ln(1/x)
         if self > one {
-            result = self.inverse()
+            result = self.inverse
             inverse = true
         }
         
@@ -1945,15 +1945,496 @@ public struct Real : CustomStringConvertible, Comparable {
     }
     
     //
+    // Takes the "base" log of the receiver.
+    //
+    public func logOfBase(base: Real) -> Real {
+        if !bf_is_valid { return self }
+        if !base.isValid { return base }
+        return self.ln()/base.ln()
+    }
+    
+    //
+    // Returns the sine of the receiver where the receiver
+    // is interpreted as having *mode* angular units.
+    //
+    public func sinWithTrigMode(mode: BFTrigMode) -> Real {
+        if (!bf_is_valid) { return self }
+        
+        let one = Real(1, radix: bf_radix)
+        let zero = Real(0, radix: bf_radix)
+        var result = self.toRadiansFrom(mode)
+        
+        var prevIteration = zero
+        var factorial = one
+        let original = result
+        var powerCopy = result
+        var nextTerm = result
+        
+        var i = 1
+        while result != prevIteration {
+            // Get a copy of the current value so that we can see if it changes
+            prevIteration = result
+            
+            // Determine the next term of the series
+            // Numerator is x^(2n+1)
+            powerCopy *= original
+            powerCopy *= original
+            nextTerm = powerCopy
+            
+            // Divide the term by (2n+1)!
+            let twoN = Real(i * 2, radix: bf_radix)
+            let twoNPlusOne = Real(i * 2 + 1, radix: bf_radix)
+            factorial *= twoN
+            factorial *= twoNPlusOne
+            nextTerm /= factorial
+            
+            // Add/subtract the next term if it is valid
+            if nextTerm.isValid {
+                if i % 2 == 0 { result += nextTerm }
+                else          { result -= nextTerm }
+            }
+            
+            i++
+        }
+        
+        // Check that accurracy hasn't caused something illegal
+        let value = result.abs()
+        if value > one { result /= value }
+        
+        // Normalise to remove built up error (makes a zero output possible)
+        nextTerm = Real(10000, radix:bf_radix)
+        Real.BF_NormaliseNumbers(&result, otherNum: &nextTerm)
+        result.createUserPoint()
+        return result
+    }
+
+    public func asin(mode: BFTrigMode) -> Real {
+        if (!bf_is_valid) { return self }
+        
+        let half = Real(0.5, radix:bf_radix)
+        let minusHalf = Real(-0.5, radix:bf_radix)
+        let zero = Real(0, radix: bf_radix)
+        let one = Real(1, radix: bf_radix)
+        let two = Real(2, radix: bf_radix)
+        let four = Real(4, radix: bf_radix)
+        
+        // To speed convergeance, for x >= 0.5, let asin(x) = pi/2-2*asin(sqrt((1-x)/2))
+        var arcsinShift = false
+        var signChange = false
+        var result = self
+        if result > half {
+            result.appendDigit("-", useComplement:0)
+            result += one
+            result /= two
+            result = result.sqrt()
+            arcsinShift = true
+        }
+        if result < minusHalf {
+            signChange = true
+            result += one
+            result /= two
+            result = result.sqrt()
+            arcsinShift = true
+        }
+        
+        var prevIteration = zero
+        var factorial = one
+        var original = result
+        var powerCopy = result
+        var nextTerm = result
+        
+        var i = 1
+        while result != prevIteration {
+            // Get a copy of the current value so that we can see if it changes
+            prevIteration = result
+            
+            // Determine the next term of the series
+            powerCopy *= original
+            powerCopy *= original
+            let twoN = Real(i * 2, radix:bf_radix)
+            let twoNMinusOne = Real(i * 2 - 1, radix:bf_radix)
+            factorial *= twoNMinusOne
+            factorial /= twoN
+            
+            nextTerm = powerCopy
+            let twoNPlusOne = Real(i * 2 + 1, radix:bf_radix)
+            nextTerm /= twoNPlusOne
+            nextTerm *= factorial
+            
+            if nextTerm.isValid { result += nextTerm }
+            i++
+        }
+        
+        if arcsinShift {
+            result *= four
+            result.appendDigit("-", useComplement:0)
+            result += self.pi
+            result /= two
+        }
+        
+        if signChange { result.appendDigit("-", useComplement:0) }
+        
+        // Check that accurracy hasn't caused something illegal
+        original = self.pi / two
+        if result > original { result = original }
+        original.appendDigit("-", useComplement:0)
+        if result < original { result = original }
+        return result.radiansToMode(mode)
+    }
+    
+    public func sinh() -> Real {
+        if (!bf_is_valid) { return self }
+        let two = Real(2, radix: bf_radix)
+        var result = self
+        var original = self.powerOfE()
+        result.appendDigit("-", useComplement:0)
+        result = result.powerOfE()
+        original -= result
+        original /= two
+        return original
+    }
+    
+    public func asinh() -> Real {
+        if (!bf_is_valid) { return self }
+        let one = Real(1, radix: bf_radix)
+        var original = self
+        var result = (self * self + one).sqrt()
+        original += result
+        return original.ln()
+    }
+    
+    //
+    // cosWithTrigMode
+    //
+    // Really this is four different functions in one:
+    //		cos, arccos, hypcos and hyparccos
+    //
+//    - (void)cosWithTrigMode: (BFTrigMode)mode inv: (BOOL)useInverse hyp: (BOOL)useHyp
+//    {
+//    unsigned long		values[BF_num_values];
+//    unsigned long		otherNum[BF_num_values];
+//    BigFloatElements	thisNumElements;
+//    BigFloatElements	otherNumElements;
+//    BigFloat				*prevIteration;
+//    BigFloat				*powerCopy;
+//    BigFloat				*nextTerm;
+//    BigFloat				*factorial;
+//    BigFloat				*original;
+//    BigFloat				*value;
+//    BigFloat				*one;
+//    BigFloat				*two;
+//    BigFloat				*zero;
+//    unsigned long	i;
+//    
+//    if (!bf_is_valid)
+//    return;
+//    
+//    one = Real(1 radix: bf_radix];
+//    two = Real(2 radix: bf_radix];
+//    zero = Real(0 radix: bf_radix];
+//    
+//    if (useHyp == false)
+//    {
+//    if (useInverse == false)
+//    {
+//    [self toRadiansFrom:mode];
+//    
+//    prevIteration = [zero copy];
+//    factorial = [one copy];
+//    original = [self copy];
+//    powerCopy = [factorial copy];
+//    nextTerm = [factorial copy];
+//    
+//    [self assign: factorial];
+//    
+//    i = 1;
+//    while([self compareWith: prevIteration] != NSOrderedSame)
+//    {
+//				BigFloat *twoN;
+//				BigFloat *twoNMinusOne;
+//    
+//				// Get a copy of the current value so that we can see if it changes
+//				[prevIteration assign: self];
+//    
+//				// Determine the next term of the series
+//				// Numerator is x^(2n)
+//				[powerCopy multiplyBy: original];
+//				[powerCopy multiplyBy: original];
+//				[nextTerm assign:powerCopy];
+//				
+//				// Divide the term by (2n)!
+//				twoN = Real( (int)(i * 2) radix:bf_radix];
+//				twoNMinusOne = Real((int)(i * 2 - 1) radix:bf_radix];
+//				[factorial multiplyBy:twoN];
+//				[factorial multiplyBy:twoNMinusOne];
+//				[nextTerm divideBy: factorial];
+//    
+//				// Add/subtract the next term if it is valid
+//				if ([nextTerm isValid])
+//				{
+//    if (i % 2 == 0)
+//    [self add: nextTerm];
+//    else
+//    [self subtract: nextTerm];
+//				}
+//				
+//				i++;
+//    }
+//    
+//    // Check that accurracy hasn't caused something illegal
+//    value = [self copy];
+//    [value abs];
+//    if ([value compareWith:one] == NSOrderedDescending)
+//    {
+//				[self divideBy:value];
+//    }
+//    
+//    // Normalise to remove built up error (makes a zero output possible)
+//    nextTerm = Real(10000 radix:bf_radix];
+//    BF_CopyValues(bf_array, values);
+//    [self copyElements: &thisNumElements];
+//    BF_CopyValues(nextTerm->bf_array, otherNum);
+//    [nextTerm copyElements: &otherNumElements];
+//    BF_NormaliseNumbers(values, otherNum, &thisNumElements, &otherNumElements);
+//    BF_AssignValues(bf_array, values);
+//    [self assignElements: &thisNumElements];
+//    [self createUserPoint];
+//    
+//    }
+//    else // Inverse cosine
+//    {
+//    // arccos = π/2 - arcsin
+//    original = [self copy];
+//    [original sinWithTrigMode: BF_radians inv: true hyp: false];
+//    factorial = self.pi;
+//    [factorial divideBy:two];
+//    [factorial subtract: original];
+//    
+//    [self assign: factorial];
+//    [self radiansToMode:mode];
+//    }
+//    }
+//    else	// hyperbolic cosine
+//    {
+//    if (useInverse == false)
+//    {
+//    original = [self copy];
+//    [original powerOfE];
+//    bf_is_negative = (bf_is_negative == false) ? true : false
+//    [self powerOfE];
+//    [original add:self];
+//    [original divideBy:two];
+//    [self assign: original];
+//    }
+//    else // inverse hyerbolic cosine
+//    {
+//    original = [self copy];
+//    [self multiplyBy:self];
+//    [self subtract:one];
+//    [self sqrt];
+//    [original add: self];
+//    [original ln];
+//    [self assign:original];
+//    }
+//    
+//    }
+//    
+//    }
+    
+    //
+    // tanWithTrigMode
+    //
+    // Really this is four different functions in one:
+    //		tan, arctan, hyptan and hyparctan
+    //
+//    - (void)tanWithTrigMode: (BFTrigMode)mode inv: (BOOL)useInverse hyp: (BOOL)useHyp
+//    {
+//    unsigned long		values[BF_num_values];
+//    unsigned long		otherNum[BF_num_values];
+//    BigFloatElements	thisNumElements;
+//    BigFloatElements	otherNumElements;
+//    BigFloat				*one;
+//    BigFloat				*two;
+//    BigFloat				*zero;
+//    BigFloat				*minusOne;
+//    BigFloat				*prevIteration;
+//    BigFloat				*powerCopy;
+//    BigFloat				*nextTerm;
+//    BigFloat				*factorial;
+//    BigFloat				*original;
+//    NSComparisonResult	compare;
+//    int						path;
+//    
+//    if (!bf_is_valid)
+//    return;
+//    
+//    one = Real(1 radix: bf_radix];
+//    two = Real(2 radix: bf_radix];
+//    zero = Real(0 radix: bf_radix];
+//    minusOne = Real(-1 radix: bf_radix];
+//    
+//    if (useHyp == false)
+//    {
+//    if (useInverse == false)
+//    {
+//    [self toRadiansFrom:mode];
+//    
+//    original = [self copy];
+//    [self sinWithTrigMode:BF_radians inv:false hyp:false];
+//    [original cosWithTrigMode:BF_radians inv:false hyp:false];
+//    [self divideBy:original];
+//    
+//    // Normalise to remove built up error (makes a zero output possible)
+//    nextTerm = Real(10000 radix:bf_radix)
+//    BF_CopyValues(bf_array, values);
+//    [self copyElements: &thisNumElements)
+//    BF_CopyValues(nextTerm->bf_array, otherNum);
+//    [nextTerm copyElements: &otherNumElements)
+//    BF_NormaliseNumbers(values, otherNum, &thisNumElements, &otherNumElements);
+//    BF_AssignValues(bf_array, values);
+//    [self assignElements: &thisNumElements)
+//    [self createUserPoint)
+//    }
+//    else // Inverse tangent
+//    {
+//    original = [self copy)
+//    powerCopy = [original copy)
+//    factorial = [one copy)
+//    nextTerm = [factorial copy)
+//    
+//    path = 1;
+//    compare = [original compareWith:one)
+//    if (compare == NSOrderedDescending)
+//    {
+//				path = 2;
+//    }
+//    else if (compare != NSOrderedSame)
+//    {
+//				compare = [original compareWith:minusOne)
+//				if (compare == NSOrderedAscending)
+//				{
+//    path = 3;
+//				}
+//    }
+//    else
+//    {
+//				// tan-1(1) = pi/4
+//				[self assign:self.pi)
+//				[self divideBy:two)
+//				[self divideBy:two)
+//				path = 4;
+//    }
+//    
+//    if (path == 1) // inverse tangent for |x| < 1
+//    {
+//				prevIteration = [one copy)
+//				
+//				while([self compareWith: prevIteration] != NSOrderedSame)
+//				{
+//    [prevIteration assign:self)
+//    
+//    [factorial add: two)
+//    [powerCopy multiplyBy:original)
+//    [powerCopy multiplyBy:original)
+//    [nextTerm assign:powerCopy)
+//    [nextTerm divideBy:factorial)
+//    
+//    if ([nextTerm isValid])
+//    [self subtract: nextTerm)
+//    
+//    [factorial add: two)
+//    [powerCopy multiplyBy:original)
+//    [powerCopy multiplyBy:original)
+//    [nextTerm assign:powerCopy)
+//    [nextTerm divideBy:factorial)
+//    
+//    if ([nextTerm isValid])
+//    [self add: nextTerm)
+//				}
+//    }
+//    else if (path != 4) // inverse tangent for |x| >= 1
+//    {
+//				// arctan = ((x>=1) * -1)π/2 - 1/x + 1/(3x^3) - 1/(5x^5) +...
+//    
+//				// generate the (+/-) π/2
+//				[self assign:self.pi)
+//				[self divideBy:two)
+//				if (path == 3)
+//    [self appendDigit:L'-' useComplement:0)
+//				prevIteration = [self copy)
+//				
+//				// Apply the first term
+//				[nextTerm assign:original)
+//				[nextTerm inverse)
+//				[self subtract: nextTerm)
+//    
+//				while([self compareWith: prevIteration] != NSOrderedSame)
+//				{
+//    [prevIteration assign: self)
+//    
+//    [powerCopy multiplyBy:original)
+//    [powerCopy multiplyBy:original)
+//    [factorial add:two)
+//    [nextTerm assign:factorial)
+//    [nextTerm multiplyBy:powerCopy)
+//    [nextTerm inverse)
+//    
+//    if ([nextTerm isValid])
+//    [self add: nextTerm)
+//    
+//    [powerCopy multiplyBy:original)
+//    [powerCopy multiplyBy:original)
+//    [factorial add:two)
+//    [nextTerm assign:factorial)
+//    [nextTerm multiplyBy:powerCopy)
+//    [nextTerm inverse)
+//    
+//    if ([nextTerm isValid])
+//    [self subtract: nextTerm)
+//				}
+//    }
+//    else
+//    {
+//				prevIteration = [self copy)
+//    }
+//    
+//    [self radiansToMode:mode)
+//    
+//    }
+//    }
+//    else	// hyperbolic tangent
+//    {
+//    if (useInverse == false)
+//    {
+//    original = [self copy)
+//    [original cosWithTrigMode: BF_radians inv: false hyp: true)
+//    [self sinWithTrigMode: BF_radians inv: false hyp: true)
+//    [self divideBy: original)
+//    }
+//    else // inverse hyerbolic tangent
+//    {
+//    original = [self copy)
+//    [self add:one)
+//    [original appendDigit:L'-' useComplement:0)
+//    [original add:one)
+//    [self divideBy:original)
+//    [self ln)
+//    [self divideBy:two)
+//    }
+//    
+//    }
+//    }
+    
+    //
     // Calculates a factorial in the most basic way.
     //
-    func factorial() -> Real {
+    public func factorial() -> Real {
         if !bf_is_valid { return self }
         
         var result = self
         
         // Negative numbers have no factorial equivalent
-        if bf_is_negative || !fractionalPart().isZero {
+        if bf_is_negative || !fractionalPart.isZero {
             result.bf_is_valid = false
             return result
         }
@@ -1980,16 +2461,16 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Permutation of receiver samples made from a range of r options
     //
-    func nPr(r: Real) -> Real {
+    public func nPr(r: Real) -> Real {
         if !bf_is_valid { return self }
         if !r.isValid { return r }
         
-        var result = self.wholePart()
+        var result = self.wholePart
         if result < r {
             return Real(0, radix:bf_radix)
         }
         
-        let self_minus_r = result - r.wholePart()
+        let self_minus_r = result - r.wholePart
         
         result = result.factorial()
         result /= self_minus_r.factorial()
@@ -2000,16 +2481,16 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Calculates receiver combinations of samples taken from a choice of r candidates.
     //
-    func nCr (r: Real) -> Real {
+    public func nCr (r: Real) -> Real {
         if !bf_is_valid { return self }
         if !r.isValid { return r }
         
-        var result = self.wholePart()
+        var result = self.wholePart
         if result < r {
             return Real(0, radix:bf_radix)
         }
         
-        let rcopy = r.wholePart()
+        let rcopy = r.wholePart
         let self_minus_r = result - rcopy
         
         result = result.factorial()
@@ -2022,7 +2503,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Performs 1/receiver.
     //
-    public func inverse() -> Real {
+    public var inverse: Real {
         var inverseValue: Real
         
         if !bf_is_valid { return self }
@@ -2036,10 +2517,12 @@ public struct Real : CustomStringConvertible, Comparable {
         return inverseValue.divideBy(self)
     }
     
+    // MARK: - Accessor Functions
+    
     //
     // Sets the receiver to the receiver modulo 1.
     //
-    public func fractionalPart() -> Real {
+    public var fractionalPart: Real {
         if !bf_is_valid { return self}
         
         let one = Real(1, radix:bf_radix)
@@ -2049,23 +2532,21 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Sets the receiver to (receiver - (receiver modulo 1))
     //
-    public func wholePart() -> Real {
+    public var wholePart: Real {
         if !bf_is_valid { return self }
         
         let isNegative = bf_is_negative
         let numb = self.abs()
-
-        var whole = numb.subtract(numb.fractionalPart())
+        
+        var whole = numb.subtract(numb.fractionalPart)
         whole.bf_is_negative = isNegative
         return whole
     }
     
-    // MARK: - Accessor Functions
-    
     //
     // Returns the approximate value of the receiver as a double
     //
-    var doubleValue: Double {
+    public var doubleValue: Double {
         // Return NaN if number is not valid
         if !bf_is_valid {
             return Double.NaN
