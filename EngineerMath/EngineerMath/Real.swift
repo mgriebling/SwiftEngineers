@@ -47,7 +47,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	static let BF_max_radix				=   1 << BF_digit_bits
     static let BF_max_mantissa_length	=	BF_num_values * BF_digit_bits + 3
     static let BF_max_exponent_length	=	sizeof(Int32)*8
-	static let BF_max_exponent			=   Int32(Int16.max)
+	static let BF_max_exponent			=   Int(Int16.max)
 	
 	// A string containing the unichar digits 0 to 9 and onwards
 	static let BF_digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -58,14 +58,13 @@ public struct Real : CustomStringConvertible, Comparable {
     typealias Digit = UInt32
     
     private var bf_array = [Digit](count: Real.BF_num_values, repeatedValue: 0)
-    private var bf_exponent: Int32 = 0
-    private var bf_user_point: UInt16 = 0
+    private var bf_exponent: Int = 0
+    private var bf_user_point: Int = 0
     private var bf_is_negative: Bool = false
     
-    private var bf_radix: UInt8 = 10
-    private var bf_value_precision: UInt32 = 0
-    private var bf_value_limit: UInt32 = 0
-    private var bf_exponent_precision: UInt32 = 0
+    private var bf_radix: Int = 10
+    private var bf_value_precision: Digit = 0
+    private var bf_value_limit: Digit = 0
 	private var bf_is_valid: Bool = false
 		
     // MARK: - Helper Functions
@@ -75,7 +74,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     static func BF_ClearValuesArray(inout values: [Digit]) {
         // Set the value to zero
-        values = [UInt32](count: values.count, repeatedValue: 0)
+        values = [Digit](count: values.count, repeatedValue: 0)
     }
     
     //
@@ -120,7 +119,7 @@ public struct Real : CustomStringConvertible, Comparable {
     // Appends a single radix digit to the least significant end of the values array. Space
     // is made for the digit by multiplying through by the radix first.
     //
-    static func BF_AppendDigitToMantissa(inout values: [Digit], var digit: Digit, radix: UInt8, limit: Digit, scale: Int = 1) {
+    static func BF_AppendDigitToMantissa(inout values: [Digit], var digit: Digit, radix: Int, limit: Digit, scale: Int = 1) {
         // Multiply through by the bf_radix and add the digit
         for i in 0..<BF_num_values * scale {
             values[i] = (values[i] * UInt32(radix)) + digit
@@ -133,14 +132,14 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Chops a single digit off the end of the values array by dividing through by the radix.
     //
-    static func BF_RemoveDigitFromMantissa(inout values: [Digit], radix: UInt8, limit: Digit, start: Int = 0, scale: Int = 1) -> Digit  {
+    static func BF_RemoveDigitFromMantissa(inout values: [Digit], radix: Int, limit: Digit, start: Int = 0, scale: Int = 1) -> Digit  {
         // Truncate a digit by dividing through by the bf_radix
         var carryBits : Digit = 0
         
         for i in (start..<start+BF_num_values*scale).reverse() {
             values[i] = values[i] + (carryBits * limit)
-            carryBits = values[i] % UInt32(radix)
-            values[i] = values[i] / UInt32(radix)
+            carryBits = values[i] % Digit(radix)
+            values[i] = values[i] / Digit(radix)
         }
         
         return carryBits
@@ -150,15 +149,15 @@ public struct Real : CustomStringConvertible, Comparable {
     // Chops a single digit off the end of the values array by dividing through by the radix.
     // If the result is negative it says so.
     //
-    static func BF_RemoveDigitFromMantissaAndFlagEmpty(inout values: [Digit], radix: UInt8, limit: Digit, inout isEmpty: Bool) -> Digit {
+    static func BF_RemoveDigitFromMantissaAndFlagEmpty(inout values: [Digit], radix: Int, limit: Digit, inout isEmpty: Bool) -> Digit {
         // Truncate a digit by dividing through by the bf_radix
         var carryBits: Digit = 0
         var empty = true
         
         for i in (0..<values.count).reverse() {
             values[i] = values[i] + (carryBits * limit)
-            carryBits = values[i] % UInt32(radix)
-            values[i] = values[i] / UInt32(radix)
+            carryBits = values[i] % Digit(radix)
+            values[i] = values[i] / Digit(radix)
             if values[i] != 0 { empty = false }
         }
         
@@ -169,7 +168,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     // Counts the number of digits after and including the most significant non-zero digit.
     //
-    static func BF_NumDigitsInArray(values: [Digit], radix: UInt8, precision: Digit) -> Int {
+    static func BF_NumDigitsInArray(values: [Digit], radix: Int, precision: Digit) -> Int {
         var digitsInNumber, valueNumber, digitNumber: Int
         
         // Trace through the number looking the the most significant non-zero digit
@@ -178,11 +177,11 @@ public struct Real : CustomStringConvertible, Comparable {
         repeat {
             valueNumber--
             digitNumber = Int(precision - 1)
-            while Int(Double(values[valueNumber]) / pow(Double(radix), Double(digitNumber))) % Int(radix) == 0 && digitNumber >= 0 {
+            while Int(Double(values[valueNumber]) / pow(Double(radix), Double(digitNumber))) % radix == 0 && digitNumber >= 0 {
                 digitNumber--
                 digitsInNumber--
             }
-        } while Int(Double(values[valueNumber]) / pow(Double(radix), Double(digitNumber))) % Int(radix) == 0 && valueNumber > 0
+        } while Int(Double(values[valueNumber]) / pow(Double(radix), Double(digitNumber))) % radix == 0 && valueNumber > 0
         
         return digitsInNumber
     }
@@ -199,9 +198,9 @@ public struct Real : CustomStringConvertible, Comparable {
         var thisEmpty = false
         var otherEmpty = false
         
-        thisNum.bf_exponent -= Int32(thisNum.bf_user_point)
+        thisNum.bf_exponent -= thisNum.bf_user_point
         thisNum.bf_user_point = 0
-        otherNum.bf_exponent -= Int32(otherNum.bf_user_point)
+        otherNum.bf_exponent -= otherNum.bf_user_point
         otherNum.bf_user_point = 0
         
         // Normalise due to otherNum.bf_exponent being greater than bf_exponent
@@ -259,7 +258,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// Allows the elements of a BigFloat to be safely set.
 	//
-	private mutating func setElements(var radix: UInt8, negative isNegative:Bool, exp exponent:Int32, valid isValid:Bool, var userPoint:UInt16) {
+	private mutating func setElements(var radix: Int, negative isNegative:Bool, exp exponent:Int, valid isValid:Bool, var userPoint:Int) {
 		// Set everything
 		bf_exponent = exponent
 		bf_is_negative = isNegative
@@ -273,11 +272,10 @@ public struct Real : CustomStringConvertible, Comparable {
 		let rmax = Double(Real.BF_max_radix)
 		bf_value_precision = Digit(log(rmax) / log(rradix))
 		bf_value_limit = Digit(pow(rradix, Double(bf_value_precision)))
-		bf_exponent_precision = Digit(log(rmax) / log(rradix))
 		
 		// Apply the decimal point
-		if Int(userPoint) > Int(bf_value_precision) * Real.BF_num_values - 1 {
-			userPoint = UInt16(Int(bf_value_precision) * Real.BF_num_values - 1)
+		if userPoint > Int(bf_value_precision * Digit(Real.BF_num_values) - 1) {
+			userPoint = Int(bf_value_precision * Digit(Real.BF_num_values) - 1)
 		}
 		bf_user_point = userPoint
 	}
@@ -296,9 +294,9 @@ public struct Real : CustomStringConvertible, Comparable {
 		if bf_exponent < 0 {
 			if Digit(-bf_exponent) > bf_value_precision * Digit(Real.BF_num_values) {
 				bf_exponent += Int32(bf_value_precision * Digit(Real.BF_num_values)) - 1
-				bf_user_point = UInt16(bf_value_precision * Digit(Real.BF_num_values)) - 1
+				bf_user_point = Int(bf_value_precision * Digit(Real.BF_num_values)) - 1
 			} else {
-				bf_user_point = UInt16(-bf_exponent)
+				bf_user_point = -bf_exponent
 				bf_exponent = 0
 			}
 		}
@@ -358,7 +356,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// Allows fairly explicit contruction of a Real
 	//
-	public init(var mantissa: UInt64, exponent exp: Int32, isNegative flag: Bool, radix newRadix: UInt8, userPointAt pointLocation: UInt16) {
+	public init(var mantissa: UInt64, exponent exp: Int, isNegative flag: Bool, radix newRadix: Int, userPointAt pointLocation: Int) {
 		Real.BF_ClearValuesArray(&bf_array)
 		setElements(newRadix, negative:flag, exp:exp, valid:true, userPoint:pointLocation)
 		
@@ -383,7 +381,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// The most common constructor. Simple and delicious.
 	//
-	public init (var _ newValue: Int, radix newRadix: UInt8 = 10) {
+	public init (var _ newValue: Int, radix newRadix: Int = 10) {
 		let negative = newValue < 0
 		if negative { newValue = -newValue }
 		
@@ -393,9 +391,9 @@ public struct Real : CustomStringConvertible, Comparable {
 	//
 	// Also good but not as fast as initWithInt.
 	//
-	public init(var _ newValue: Double, radix newRadix: UInt8 = 10) {
+	public init(var _ newValue: Double, radix newRadix: Int = 10) {
 		var mantissa : UInt64 = 0
-		var newExponent: Int32
+		var newExponent: Int
 		var numDigits = 0
 		var negative = false
 		
@@ -416,9 +414,9 @@ public struct Real : CustomStringConvertible, Comparable {
 		// Get the base bf_radix exponent
 		let doubleExponent = log(newValue) / log(Double(newRadix))
 		if doubleExponent < 0 {
-			newExponent = Int32(floor(doubleExponent))
+			newExponent = Int(floor(doubleExponent))
 		} else {
-			newExponent = Int32(ceil(doubleExponent))
+			newExponent = Int(ceil(doubleExponent))
 		}
 		
 		// Remove the exponent from the newValue
@@ -470,61 +468,16 @@ public struct Real : CustomStringConvertible, Comparable {
 		// Create a user point.
 		createUserPoint()
 		if Int(bf_user_point) >= numDigits {
-			bf_exponent -= Int32(bf_user_point) - Int32(numDigits) + 1
-			bf_user_point -= bf_user_point - UInt16(numDigits) + 1
+			bf_exponent -= Int(bf_user_point) - numDigits + 1
+			bf_user_point -= bf_user_point - numDigits + 1
 		}
 	}
-	
-//	//
-//	// initPiWithRadix
-//	//
-//	// Creates a number and initialises it to π. At one point I was going to have more of these.
-//	// Like a zero, a one and other such numbers. Oh well.
-//	//
-//	- (instancetype)initPiWithRadix:(unsigned short)newRadix
-//	{
-//	self = [self initWithInt:0 radix:newRadix)
-//	
-//	if (self != nil)
-//	{
-//	// Don't actually return our private PI (in case the caller messes it up)
-//	[self assign:π)   // automatically calculate new pi for unknown radices
-//	}
-//	}
-//	
-//	//
-//	// initWithCoder
-//	//
-//	// Part of the NSCoder protocol. Required for copy, paste and other such stuff.
-//	//
-//	- (instancetype)initWithCoder:(NSCoder *)coder
-//	{
-//	unsigned long	*values;
-//	NSUInteger		length;
-//	
-//	self = [super init)
-//	
-//	values = (unsigned long *)[coder decodeBytesForKey:@"BFArray" returnedLength:&length)
-//	NSAssert(length == sizeof(unsigned long)*BF_num_values, @"Value array is wrong length");
-//	BF_AssignValues(bf_array, values);
-//	
-//	bf_exponent = [coder decodeIntForKey:@"BFExponent")
-//	bf_user_point = [coder decodeIntForKey:@"BFUserPoint")
-//	bf_is_negative = [coder decodeBoolForKey:@"BFIsNegative")
-//	bf_radix = [coder decodeIntForKey:@"BFRadix")
-//	bf_value_precision = [coder decodeIntForKey:@"BFValuePrecision")
-//	bf_value_limit = [coder decodeIntForKey:@"BFValueLimit")
-//	bf_exponent_precision = [coder decodeIntForKey:@"BFExponentPrecision")
-//	bf_is_valid = [coder decodeBoolForKey:@"BFIsValid")
-//	
-//	return self;
-//	}
 	
 	//
 	// The most requested constructor for those numbers that don't fit in 19 digits.
 	// BTW: I'll go with the Swift convention and use a 'p' exponent for radices other than 10.
 	//
-	public init(_ newValue: String, radix newRadix: UInt8 = 10) {
+	public init(_ newValue: String, radix newRadix: Int = 10) {
 		
 		func getCharFromString(inout string: String) -> Character {
 			if !string.isEmpty {
@@ -610,9 +563,6 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     func calculatePi() -> Real {
         // Setup the initial conditions
-        let one 		= Real(1, radix: bf_radix)
-        let two 		= Real(2, radix: bf_radix)
-        let four 		= Real(4, radix: bf_radix)
         let two_sqrt	= two.sqrt()
         let quarter 	= Real(0.25, radix: bf_radix)
         var p 			= two_sqrt - one
@@ -651,7 +601,10 @@ public struct Real : CustomStringConvertible, Comparable {
         Real.piArray[Int(bf_radix)] = p.inverse
         return Real.piArray[Int(bf_radix)]!
     }
-    
+	
+	//
+	// I really don't like this but it is convenient.  It seems weird
+	// to have a number act like a factory.
     private static var piArray = [Real?](count: 36, repeatedValue: nil)
     public var pi: Real {
         if let mpi = Real.piArray[Int(bf_radix)] {
@@ -661,6 +614,10 @@ public struct Real : CustomStringConvertible, Comparable {
         }
     }
     public var π: Real { return pi }
+	public var zero: Real { return Real(0, radix:bf_radix) }
+	public var one: Real { return Real(1, radix:bf_radix) }
+	public var two: Real { return Real(2, radix:bf_radix) }
+	public var four: Real { return Real(4, radix:bf_radix) }
     
     //
     // Reports what the current fractional point's location is.
@@ -732,7 +689,7 @@ public struct Real : CustomStringConvertible, Comparable {
 			bf_is_negative = (bf_is_negative == false) ? true : false
 		} else if (digit >= "0" && digit <= "9") || (digit >= "A" && digit <= "Z") { // append a regular digit
 			// Do nothing if overflow could occur
-			if bf_array[Real.BF_num_values - 1] >= (bf_value_limit / UInt32(bf_radix)) {
+			if bf_array[Real.BF_num_values - 1] >= (bf_value_limit / Digit(bf_radix)) {
 				return false
 			}
 			
@@ -812,11 +769,11 @@ public struct Real : CustomStringConvertible, Comparable {
 		// Do the appending stuff
 		if digit >= "0" && digit <= "9" {
 			// Do nothing if overflow could occur
-			if Swift.abs(bf_exponent) > Int32(pow(Double(bf_radix), Double(bf_exponent_precision)) / Double(bf_radix)) {
+			if Swift.abs(bf_exponent) > Int(pow(Double(bf_radix), Double(bf_value_precision)) / Double(bf_radix)) {
 				return
 			}
 			
-			bf_exponent = bf_exponent * Int32(bf_radix) + Int32(String(digit))!
+			bf_exponent = bf_exponent * bf_radix + Int(String(digit))!
 		}
 	}
 	
@@ -824,10 +781,10 @@ public struct Real : CustomStringConvertible, Comparable {
 	// Puts a fractional point into the number
 	//
 	public mutating func setUserPoint(pointLocation: Int) {
-		setElements(bf_radix, negative:bf_is_negative, exp:bf_exponent, valid:isValid, userPoint:UInt16(pointLocation))
+		setElements(bf_radix, negative:bf_is_negative, exp:bf_exponent, valid:isValid, userPoint:pointLocation)
 	}
     
-    public func convertToRadix(newRadix: UInt8) -> Real {
+    public func convertToRadix(newRadix: Int) -> Real {
         // Get a copy of the relevant stuff
         var values = self
         
@@ -843,16 +800,16 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // Apply the user's decimal point
-        let exponent = bf_exponent - Int32(bf_user_point)
+        let exponent = bf_exponent - Int(bf_user_point)
         values.bf_user_point = 0
 
         // Adjust the precision related elements
         let rradix = Double(Real.BF_max_radix)
         values.bf_radix = newRadix
         values.bf_exponent = 0
-        values.bf_exponent_precision =  UInt32(log(rradix) / log(Double(values.bf_radix)))
-        values.bf_value_precision = UInt32(log(rradix) / log(Double(values.bf_radix)))
-        values.bf_value_limit = UInt32(pow(Double(newRadix), Double(values.bf_value_precision)))
+//        values.bf_exponent_precision =  UInt32(log(rradix) / log(Double(values.bf_radix)))
+        values.bf_value_precision = Digit(log(rradix) / log(Double(values.bf_radix)))
+        values.bf_value_limit = Digit(pow(Double(newRadix), Double(values.bf_value_precision)))
         
         // Clear the working space
         var reversed = [Digit](count:Real.BF_max_radix*2, repeatedValue:0)
@@ -901,9 +858,9 @@ public struct Real : CustomStringConvertible, Comparable {
     // Takes the receiver to the nth power.
     //
     public func raiseToIntPower(n: Int) -> Real {
-        var Z = Real(0, radix: bf_radix)
+        var Z = zero
         var N = Swift.abs(n)
-        var Y = Real(1, radix: bf_radix)
+        var Y = one
         let isNegativePower = n < 0
         
         if !bf_is_valid { return self }
@@ -1106,9 +1063,9 @@ public struct Real : CustomStringConvertible, Comparable {
 		}
 		
 		// Apply the user's decimal point
-		thisNum.bf_exponent -= Int32(thisNum.bf_user_point)
+		thisNum.bf_exponent -= Int(thisNum.bf_user_point)
 		thisNum.bf_user_point = 0
-		otherNum.bf_exponent -= Int32(otherNum.bf_user_point)
+		otherNum.bf_exponent -= Int(otherNum.bf_user_point)
 		otherNum.bf_user_point = 0
 		
 		// Multiply exponents through addition
@@ -1170,10 +1127,6 @@ public struct Real : CustomStringConvertible, Comparable {
 		var subValues = values
 		var thisNum = self
 		var otherNum = num
-        
-        if num == Real(2249) {
-            print("Dividing \(self) / \(num)")
-        }
 		
 		if num.radix != Int(bf_radix) {
 			otherNum = num.convertToRadix(bf_radix)
@@ -1190,9 +1143,9 @@ public struct Real : CustomStringConvertible, Comparable {
 		}
 		
 		// Apply the user's decimal point
-		thisNum.bf_exponent -= Int32(thisNum.bf_user_point)
+		thisNum.bf_exponent -= Int(thisNum.bf_user_point)
 		thisNum.bf_user_point = 0
-		otherNum.bf_exponent -= Int32(otherNum.bf_user_point)
+		otherNum.bf_exponent -= Int(otherNum.bf_user_point)
 		otherNum.bf_user_point = 0
 		
 		// Two negatives make a positive
@@ -1202,7 +1155,7 @@ public struct Real : CustomStringConvertible, Comparable {
 		// This involves multiplying through by the bf_radix until the number runs up against the
 		// left edge or MSD (most significant digit)
         if Real.BF_ArrayIsNonZero(values) {
-			while values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix)) {
+			while values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / Digit(thisNum.bf_radix)) {
                 Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 				thisNum.bf_exponent--
 			}
@@ -1236,7 +1189,7 @@ public struct Real : CustomStringConvertible, Comparable {
 			// If the last multiply will make otherNum greater than this num, then we
 			// don't do it. This ensures that the first division column will always be non-zero.
 			if Real.BF_ArrayIsNonZero(otherNumValues) {
-				while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / UInt32(otherNum.bf_radix))) &&
+				while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / Digit(otherNum.bf_radix))) &&
 					  (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / Digit(otherNum.bf_radix)))
 				{
 					Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
@@ -1353,13 +1306,13 @@ public struct Real : CustomStringConvertible, Comparable {
 		// Normalise the result
 		// This involves multiplying through by the bf_radix until the number runs up against the
 		// left edge or MSD (most significant digit)
-		while result[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix)) {
+		while result[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / Digit(thisNum.bf_radix)) {
 			Real.BF_AppendDigitToMantissa(&result, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
 			thisNum.bf_exponent--
 		}
 		
 		// Apply a round to nearest on the last digit
-		if ((Double(result[Real.BF_num_values - 1]) / Double(bf_value_limit / UInt32(bf_radix))) >= (Double(bf_radix) / 2.0)) {
+		if ((Double(result[Real.BF_num_values - 1]) / Double(bf_value_limit / Digit(bf_radix))) >= (Double(bf_radix) / 2.0)) {
             Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.bf_value_limit, start: Real.BF_num_values)
 			
 			// If by shear fluke that cause the top digit to overflow, then shift back by one digit
@@ -1424,9 +1377,9 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // Apply the user's decimal point
-        thisNum.bf_exponent -= Int32(thisNum.bf_user_point)
+        thisNum.bf_exponent -= Int(thisNum.bf_user_point)
         thisNum.bf_user_point = 0
-        otherNum.bf_exponent -= Int32(otherNum.bf_user_point)
+        otherNum.bf_exponent -= Int(otherNum.bf_user_point)
         otherNum.bf_user_point = 0
  
         // Two negatives make a positive
@@ -1436,7 +1389,7 @@ public struct Real : CustomStringConvertible, Comparable {
         // This involves multiplying through by the bf_radix until the number runs up against the
         // left edge or MSD (most significant digit)
         if Real.BF_ArrayIsNonZero(values) {
-            while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / UInt32(thisNum.bf_radix))) {
+            while(values[Real.BF_num_values * 2 - 1] < (thisNum.bf_value_limit / Digit(thisNum.bf_radix))) {
                 Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
                 thisNum.bf_exponent--
             }
@@ -1454,7 +1407,7 @@ public struct Real : CustomStringConvertible, Comparable {
         // If the last multiply will make otherNum greater than this num, then we
         // don't do it. This ensures that the first division column will always be non-zero.
         if Real.BF_ArrayIsNonZero(otherNumValues) {
-            while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / UInt32(otherNum.bf_radix))) &&
+            while (otherNumValues[Real.BF_num_values * 2 - 1] < (otherNum.bf_value_limit / Digit(otherNum.bf_radix))) &&
                 (otherNumValues[Real.BF_num_values * 2 - 1] < (values[Real.BF_num_values * 2 - 1] / Digit(otherNum.bf_radix)))
             {
                 Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.bf_radix, limit: thisNum.bf_value_limit, scale:2)
@@ -1677,8 +1630,6 @@ public struct Real : CustomStringConvertible, Comparable {
             return result
         }
         
-        let one = Real(1, radix: bf_radix)
-        
         if self.isZero {
             // Zero raised to anything except zero is zero (provided exponent is valid)
             numCopy.bf_is_valid = num.isValid
@@ -1698,7 +1649,6 @@ public struct Real : CustomStringConvertible, Comparable {
         
         result = (result.ln() * num).powerOfE()
         if negative {
-            let two = Real(2, radix: bf_radix)
             if numCopy.isNegative {
                 numCopy = -numCopy
             }
@@ -1726,9 +1676,7 @@ public struct Real : CustomStringConvertible, Comparable {
         if bf_is_negative {
             result.bf_is_negative = false
         }
-        
-        let one = Real(1, radix:bf_radix)
-        let two = Real(2, radix:bf_radix)
+		
 		while result > one {
             result /= two
             squares++
@@ -1747,7 +1695,7 @@ public struct Real : CustomStringConvertible, Comparable {
         result += original
         
         // otherwise iterate the Taylor Series until we obtain a stable solution
-        var i = Real(2, radix:bf_radix)
+        var i = two
         var nextTerm = factorialValue
         while result != prevIteration {
             // Get a copy of the current value so that we can see if it changes
@@ -1786,7 +1734,6 @@ public struct Real : CustomStringConvertible, Comparable {
     // Takes the nth root of the receiver
     //
     public func nRoot(n: Int) -> Real {
-        let one = Real(1, radix:bf_radix)
         var result = self
         
         if !bf_is_valid || self.isZero { return self }
@@ -1821,7 +1768,7 @@ public struct Real : CustomStringConvertible, Comparable {
         
         // Do some Newton's method iterations until we converge
         var maxIterations = 1000
-        var power = Real(0, radix:bf_radix)
+        var power = zero
         while newGuess != prevGuess && maxIterations > 0 {
             prevGuess = newGuess
             
@@ -1873,9 +1820,8 @@ public struct Real : CustomStringConvertible, Comparable {
     public func ln() -> Real {
         if !bf_is_valid { return self }
         
-        var prevIteration = Real(0, radix: bf_radix)
-        let one = Real( 1, radix: bf_radix)
-        var i = Real(2, radix: bf_radix)
+        var prevIteration = zero
+        var i = two
         let eighth = Real(0.125, radix: bf_radix)
         var result = self
         var inverse = false
@@ -1960,9 +1906,7 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     public func sinWithTrigMode(mode: BFTrigMode) -> Real {
         if !bf_is_valid { return self }
-        
-        let one = Real(1, radix: bf_radix)
-        let zero = Real(0, radix: bf_radix)
+		
         var result = self.toRadiansFrom(mode)
         
         var prevIteration = zero
@@ -2015,9 +1959,6 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     func cosWithTrigMode(mode: BFTrigMode) -> Real {
         if !bf_is_valid { return self }
-        
-        let one = Real(1, radix: bf_radix)
-        let zero = Real(0, radix: bf_radix)
         
         var result = self.toRadiansFrom(mode)
         
@@ -2089,10 +2030,6 @@ public struct Real : CustomStringConvertible, Comparable {
         
         let half = Real(0.5, radix:bf_radix)
         let minusHalf = Real(-0.5, radix:bf_radix)
-        let zero = Real(0, radix: bf_radix)
-        let one = Real(1, radix: bf_radix)
-        let two = Real(2, radix: bf_radix)
-        let four = Real(4, radix: bf_radix)
         
         // To speed convergeance, for x >= 0.5, let asin(x) = pi/2-2*asin(sqrt((1-x)/2))
         var arcsinShift = false
@@ -2161,7 +2098,6 @@ public struct Real : CustomStringConvertible, Comparable {
     public func acos(mode: BFTrigMode) -> Real {
         // arccos = π/2 - arcsin
         if !bf_is_valid { return self }
-        let two = Real(2, radix: bf_radix)
         var original = self.asin(.BF_radians)
         original = π / two - original
         return original.radiansToMode(mode)
@@ -2169,8 +2105,6 @@ public struct Real : CustomStringConvertible, Comparable {
     
     public func atan(mode: BFTrigMode) -> Real {
         if !bf_is_valid { return self }
-        let one = Real(1, radix: bf_radix)
-        let two = Real(2, radix: bf_radix)
         let minusOne = Real(-1, radix: bf_radix)
         var original = self
         var powerCopy = original
@@ -2248,7 +2182,6 @@ public struct Real : CustomStringConvertible, Comparable {
 
     public func sinh() -> Real {
         if !bf_is_valid { return self }
-        let two = Real(2, radix: bf_radix)
         var result = self
         var original = self.powerOfE()
         result.appendDigit("-", useComplement:0)
@@ -2260,7 +2193,6 @@ public struct Real : CustomStringConvertible, Comparable {
 
     public func cosh() -> Real {
         if !bf_is_valid { return self }
-        let two = Real(2, radix: bf_radix)
         var original = self.powerOfE()
 		var result = self
         result.bf_is_negative = !bf_is_negative ? true : false
@@ -2276,7 +2208,6 @@ public struct Real : CustomStringConvertible, Comparable {
     
     public func asinh() -> Real {
         if !bf_is_valid { return self }
-        let one = Real(1, radix: bf_radix)
         var original = self
         let result = (self * self + one).sqrt()
         original += result
@@ -2285,7 +2216,6 @@ public struct Real : CustomStringConvertible, Comparable {
     
     public func acosh() -> Real {
         if !bf_is_valid { return self }
-        let one = Real(1, radix: bf_radix)
         var original = self
 		let result = (self * self - one).sqrt()
         original += result
@@ -2294,8 +2224,6 @@ public struct Real : CustomStringConvertible, Comparable {
     
     public func atanh() -> Real {
         if !bf_is_valid { return self }
-        let one = Real(1, radix: bf_radix)
-        let two = Real(2, radix: bf_radix)
         var result = (one + self) / (one - self)
         result = result.ln()
         return result / two
@@ -2303,9 +2231,8 @@ public struct Real : CustomStringConvertible, Comparable {
     
     public func atan2(y:Real) -> Real {
         let x = self
-        let zero = Real(0, radix: bf_radix)
         let k3 = Real(3, radix: bf_radix)
-        let k4 = Real(4, radix: bf_radix)
+        let k4 = four
         
         // Algorithm shamelessly stolen from qd_real
         if x.isZero {
@@ -2350,9 +2277,6 @@ public struct Real : CustomStringConvertible, Comparable {
             return result
         }
         
-        let zero = Real(0, radix: bf_radix)
-        let one = Real(1, radix: bf_radix)
-        
         // Factorial zero is 1
         if isZero {
             return one
@@ -2378,7 +2302,7 @@ public struct Real : CustomStringConvertible, Comparable {
         
         var result = self.wholePart
         if result < r {
-            return Real(0, radix:bf_radix)
+            return zero
         }
         
         let self_minus_r = result - r.wholePart
@@ -2398,7 +2322,7 @@ public struct Real : CustomStringConvertible, Comparable {
         
         var result = self.wholePart
         if result < r {
-            return Real(0, radix:bf_radix)
+            return zero
         }
         
         let rcopy = r.wholePart
@@ -2435,8 +2359,6 @@ public struct Real : CustomStringConvertible, Comparable {
     //
     public var fractionalPart: Real {
         if !bf_is_valid { return self}
-        
-        let one = Real(1, radix:bf_radix)
         return self.moduloBy(one)
     }
     
@@ -2479,14 +2401,14 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // Apply the exponent
-        retVal *= pow(Double(bf_radix), Double(bf_exponent - Int32(bf_user_point)))
+        retVal *= pow(Double(bf_radix), Double(bf_exponent - Int(bf_user_point)))
         return retVal
     }
 	
 	//
 	// Interprets the given int as an exponent and formats it as a string. Why did I do this?
 	//
-	public func exponentStringFromInt(exp: Int32) -> String {
+	public func exponentStringFromInt(exp: Int) -> String {
         var workingExponent = exp;
         var exponentIsNegative = false
         var digits = [Character](count: Real.BF_max_exponent_length, repeatedValue: "0")
@@ -2502,15 +2424,15 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // Work right to left and fill in the digits
-        while (currentPosition > (Real.BF_max_exponent_length - Int(bf_exponent_precision) - 2)) {
-            digits[currentPosition] = Real.BF_digits[Int(workingExponent) % Int(bf_radix)]
+        while currentPosition > Real.BF_max_exponent_length - Int(bf_value_precision) - 2 {
+            digits[currentPosition] = Real.BF_digits[workingExponent % bf_radix]
             
             // Keep checking for the leftmost non-zero digit
             if digits[currentPosition] != "0" {
                 lastNonZero = currentPosition
             }
             
-            workingExponent /= Int32(bf_radix)
+            workingExponent /= bf_radix
             currentPosition--
         }
         
@@ -2642,7 +2564,7 @@ public struct Real : CustomStringConvertible, Comparable {
             userPointCopy = places
             
             // If there is not enough room to display the number in the current fixed precision, bail out
-            if digitsInNumber + exponentCopy > Int32(lengthLimit) {
+            if digitsInNumber + exponentCopy > lengthLimit {
                 mantissaOut = "∞"
                 exponentOut = ""
                 return
