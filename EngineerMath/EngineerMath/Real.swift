@@ -321,7 +321,7 @@ public struct Real : CustomStringConvertible, Comparable {
             }
             return result * π
         } else {
-            let two_pi = Real(2, radix: bf_radix) * π
+            let two_pi = two * π
             return self % two_pi
         }
     }
@@ -376,7 +376,7 @@ public struct Real : CustomStringConvertible, Comparable {
     }
     
     //
-    // receiver = receiver & num
+    // receiver = op(receiver, num)
     //
     private func opWith(num: Real, usingComplement complement: Int, andOp op: (Digit, Digit) -> Digit) -> Real {
         if !bf_is_valid { return self }
@@ -793,7 +793,6 @@ public struct Real : CustomStringConvertible, Comparable {
 				complementNumberHalf = Real(mantissa: complementHalf, exponent: 0, isNegative: false, radix: bf_radix, userPointAt: 0)
 				
 				if complement == 64 {
-					let two = Real(2, radix: bf_radix)
 					complementNumberFull = complementNumberHalf.multiplyBy(two)
 				} else {
 					complementNumberFull = Real(mantissa: complementFull, exponent: 0, isNegative: false, radix: bf_radix, userPointAt: 0)
@@ -922,10 +921,10 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // Create a Real with bf_radix = newRadix and value = oldRadix
-        var exponentNum = Real(Int(bf_radix), radix: newRadix)
+        var exponentNum = Real(bf_radix, radix: newRadix)
         
         // Raise the BigFloat to the old exponent power
-        exponentNum = exponentNum.raiseToIntPower(Int(exponent))
+        exponentNum = exponentNum.raiseToIntPower(exponent)
         
         // Set the values and elements of this number
         Real.BF_AssignValues(&values.bf_array, source: result)
@@ -1618,7 +1617,7 @@ public struct Real : CustomStringConvertible, Comparable {
         
         // Now create a number that is this dividend times the modulor and subtract it from the
         // modulee to obtain the result
-        var subNum = Real(0, radix: thisNum.bf_radix)
+        var subNum = zero
         subNum.setElements(thisNum.bf_radix, negative:thisNum.bf_is_negative, exp:divisionExponent, valid:true, userPoint:0)
         subNum.bf_array = Array(result[Real.BF_num_values..<result.count])
         subNum = subNum.multiplyBy(num)
@@ -1872,24 +1871,10 @@ public struct Real : CustomStringConvertible, Comparable {
         // within n * smallest digit size, then round to one.
         //
         let twoEpsilon = Real(mantissa: 2, exponent: -(Real.BF_num_values * Int(bf_value_precision)) + 1, isNegative: false, radix: bf_radix, userPointAt: 0)
-        if result > one {
-            //
-            // If we're slightly greater than 1, check if we should round down
-            //
-            let difference = result - one
-            if difference < twoEpsilon {
-                result = one
-            }
-        } else {
-            //
-            // If we're slightly less than 1, check if we should round up
-            //
-            let difference = one - result
-            if difference < twoEpsilon {
-                result = one
-            }
-        }
-        
+		if (result - one).abs() < twoEpsilon {
+			result = one
+		}
+		
         // fix the sign
         result.bf_is_negative = bf_is_negative
         return result
@@ -2004,8 +1989,7 @@ public struct Real : CustomStringConvertible, Comparable {
             
             // Determine the next term of the series
             // Numerator is x^(2n+1)
-            powerCopy *= original
-            powerCopy *= original
+            powerCopy *= original * original
             nextTerm = powerCopy
             
             // Divide the term by (2n+1)!
@@ -2421,18 +2405,35 @@ public struct Real : CustomStringConvertible, Comparable {
     // Performs 1/receiver.
     //
     public var inverse: Real {
-        var inverseValue: Real
-        
-        if !bf_is_valid { return self }
-        
+		if !bf_is_valid { return self }
         if isZero {
-            inverseValue = self
-            inverseValue.bf_is_valid = false
-            return inverseValue
+            var result = self
+            result.bf_is_valid = false
+            return result
         }
-        inverseValue = Real(1, radix: bf_radix)
-        return inverseValue.divideBy(self)
+        return one.divideBy(self)
     }
+	
+	public func andWith(num: Real, usingComplement complement: Int) -> Real {
+		return self.opWith(num, usingComplement: complement, andOp: &)
+	}
+	
+	public func orWith(num: Real, usingComplement complement: Int) -> Real {
+		return self.opWith(num, usingComplement: complement, andOp: |)
+	}
+	
+	public func xorWith(num: Real, usingComplement complement: Int) -> Real {
+		return self.opWith(num, usingComplement: complement, andOp: ^)
+	}
+	
+	private func not(a: Digit, b: Digit) -> Digit {
+		// b is a dummy just so the binary op algorithm can be applied here as well
+		return ~a
+	}
+	
+	public func notUsingComplement(complement: Int) -> Real {
+		return self.opWith(zero, usingComplement: complement, andOp: not)
+	}
     
     // MARK: - Accessor Functions
     
@@ -2806,7 +2807,6 @@ public struct Real : CustomStringConvertible, Comparable {
             }
             
             if bf_is_negative {
-                let two = Real(2, radix: bf_radix)
                 complementNumber = complementNumber.multiplyBy(two)
                 complementNumber = complementNumber.subtract(mantissaNumber)
                 Real.BF_CopyValues(complementNumber.bf_array, destination: &values)
