@@ -521,7 +521,7 @@ public struct Real : CustomStringConvertible, Comparable {
 			if nextDigit != 0 {
 				// Guard against overflow
 				if UInt64.max / UInt64(newRadix) >= mantissa {
-                    let power: Double = Real.pow(Double(newRadix), Double(i - numDigits + 1))
+                    let power: Double = Real.pow(newRadix, i - numDigits + 1)
 					mantissa = mantissa * UInt64(power) + UInt64(nextDigit)
 				}
 				
