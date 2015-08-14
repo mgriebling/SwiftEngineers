@@ -177,11 +177,11 @@ public struct Real : CustomStringConvertible, Comparable {
         repeat {
             valueNumber--
             digitNumber = Int(precision - 1)
-            while Int(Double(values[valueNumber]) / pow(Double(radix), Double(digitNumber))) % radix == 0 && digitNumber >= 0 {
+            while Int(Double(values[valueNumber]) / Foundation.pow(Double(radix), Double(digitNumber))) % radix == 0 && digitNumber >= 0 {
                 digitNumber--
                 digitsInNumber--
             }
-        } while Int(Double(values[valueNumber]) / pow(Double(radix), Double(digitNumber))) % radix == 0 && valueNumber > 0
+        } while Int(Double(values[valueNumber]) / Foundation.pow(Double(radix), Double(digitNumber))) % radix == 0 && valueNumber > 0
         
         return digitsInNumber
     }
@@ -271,7 +271,7 @@ public struct Real : CustomStringConvertible, Comparable {
 		let rradix = Double(radix)
 		let rmax = Double(Real.BF_max_radix)
 		bf_value_precision = Digit(log(rmax) / log(rradix))
-		bf_value_limit = Digit(pow(rradix, Double(bf_value_precision)))
+		bf_value_limit = Real.pow(radix, Int(bf_value_precision))
 		
 		// Apply the decimal point
 		if userPoint > Int(bf_value_precision * Digit(Real.BF_num_values) - 1) {
@@ -307,7 +307,7 @@ public struct Real : CustomStringConvertible, Comparable {
 		}
 	}
     
-    func toRadiansFrom(mode: BFTrigMode) -> Real {
+    public func toRadiansFrom(mode: BFTrigMode) -> Real {
         var result = self
         if mode != .BF_radians {
             if mode == .BF_degrees {
@@ -326,7 +326,7 @@ public struct Real : CustomStringConvertible, Comparable {
         }
     }
     
-    func radiansToMode(mode: BFTrigMode) -> Real {
+    public func radiansToMode(mode: BFTrigMode) -> Real {
         var result = self
         if mode != .BF_radians {
             if mode == .BF_degrees {
@@ -339,6 +339,85 @@ public struct Real : CustomStringConvertible, Comparable {
             return result / π
         }
         return self
+    }
+    
+    private func preComplement(complement: Int) -> Real {
+        if complement != 0 {
+            if self.isNegative {
+                let complementHalf = UInt64(1) << UInt64(complement - 1)
+                let complementNumberHalf = Real(mantissa:complementHalf, exponent:0, isNegative:false, radix:bf_radix, userPointAt:0)
+                let complementNumberFull = complementNumberHalf * two
+                return complementNumberFull + self
+            }
+        }
+        return self
+    }
+    
+    private func postComplement(complement: Int) -> Real {
+        if complement != 0 {
+            let complementHalf = UInt64(1) << UInt64(complement - 1)
+            let complementNumberHalf = Real(mantissa:complementHalf, exponent:0, isNegative:false, radix:bf_radix, userPointAt:0)
+            let complementNumberFull = complementNumberHalf * two
+
+            if self >= complementNumberHalf {
+                return zero - (complementNumberFull - self)
+            }
+        }
+        return self
+    }
+    
+    private static func pow (x: Int, _ power: Int) -> Double {
+        return Foundation.pow(Double(x), Double(power))
+    }
+    
+    private static func pow (x: Int, _ power: Int) -> Digit {
+        return Digit(Foundation.pow(Double(x), Double(power)))
+    }
+    
+    //
+    // receiver = receiver & num
+    //
+    private func opWith(num: Real, usingComplement complement: Int, andOp op: (Digit, Digit) -> Digit) -> Real {
+        if !bf_is_valid { return self }
+        if !num.isValid { return num }
+        
+        var thisNum = self.preComplement(complement)
+        var otherNum = num.preComplement(complement)
+        
+        // Convert to a radix that is a power of 2
+        let old_radix = bf_radix
+        if bf_radix != 2 && bf_radix != 4 && bf_radix != 8 && bf_radix != 16 && bf_radix != 32 {
+            // Convert to the largest possible binary compatible radix
+            thisNum = thisNum.convertToRadix(32)
+        }
+        otherNum = otherNum.convertToRadix(thisNum.bf_radix)
+        
+        // look for the first digit
+        var digit = Real.BF_num_values * Int(thisNum.bf_value_precision) - 1
+        var ind = digit /  Int(thisNum.bf_value_precision)
+        var offset: Digit = Real.pow(thisNum.bf_radix, digit % Int(thisNum.bf_value_precision))
+        while offset != 0 && thisNum.bf_array[ind] / offset == 0 && otherNum.bf_array[ind] / offset == 0 && digit >= 0 {
+            digit--
+            ind = digit / Int(thisNum.bf_value_precision)
+            offset = Real.pow(bf_radix, digit % Int(thisNum.bf_value_precision))
+        }
+        
+        // apply a binary op to each digit
+        while offset != 0 && digit >= 0 {
+            var this_digit = (thisNum.bf_array[ind] / offset) % Digit(thisNum.bf_radix)
+            let that_digit = (otherNum.bf_array[ind] / offset) % Digit(thisNum.bf_radix)
+            thisNum.bf_array[ind] -= this_digit * Digit(offset)
+            this_digit = op(this_digit, that_digit) % Digit(thisNum.bf_radix)
+            thisNum.bf_array[ind] += this_digit * offset
+            
+            digit--
+            ind = digit / Int(thisNum.bf_value_precision)
+            offset = Real.pow(thisNum.bf_radix, digit % Int(thisNum.bf_value_precision))
+        }
+        
+        // Restore the radix
+        thisNum = thisNum.convertToRadix(old_radix)
+        return thisNum.postComplement(complement)
     }
 
 
@@ -420,7 +499,7 @@ public struct Real : CustomStringConvertible, Comparable {
 		}
 		
 		// Remove the exponent from the newValue
-		newValue /= pow(Double(newRadix), Double(newExponent))
+		newValue /= Foundation.pow(Double(newRadix), Double(newExponent))
 		if newValue.isNaN {
 			// Generate an NaN and return
 			self.init(0, radix: newRadix)
@@ -441,7 +520,7 @@ public struct Real : CustomStringConvertible, Comparable {
 			if nextDigit != 0 {
 				// Guard against overflow
 				if UInt64.max / UInt64(newRadix) >= mantissa {
-					mantissa = mantissa * UInt64(pow(Double(newRadix), Double(i - numDigits + 1))) + UInt64(nextDigit)
+					mantissa = mantissa * UInt64(Foundation.pow(Double(newRadix), Double(i - numDigits + 1))) + UInt64(nextDigit)
 				}
 				
 				numDigits = i + 1
@@ -769,7 +848,8 @@ public struct Real : CustomStringConvertible, Comparable {
 		// Do the appending stuff
 		if digit >= "0" && digit <= "9" {
 			// Do nothing if overflow could occur
-			if Swift.abs(bf_exponent) > Int(pow(Double(bf_radix), Double(bf_value_precision)) / Double(bf_radix)) {
+            let power: Double = Real.pow(bf_radix, Int(bf_value_precision))
+			if Swift.abs(bf_exponent) > Int(power / Double(bf_radix)) {
 				return
 			}
 			
@@ -809,7 +889,7 @@ public struct Real : CustomStringConvertible, Comparable {
         values.bf_exponent = 0
 //        values.bf_exponent_precision =  UInt32(log(rradix) / log(Double(values.bf_radix)))
         values.bf_value_precision = Digit(log(rradix) / log(Double(values.bf_radix)))
-        values.bf_value_limit = Digit(pow(Double(newRadix), Double(values.bf_value_precision)))
+        values.bf_value_limit = Real.pow(newRadix, Int(values.bf_value_precision))
         
         // Clear the working space
         var reversed = [Digit](count:Real.BF_max_radix*2, repeatedValue:0)
@@ -1753,7 +1833,7 @@ public struct Real : CustomStringConvertible, Comparable {
         var digitNotFound = true
         for i in (0..<Real.BF_num_values).reverse() where digitNotFound {
             for j in (0..<bf_value_precision).reverse() where digitNotFound {
-                if ((bf_array[i] / Digit(pow(Double(bf_radix), Double(j))) % Digit(bf_radix)) == 0) {
+                if ((bf_array[i] / Real.pow(bf_radix, Int(j)) % Digit(bf_radix)) == 0) {
                     numDigits--
                 } else {
                     digitNotFound = false
@@ -2390,7 +2470,8 @@ public struct Real : CustomStringConvertible, Comparable {
         for i in (0..<Real.BF_num_values).reverse() {
             let currentValue = Int64(bf_array[i])
             for j in (0..<bf_value_precision).reverse() {
-                let digit = currentValue / Int64(pow(Double(bf_radix), Double(j))) % Int64(bf_radix)
+                let power : Digit = Real.pow(bf_radix, Int(j))
+                let digit = currentValue / Int64(power) % Int64(bf_radix)
                 retVal = (retVal * Double(bf_radix)) + Double(digit)
             }
         }
@@ -2401,7 +2482,7 @@ public struct Real : CustomStringConvertible, Comparable {
         }
         
         // Apply the exponent
-        retVal *= pow(Double(bf_radix), Double(bf_exponent - Int(bf_user_point)))
+        retVal *= Real.pow(bf_radix, bf_exponent - Int(bf_user_point))
         return retVal
     }
 	
@@ -2761,7 +2842,8 @@ public struct Real : CustomStringConvertible, Comparable {
         // Write the digits out to the string
         digitsInNumber--
         while digitsInNumber >= 0 {
-            let nextDigit = Real.BF_digits[(Int(Double(values[digitsInNumber / Int(bf_value_precision)]) / pow(Double(bf_radix), Double(digitsInNumber % Int(bf_value_precision)))) % Int(bf_radix))]
+            let power: Double = Real.pow(bf_radix, digitsInNumber % Int(bf_value_precision))
+            let nextDigit = Real.BF_digits[(Int(Double(values[digitsInNumber / Int(bf_value_precision)]) / power) % bf_radix)]
             
             if userPointCopy <= digitsInNumber {
                 if userPointCopy != 0 && userPointCopy == (digitsInNumber + 1) {
