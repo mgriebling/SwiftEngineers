@@ -177,11 +177,11 @@ public struct Real : CustomStringConvertible, Comparable {
         repeat {
             valueNumber--
             digitNumber = Int(precision - 1)
-            while Int(Double(values[valueNumber]) / Foundation.pow(Double(radix), Double(digitNumber))) % radix == 0 && digitNumber >= 0 {
+            while Int(Double(values[valueNumber]) / Real.pow(radix, digitNumber)) % radix == 0 && digitNumber >= 0 {
                 digitNumber--
                 digitsInNumber--
             }
-        } while Int(Double(values[valueNumber]) / Foundation.pow(Double(radix), Double(digitNumber))) % radix == 0 && valueNumber > 0
+        } while Int(Double(values[valueNumber]) / Real.pow(radix, digitNumber)) % radix == 0 && valueNumber > 0
         
         return digitsInNumber
     }
@@ -371,7 +371,8 @@ public struct Real : CustomStringConvertible, Comparable {
     }
     
     private static func pow (x: Int, _ power: Int) -> Digit {
-        return Digit(Foundation.pow(Double(x), Double(power)))
+        let power: Double = pow(x, power)
+        return Digit(power)
     }
     
     //
@@ -499,7 +500,7 @@ public struct Real : CustomStringConvertible, Comparable {
 		}
 		
 		// Remove the exponent from the newValue
-		newValue /= Foundation.pow(Double(newRadix), Double(newExponent))
+		newValue /= Real.pow(newRadix, newExponent)
 		if newValue.isNaN {
 			// Generate an NaN and return
 			self.init(0, radix: newRadix)
@@ -520,7 +521,8 @@ public struct Real : CustomStringConvertible, Comparable {
 			if nextDigit != 0 {
 				// Guard against overflow
 				if UInt64.max / UInt64(newRadix) >= mantissa {
-					mantissa = mantissa * UInt64(Foundation.pow(Double(newRadix), Double(i - numDigits + 1))) + UInt64(nextDigit)
+                    let power: Double = Real.pow(Double(newRadix), Double(i - numDigits + 1))
+					mantissa = mantissa * UInt64(power) + UInt64(nextDigit)
 				}
 				
 				numDigits = i + 1
