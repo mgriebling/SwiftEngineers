@@ -53,7 +53,7 @@ public struct Real : CustomStringConvertible, Comparable {
 	static let BF_digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     
     // Mode for trigonometric operations
-    public enum BFTrigMode { case BF_degrees, BF_radians, BF_gradians }
+    public enum TrigMode { case BF_degrees, BF_radians, BF_gradians }
     
     typealias Digit = UInt32
     
@@ -307,7 +307,7 @@ public struct Real : CustomStringConvertible, Comparable {
 		}
 	}
     
-    public func toRadiansFrom(mode: BFTrigMode) -> Real {
+    public func toRadiansFrom(mode: TrigMode) -> Real {
         var result = self
         if mode != .BF_radians {
             if mode == .BF_degrees {
@@ -326,7 +326,7 @@ public struct Real : CustomStringConvertible, Comparable {
         }
     }
     
-    public func radiansToMode(mode: BFTrigMode) -> Real {
+    public func radiansToMode(mode: TrigMode) -> Real {
         var result = self
         if mode != .BF_radians {
             if mode == .BF_degrees {
@@ -1666,7 +1666,7 @@ public struct Real : CustomStringConvertible, Comparable {
         
         let ownLength = Real.BF_NumDigitsInArray(values.bf_array, radix: bf_radix, precision: Digit(bf_value_precision))
         let otherLength = Real.BF_NumDigitsInArray(otherNum.bf_array, radix: bf_radix, precision: Digit(bf_value_precision))
-        let maxLength = (ownLength > otherLength) ? ownLength : otherLength
+        let maxLength = max(ownLength, otherLength)
         
         //
         // For a full length number, never compare the last digit because it's
@@ -1971,7 +1971,7 @@ public struct Real : CustomStringConvertible, Comparable {
     // Returns the sine of the receiver where the receiver
     // is interpreted as having *mode* angular units.
     //
-    public func sinWithTrigMode(mode: BFTrigMode) -> Real {
+    public func sinWithTrigMode(mode: TrigMode) -> Real {
         if !bf_is_valid { return self }
 		
         var result = self.toRadiansFrom(mode)
@@ -2023,7 +2023,7 @@ public struct Real : CustomStringConvertible, Comparable {
     // Returns the cosine of the receiver where the receiver
     // is interpreted as having *mode* angular units.
     //
-    func cosWithTrigMode(mode: BFTrigMode) -> Real {
+    func cosWithTrigMode(mode: TrigMode) -> Real {
         if !bf_is_valid { return self }
         
         var result = self.toRadiansFrom(mode)
@@ -2078,7 +2078,7 @@ public struct Real : CustomStringConvertible, Comparable {
     // Returns the tangent of the receiver where the receiver
     // is interpreted as having *mode* angular units.
     //
-    public func tanWithTrigMode(mode: BFTrigMode) -> Real {
+    public func tanWithTrigMode(mode: TrigMode) -> Real {
         if !bf_is_valid { return self }
         
         let original = self.toRadiansFrom(mode)
@@ -2091,7 +2091,7 @@ public struct Real : CustomStringConvertible, Comparable {
         return result
     }
 
-    public func asin(mode: BFTrigMode) -> Real {
+    public func asin(mode: TrigMode) -> Real {
         if !bf_is_valid { return self }
         
         let half = Real(0.5, radix:bf_radix)
@@ -2161,15 +2161,15 @@ public struct Real : CustomStringConvertible, Comparable {
         return result.radiansToMode(mode)
     }
     
-    public func acos(mode: BFTrigMode) -> Real {
+    public func acos(mode: TrigMode) -> Real {
         // arccos = π/2 - arcsin
         if !bf_is_valid { return self }
-        var original = self.asin(.BF_radians)
+        var original = asin(.BF_radians)
         original = π / two - original
         return original.radiansToMode(mode)
     }
     
-    public func atan(mode: BFTrigMode) -> Real {
+    public func atan(mode: TrigMode) -> Real {
         if !bf_is_valid { return self }
         let minusOne = Real(-1, radix: bf_radix)
         var original = self
@@ -2188,7 +2188,7 @@ public struct Real : CustomStringConvertible, Comparable {
             }
         } else {
             // atan(1) = pi/4
-            original = π / two / two
+            result = (π / two) / two
             path = 4
         }
         
@@ -2227,19 +2227,19 @@ public struct Real : CustomStringConvertible, Comparable {
             while result != prevIteration {
                 prevIteration = result
                 
-                factorial += two
                 powerCopy *= original * original
+                factorial += two
                 nextTerm = factorial
                 nextTerm *= powerCopy
                 nextTerm = nextTerm.inverse
                 if nextTerm.isValid { result += nextTerm }
                 
-                factorial += two
                 powerCopy *= original * original
+                factorial += two
                 nextTerm = factorial
                 nextTerm *= powerCopy
                 nextTerm = nextTerm.inverse
-                if nextTerm.isValid { result += nextTerm }
+                if nextTerm.isValid { result -= nextTerm }
             }
         }
         
@@ -2910,7 +2910,7 @@ public struct Real : CustomStringConvertible, Comparable {
         c.assign(a1); c.moduloBy(b1)
         print("a1%b1 = \(c)")
         let one = Real(1)
-        let one1 = BigFloat(int: 1, radix: 10)
+        var one1 = BigFloat(int: 1, radix: 10)
         one1.powerOfE()
         print("exp1(1) = \(one1)")
         let e = one.powerOfE()
@@ -2923,6 +2923,64 @@ public struct Real : CustomStringConvertible, Comparable {
         print("2**32.5 = \(two.raiseToPower(c32+Real(0.5)))")
         print("32! = \(c32.factorial())")
 		print("pi = \(two.pi)")
+        
+        var x = one.sinWithTrigMode(.BF_radians)
+        one1 = BigFloat(int: 1, radix: 10)
+        one1.sinWithTrigMode(BFTrigMode.radians, inv: false, hyp: false)
+        print("sin(1)  = \(x)")
+        print("sin1(1) = \(one1)")
+        print("arcsin(sin(1))   = \(x.asin(.BF_radians))")
+        one1.sinWithTrigMode(.radians, inv: true, hyp: false)
+        print("arcsin1(sin1(1)) = \(one1)")
+        one1 = BigFloat(int: 1, radix: 10)
+        x = one.cosWithTrigMode(.BF_radians)
+        one1.cosWithTrigMode(BFTrigMode.radians, inv: false, hyp: false)
+        print("cos(1)  = \(x)")
+        print("cos1(1) = \(one1)")
+        print("arccos(cos(1))   = \(x.acos(.BF_radians))")
+        one1.cosWithTrigMode(.radians, inv: true, hyp: false)
+        print("arccos1(cos1(1)) = \(one1)")
+        one1 = BigFloat(int: 1, radix: 10)
+        x = one.tanWithTrigMode(.BF_radians)
+        one1.tanWithTrigMode(BFTrigMode.radians, inv: false, hyp: false)
+        print("tan(1)  = \(x)")
+        print("tan1(1) = \(one1)")
+        print("arctan(tan(1))   = \(x.atan(.BF_radians))")
+        one1.tanWithTrigMode(.radians, inv: true, hyp: false)
+        print("arctan1(tan1(1)) = \(one1)")
+        
+        x = one.sinh()
+        one1 = BigFloat(int: 1, radix: 10)
+        one1.sinWithTrigMode(BFTrigMode.radians, inv: false, hyp: true)
+        print("sinh(1)  = \(x)")
+        print("sinh1(1) = \(one1)")
+        print("arcsinh(sinh(1))   = \(x.asinh())")
+        one1.sinWithTrigMode(.radians, inv: true, hyp: true)
+        print("arcsinh1(sinh1(1)) = \(one1)")
+        one1 = BigFloat(int: 1, radix: 10)
+        x = one.cosh()
+        one1.cosWithTrigMode(BFTrigMode.radians, inv: false, hyp: true)
+        print("cosh(1)  = \(x)")
+        print("cosh1(1) = \(one1)")
+        print("arccosh(cosh(1))   = \(x.acosh())")
+        one1.cosWithTrigMode(.radians, inv: true, hyp: true)
+        print("arccosh1(cosh1(1)) = \(one1)")
+        one1 = BigFloat(int: 1, radix: 10)
+        x = one.tanh()
+        one1.tanWithTrigMode(BFTrigMode.radians, inv: false, hyp: true)
+        print("tanh(1)  = \(x)")
+        print("tanh1(1) = \(one1)")
+        print("arctanh(tanh(1))   = \(x.atanh())")
+        one1.tanWithTrigMode(.radians, inv: true, hyp: true)
+        print("arctanh1(tanh1(1)) = \(one1)")
+        
+        let n = Real("FFFF0FFFFF0F", radix: 16)
+        let m = Real("FAAAAFF12F0F", radix: 16)
+        print("~\(n) = \(n.notUsingComplement(0))")
+        print("\(n) & \(m) = \(n.andWith(m, usingComplement:0))")
+        print("\(n) | \(m) = \(n.orWith(m, usingComplement:0))")
+        print("\(n) ^ \(m) = \(n.xorWith(m, usingComplement:0))")
+        print("\(n.xorWith)")
     }
 	
 }

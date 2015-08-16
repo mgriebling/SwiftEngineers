@@ -809,7 +809,8 @@ BF_NormaliseNumbers
 		
 		// extract the mantissa
 		while ([validDigits characterIsMember:ch]) {
-			[self appendDigit:ch - '0' useComplement:0];
+            if (ch < 'A') [self appendDigit:ch - '0' useComplement:0];
+            else [self appendDigit:ch - 'A' + 10 useComplement:0];
 			ch = [self getCharFromString:&mantissa];
 		}
 		
