@@ -2990,12 +2990,3 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     static let epsilon : Real = ONE.epsilon
 	
 }
-
-extension BigFloat {
-    
-    // Just needed for Real.Test()
-    override public var description : String {
-        return self.toString
-    }
-    
-}
