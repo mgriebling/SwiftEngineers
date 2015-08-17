@@ -39,6 +39,14 @@ public func /= (inout lhs: Real, rhs: Real) { lhs = lhs / rhs }
 public func % (lhs: Real, rhs: Real) -> Real { return lhs.moduloBy(rhs) }
 public func %= (inout lhs: Real, rhs: Real) { lhs = lhs % rhs }
 
+public func & (lhs: Real, rhs: Real) -> Real { return lhs.andWith(rhs, usingComplement: 0) }
+public func &= (inout lhs: Real, rhs: Real) { lhs = lhs & rhs }
+public func | (lhs: Real, rhs: Real) -> Real { return lhs.orWith(rhs, usingComplement: 0) }
+public func |= (inout lhs: Real, rhs: Real) { lhs = lhs | rhs }
+public func ^ (lhs: Real, rhs: Real) -> Real { return lhs.xorWith(rhs, usingComplement: 0) }
+public func ^= (inout lhs: Real, rhs: Real) { lhs = lhs ^ rhs }
+public prefix func ~ (z:Real) -> Real { return z.notUsingComplement(0) }
+
 public protocol BasicOperationType : SignedNumberType {
     func +(lhs: Self, rhs: Self) -> Self
     func -(lhs: Self, rhs: Self) -> Self
@@ -46,7 +54,7 @@ public protocol BasicOperationType : SignedNumberType {
     func /(lhs: Self, rhs: Self) -> Self
 }
 
-extension Int : BasicOperationType { }
+extension Int : BasicOperationType { }  // used for ipower generic instance of Int
 
 public struct Real : CustomStringConvertible, BasicOperationType {
 
@@ -90,7 +98,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // Sets every value in a values array to zero
     //
-    static func BF_ClearValuesArray(inout values: [Digit]) {
+    static func ClearValuesArray(inout values: [Digit]) {
         // Set the value to zero
         values = [Digit](count: values.count, repeatedValue: 0)
     }
@@ -98,7 +106,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // Scans a values array looking for any non-zero digits.
     //
-    static func BF_ArrayIsNonZero(values: [Digit], start: Int = 0) -> Bool {
+    static func ArrayIsNonZero(values: [Digit], start: Int = 0) -> Bool {
         for i in start..<values.count {
             if values[i] != 0 { return true }
         }
@@ -109,21 +117,21 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // Copies the source values to the destination values.
     //
-    static func BF_CopyValues(source: [Digit], inout destination: [Digit], sstart: Int = 0, dstart: Int = 0) {
+    static func CopyValues(source: [Digit], inout destination: [Digit], sstart: Int = 0, dstart: Int = 0) {
         // Do a basic copy of the values into the destination
         for i in 0..<NumDigits {
             destination[i+dstart] = source[i+sstart]
         }
     }
     
-    static func BF_AssignValues(inout destination: [Digit], source: [Digit], sstart: Int = 0, dstart: Int = 0) {
-        BF_CopyValues(source, destination: &destination, sstart: sstart, dstart: dstart)
+    static func AssignValues(inout destination: [Digit], source: [Digit], sstart: Int = 0, dstart: Int = 0) {
+        CopyValues(source, destination: &destination, sstart: sstart, dstart: dstart)
     }
     
     //
     // Adds a single UInt32 to an array of values.
     //
-    static func BF_AddToMantissa(inout values: [Digit], var digit: Digit, limit: Digit, start: Int = 0, scale: Int = 1) {
+    static func AddToMantissa(inout values: [Digit], var digit: Digit, limit: Digit, start: Int = 0, scale: Int = 1) {
         for i in start..<start+NumDigits*scale {
             values[i] += digit
             digit      = values[i] / limit
@@ -137,7 +145,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Appends a single radix digit to the least significant end of the values array. Space
     // is made for the digit by multiplying through by the radix first.
     //
-    static func BF_AppendDigitToMantissa(inout values: [Digit], var digit: Digit, radix: Int, limit: Digit, scale: Int = 1) {
+    static func AppendDigitToMantissa(inout values: [Digit], var digit: Digit, radix: Int, limit: Digit, scale: Int = 1) {
         // Multiply through by the radix and add the digit
         for i in 0..<NumDigits * scale {
             values[i] = (values[i] * Digit(radix)) + digit
@@ -150,7 +158,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // Chops a single digit off the end of the values array by dividing through by the radix.
     //
-    static func BF_RemoveDigitFromMantissa(inout values: [Digit], radix: Int, limit: Digit, start: Int = 0, scale: Int = 1) -> Digit  {
+    static func RemoveDigitFromMantissa(inout values: [Digit], radix: Int, limit: Digit, start: Int = 0, scale: Int = 1) -> Digit  {
         // Truncate a digit by dividing through by the radix
         var carryBits : Digit = 0
         
@@ -167,7 +175,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Chops a single digit off the end of the values array by dividing through by the radix.
     // If the result is negative it says so.
     //
-    static func BF_RemoveDigitFromMantissaAndFlagEmpty(inout values: [Digit], radix: Int, limit: Digit, inout isEmpty: Bool) -> Digit {
+    static func RemoveDigitFromMantissaAndFlagEmpty(inout values: [Digit], radix: Int, limit: Digit, inout isEmpty: Bool) -> Digit {
         // Truncate a digit by dividing through by the radix
         var carryBits: Digit = 0
         var empty = true
@@ -186,7 +194,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // Counts the number of digits after and including the most significant non-zero digit.
     //
-    static func BF_NumDigitsInArray(values: [Digit], radix: Int, precision: Digit) -> Int {
+    static func NumDigitsInArray(values: [Digit], radix: Int, precision: Digit) -> Int {
         var digitsInNumber, valueNumber, digitNumber: Int
         
         // Trace through the number looking the the most significant non-zero digit
@@ -208,7 +216,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Normalises the mantissas of two floating point numbers so that they can be added
     // subtracted or compared.
     //
-    static func BF_NormaliseNumbers(inout thisNum: Real, inout otherNum: Real) {
+    static func NormaliseNumbers(inout thisNum: Real, inout otherNum: Real) {
         assert(otherNum.radix == thisNum.radix, "Numbers must have same radix before normalisation")
         
         var thisRoundingNum : Digit = 0
@@ -227,13 +235,13 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             while otherNum.exponent > thisNum.exponent &&
                   otherNum.digits[NumDigits - 1] < (otherNum.valueLimit / Digit(otherNum.radix))
             {
-                BF_AppendDigitToMantissa(&otherNum.digits, digit: 0, radix: otherNum.radix, limit: otherNum.valueLimit)
+                AppendDigitToMantissa(&otherNum.digits, digit: 0, radix: otherNum.radix, limit: otherNum.valueLimit)
                 otherNum.exponent--
             }
             
             // then normalise this num to the right
             while otherNum.exponent > thisNum.exponent && !thisEmpty {
-                thisRoundingNum = BF_RemoveDigitFromMantissaAndFlagEmpty(&thisNum.digits, radix: thisNum.radix, limit: thisNum.valueLimit, isEmpty: &thisEmpty)
+                thisRoundingNum = RemoveDigitFromMantissaAndFlagEmpty(&thisNum.digits, radix: thisNum.radix, limit: thisNum.valueLimit, isEmpty: &thisEmpty)
                 thisNum.exponent++
             }
         }
@@ -244,21 +252,21 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             while thisNum.exponent > otherNum.exponent &&
                   thisNum.digits[NumDigits - 1] < (thisNum.valueLimit / Digit(thisNum.radix))
             {
-                BF_AppendDigitToMantissa(&thisNum.digits, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit)
+                AppendDigitToMantissa(&thisNum.digits, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit)
                 thisNum.exponent--
             }
             // then normalise otherNum to the right
             while thisNum.exponent > otherNum.exponent && !otherEmpty {
-                otherRoundingNum = BF_RemoveDigitFromMantissaAndFlagEmpty(&otherNum.digits, radix: otherNum.radix, limit: otherNum.valueLimit, isEmpty: &otherEmpty)
+                otherRoundingNum = RemoveDigitFromMantissaAndFlagEmpty(&otherNum.digits, radix: otherNum.radix, limit: otherNum.valueLimit, isEmpty: &otherEmpty)
                 otherNum.exponent++
             }
         }
         
         // Apply a round to nearest on any truncated values
         if (!otherEmpty && Double(otherRoundingNum) >= (Double(thisNum.radix) / 2.0)) {
-            BF_AddToMantissa(&otherNum.digits, digit: 1, limit: otherNum.valueLimit)
+            AddToMantissa(&otherNum.digits, digit: 1, limit: otherNum.valueLimit)
         } else if (!thisEmpty && Double(thisRoundingNum) >= (Double(thisNum.radix) / 2.0)) {
-            BF_AddToMantissa(&thisNum.digits, digit: 1, limit: thisNum.valueLimit)
+            AddToMantissa(&thisNum.digits, digit: 1, limit: thisNum.valueLimit)
         }
         
         if thisEmpty && !otherEmpty {
@@ -385,7 +393,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     }
     
     //
-    // receiver = op(receiver, num)
+    // returns op(receiver, num)
     //
     private func opWith(num: Real, usingComplement complement: Int, andOp op: (Digit, Digit) -> Digit) -> Real {
         if !valid { return self }
@@ -434,37 +442,25 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // MARK: - Contructors
 
 	//
-	// Hey look, its the default constructor. Bet you've never seen one of these before.
-	// By default you get a base 10 zero.
+	// Hey look, it's the default constructor. Bet you've never seen one of these before.
+	// By default you get a base 10 zero because we have ten fingers.
 	//
 	public init() {
-		Real.BF_ClearValuesArray(&digits)
-		setElements(10, negative:false, exp:0, valid:true, userPoint:0)
-	}
+		self.init(mantissa: 0, exponent: 0, isNegative: false, radix: 10, userPointAt: 0)
+    }
 
 	//
 	// Allows fairly explicit contruction of a Real
 	//
 	public init(var mantissa: UInt64, exponent exp: Int, isNegative flag: Bool, radix newRadix: Int, userPointAt pointLocation: Int) {
-		Real.BF_ClearValuesArray(&digits)
+		Real.ClearValuesArray(&digits)
 		setElements(newRadix, negative:flag, exp:exp, valid:true, userPoint:pointLocation)
 		
 		// Set the values
 		let limit = UInt64(valueLimit)
-		digits[0] = Digit(mantissa % limit); mantissa /= limit
-		digits[1] = Digit(mantissa % limit); mantissa /= limit
-		if Real.NumDigits > 2 {
-			digits[2] = Digit(mantissa % limit); mantissa /= limit
-			if Real.NumDigits > 3 {
-				digits[3] = Digit(mantissa % limit); mantissa /= limit
-				if Real.NumDigits > 4 {
-					digits[4] = Digit(mantissa % limit); mantissa /= limit
-					if Real.NumDigits > 5 {
-						digits[5] = Digit(mantissa % limit)
-					}
-				}
-			}
-		}
+        for i in 0..<Real.NumDigits where mantissa > 0 {
+            digits[i] = Digit(mantissa % limit); mantissa /= limit
+        }
 	}
 
 	//
@@ -473,7 +469,6 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 	public init (var _ newValue: Int, radix newRadix: Int = 10) {
 		let negative = newValue < 0
 		if negative { newValue = -newValue }
-		
 		self.init(mantissa: UInt64(newValue), exponent: 0, isNegative: negative, radix: newRadix, userPointAt: 0)
 	}
     
@@ -489,22 +484,17 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		var mantissa : UInt64 = 0
 		var newExponent: Int
 		var numDigits = 0
-		var negative = false
+		let negative = newValue < 0
 		
 		// Shortcut
-		if newValue == 0.0 {
-			self.init(0, radix:newRadix); return
-		}
+		if newValue == 0 { self.init(0, radix:newRadix); return }
 		
 		// Determine what the valuePrecision would be for this radix
         let logNewRadix = Foundation.log(Double(newRadix))
 		let radixValuePrecision = Digit(Real.LogMaxRadix / logNewRadix)
 		
 		// Determine the sign
-		if newValue < 0 {
-			negative = true
-			newValue = -newValue
-		}
+		if negative { newValue = -newValue }
 		
 		// Get the base radix exponent
 		let doubleExponent = Foundation.log(newValue) / logNewRadix
@@ -549,7 +539,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		fracPart = modf(newValue, &intPart)
 		if newValue > Double(newRadix / 2) && UInt64.max > mantissa {
 			mantissa++
-			while (mantissa % UInt64(newRadix) == 0 && numDigits > 1) {
+			while mantissa % UInt64(newRadix) == 0 && numDigits > 1 {
 				mantissa /= UInt64(newRadix)
 				numDigits--
 			}
@@ -571,7 +561,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 	
 	//
 	// The most requested constructor for those numbers that don't fit in 19 digits.
-	// BTW: I'll go with the Swift convention and use a 'p' exponent for radices other than 10.
+	// I'll use the Swift convention and use a 'p' exponent for radices other than 10.
 	//
 	public init(_ newValue: String, radix newRadix: Int = 10) {
 		
@@ -583,7 +573,6 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			return "\0"
 		}
 		
-		// Mike - created this primarily for the constants
 		let separators = newRadix == 10 ? "eE" : "pP"
 		let index = advance(Real.ValidDigits.startIndex, Int(newRadix))
 		let digits = Real.ValidDigits.substringToIndex(index)
@@ -639,10 +628,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 	
 	// MARK: - Public utility functions
     
-    public var isInteger: Bool {
-        let tmp = self.abs().fractionalPart
-        return tmp.isZero
-    }
+    public var isInteger: Bool { return abs().fractionalPart.isZero }
     
     //
     // Calculate π for the current radix and cache it in the array
@@ -700,7 +686,11 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 	
 	//
 	// I really don't like this but it is convenient.  It seems weird
-	// to have a number act like a factory.
+	// to have a number act like a factory.  Maybe it would be better
+    // to return the product of the number and specified factory value?
+    // So, to get 2π you would use two.π as the invocation.  Alternatively,
+    // if a default radix were specified in the Real class, this could be done
+    // properly by having the class act as a factory.
     //
     private static var piArray = [Real?](count: 36, repeatedValue: nil)
     public var pi: Real {
@@ -728,7 +718,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Returns the number of digits in the number.
     //
     public var mantissaLength: Int {
-        return Int(Real.BF_NumDigitsInArray(digits, radix: radix, precision: valuePrecision))
+        return Int(Real.NumDigitsInArray(digits, radix: radix, precision: valuePrecision))
     }
     
     //
@@ -756,7 +746,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // True if the number is empty.
     //
     public var isZero: Bool {
-        return !Real.BF_ArrayIsNonZero(digits)
+        return !Real.ArrayIsNonZero(digits)
     }
     
     //
@@ -797,14 +787,14 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 				return false
 			}
 			
-			Real.BF_CopyValues(digits, destination: &values)
+			Real.CopyValues(digits, destination: &values)
 			
 			// Multiply through by the radix and add the digit
 			let idigit: Digit
 			let aChar : Character = "A"
 			if digit <= "9" { idigit = Digit(String(digit))! }
 			else { idigit = Digit(digit.unicodeValue() - aChar.unicodeValue() + 10) }
-			Real.BF_AppendDigitToMantissa(&values, digit: idigit, radix: radix, limit: valueLimit)
+			Real.AppendDigitToMantissa(&values, digit: idigit, radix: radix, limit: valueLimit)
 			
 			if complement != 0 {
 				var complementNumberFull: Real
@@ -822,7 +812,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 				}
 				
 				mantissaNumber = complementNumberHalf
-				Real.BF_AssignValues(&mantissaNumber.digits, source: values)
+				Real.AssignValues(&mantissaNumber.digits, source: values)
 				
 				if !negative {
 					let relative = mantissaNumber.compareWith(complementNumberHalf)
@@ -830,7 +820,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 					if (relative == .OrderedDescending || relative == .OrderedSame) {
 						if mantissaNumber.compareWith(complementNumberFull) == .OrderedAscending {
 							complementNumberFull = complementNumberFull.subtract(mantissaNumber)
-							Real.BF_AssignValues(&digits, source: complementNumberFull.digits);
+							Real.AssignValues(&digits, source: complementNumberFull.digits);
 							if (userPoint != 0) {
 								userPoint++
 							}
@@ -848,7 +838,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 				
 			}
 			
-			Real.BF_AssignValues(&digits, source: values)
+			Real.AssignValues(&digits, source: values)
 			
 			// Move the decimal point along with the digits
 			if userPoint != 0 {
@@ -911,24 +901,24 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         // Re-encode the mantissa
         for _ in 0..<(Int(values.valuePrecision) * Real.NumDigits * 2) {
             // Remove new digits from the old number by integer dividing by the new radix
-            let carryBits = Real.BF_RemoveDigitFromMantissa(&values.digits, radix: newRadix, limit: valueLimit)
+            let carryBits = Real.RemoveDigitFromMantissa(&values.digits, radix: newRadix, limit: valueLimit)
             
             // Put all the digits in the new number
-            Real.BF_AppendDigitToMantissa(&reversed, digit: carryBits, radix: newRadix, limit: values.valueLimit, scale:2)
+            Real.AppendDigitToMantissa(&reversed, digit: carryBits, radix: newRadix, limit: values.valueLimit, scale:2)
         }
         
         // Which is fine, except that all the digits are now reversed
         for _ in 0..<(Int(values.valuePrecision) * Real.NumDigits * 2) {
             // Take out backwards
-            let carryBits = Real.BF_RemoveDigitFromMantissa(&reversed, radix: newRadix, limit: values.valueLimit, scale:2)
+            let carryBits = Real.RemoveDigitFromMantissa(&reversed, radix: newRadix, limit: values.valueLimit, scale:2)
             
             // And put in forwards
-            Real.BF_AppendDigitToMantissa(&result, digit: carryBits, radix: newRadix, limit: values.valueLimit, scale:2)
+            Real.AppendDigitToMantissa(&result, digit: carryBits, radix: newRadix, limit: values.valueLimit, scale:2)
         }
         
         // if result is too big, truncate until it fits into the allowed space
         while result[Real.NumDigits] > 0 {
-            Real.BF_RemoveDigitFromMantissa(&result, radix: newRadix, limit: values.valueLimit, scale:2)
+            Real.RemoveDigitFromMantissa(&result, radix: newRadix, limit: values.valueLimit, scale:2)
             values.exponent++
         }
         
@@ -939,7 +929,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         exponentNum = exponentNum.raiseToIntPower(exponent)
         
         // Set the values and elements of this number
-        Real.BF_AssignValues(&values.digits, source: result)
+        Real.AssignValues(&values.digits, source: result)
         
         // multiply this number by the BigFloat
         return values.multiplyBy(exponentNum)
@@ -1013,7 +1003,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			return thisNum
 		}
 		
-		Real.BF_NormaliseNumbers(&thisNum, otherNum: &otherNum)
+		Real.NormaliseNumbers(&thisNum, otherNum: &otherNum)
 		
 		// We can finally do the addition at this point (yay!)
 		var carryBits : Digit = 0
@@ -1027,17 +1017,17 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		if carryBits != 0 {
 			thisNum.digits[Real.NumDigits - 1] += carryBits * thisNum.valueLimit
 			
-			carryBits = Real.BF_RemoveDigitFromMantissa(&thisNum.digits, radix: thisNum.radix, limit: thisNum.valueLimit)
+			carryBits = Real.RemoveDigitFromMantissa(&thisNum.digits, radix: thisNum.radix, limit: thisNum.valueLimit)
 			thisNum.exponent++
 		}
 		
 		// Apply round to nearest
 		if (Double(carryBits) >= (Double(thisNum.radix) / 2.0)) {
-			Real.BF_AddToMantissa(&thisNum.digits, digit: 1, limit: thisNum.valueLimit)
+			Real.AddToMantissa(&thisNum.digits, digit: 1, limit: thisNum.valueLimit)
 			
 			// If by shear fluke that cause the top digit to overflow, then shift back by one digit
 			if thisNum.digits[Real.NumDigits - 1] > thisNum.valueLimit {
-				Real.BF_RemoveDigitFromMantissa(&thisNum.digits, radix: thisNum.radix, limit: thisNum.valueLimit)
+				Real.RemoveDigitFromMantissa(&thisNum.digits, radix: thisNum.radix, limit: thisNum.valueLimit)
 				thisNum.exponent++
 			}
 		}
@@ -1074,7 +1064,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			return thisNum
 		}
 		
-		Real.BF_NormaliseNumbers(&thisNum, otherNum: &otherNum)
+		Real.NormaliseNumbers(&thisNum, otherNum: &otherNum)
 		
 		// Compare the two values
 		var compare = NSComparisonResult.OrderedSame
@@ -1131,7 +1121,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			thisNum.negative = false
 			
 			// Subtraction results in zero
-			Real.BF_ClearValuesArray(&thisNum.digits)
+			Real.ClearValuesArray(&thisNum.digits)
 		}
 		
 		// Create a user pont, store all the values back in the class and we're done
@@ -1190,24 +1180,24 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		
 		// If we have exceeded the precision, divide by the radix until
 		// we are reeled back in.
-        while Real.BF_ArrayIsNonZero(result, start:Real.NumDigits) {
-			carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
+        while Real.ArrayIsNonZero(result, start:Real.NumDigits) {
+			carryBits = Real.RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
 			thisNum.exponent++
 		}
 		
 		// Apply round to nearest
 		if Double(carryBits) >= Double(radix) / 2.0 {
-			Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit)
+			Real.AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit)
 			
 			// If by shear fluke that caused the top digit to overflow, then shift back by one digit
 			if (result[Real.NumDigits - 1] > thisNum.valueLimit) {
-				Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit)
+				Real.RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit)
 				thisNum.exponent++
 			}
 		}
 		
 		// Create a user pont, store all the values back in the class and we're done
-		Real.BF_CopyValues(result, destination: &thisNum.digits)
+		Real.CopyValues(result, destination: &thisNum.digits)
 		thisNum.createUserPoint()
 		return thisNum
 	}
@@ -1231,8 +1221,8 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		}
 		
 		// Get the numerical values
-        Real.BF_CopyValues(digits, destination: &values, dstart: Real.NumDigits)
-        Real.BF_CopyValues(otherNum.digits, destination: &otherNumValues, dstart: Real.NumDigits)
+        Real.CopyValues(digits, destination: &values, dstart: Real.NumDigits)
+        Real.CopyValues(otherNum.digits, destination: &otherNumValues, dstart: Real.NumDigits)
 		
 		// ignore invalid numbers
 		if !otherNum.valid || !thisNum.valid {
@@ -1252,18 +1242,18 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		// Normalise this num
 		// This involves multiplying through by the radix until the number runs up against the
 		// left edge or MSD (most significant digit)
-        if Real.BF_ArrayIsNonZero(values) {
+        if Real.ArrayIsNonZero(values) {
 			while values[Real.NumDigits * 2 - 1] < (thisNum.valueLimit / Digit(thisNum.radix)) {
-                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
+                Real.AppendDigitToMantissa(&values, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
 				thisNum.exponent--
 			}
 		} else {
-            Real.BF_AssignValues(&thisNum.digits, source: values, sstart:Real.NumDigits)
+            Real.AssignValues(&thisNum.digits, source: values, sstart:Real.NumDigits)
 			thisNum.exponent = 0
 			thisNum.userPoint = 0
 			thisNum.negative = false
 			
-			if !Real.BF_ArrayIsNonZero(otherNumValues) {
+			if !Real.ArrayIsNonZero(otherNumValues) {
 				thisNum.valid = false
 			}
 			
@@ -1274,11 +1264,11 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		// this num did in the first place. So we may have to divide through by radix
 		// once to normalise otherNum
 		if (otherNumValues[Real.NumDigits * 2 - 1] > values[Real.NumDigits * 2 - 1]) {
-            let carryBits = Real.BF_RemoveDigitFromMantissa(&otherNumValues, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
+            let carryBits = Real.RemoveDigitFromMantissa(&otherNumValues, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
 			otherNum.exponent++
 			
 			if (Double(carryBits) >= (Double(otherNum.radix) / 2.0)) {
-				Real.BF_AddToMantissa(&otherNumValues, digit: 1, limit: otherNum.valueLimit, scale:2)
+				Real.AddToMantissa(&otherNumValues, digit: 1, limit: otherNum.valueLimit, scale:2)
 			}
 		} else {
 			// Normalise otherNum so that it cannot be greater than this num
@@ -1286,11 +1276,11 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			// against the left edge or MSD (most significant digit)
 			// If the last multiply will make otherNum greater than this num, then we
 			// don't do it. This ensures that the first division column will always be non-zero.
-			if Real.BF_ArrayIsNonZero(otherNumValues) {
+			if Real.ArrayIsNonZero(otherNumValues) {
 				while (otherNumValues[Real.NumDigits * 2 - 1] < (otherNum.valueLimit / Digit(otherNum.radix))) &&
 					  (otherNumValues[Real.NumDigits * 2 - 1] < (values[Real.NumDigits * 2 - 1] / Digit(otherNum.radix)))
 				{
-					Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
+					Real.AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
 					otherNum.exponent--
 				}
 			} else {
@@ -1405,20 +1395,20 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		// This involves multiplying through by the radix until the number runs up against the
 		// left edge or MSD (most significant digit)
 		while result[Real.NumDigits * 2 - 1] < (thisNum.valueLimit / Digit(thisNum.radix)) {
-			Real.BF_AppendDigitToMantissa(&result, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
+			Real.AppendDigitToMantissa(&result, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
 			thisNum.exponent--
 		}
 		
 		// Apply a round to nearest on the last digit
 		if ((Double(result[Real.NumDigits - 1]) / Double(valueLimit / Digit(radix))) >= (Double(radix) / 2.0)) {
-            Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit, start: Real.NumDigits)
+            Real.AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit, start: Real.NumDigits)
 			
 			// If by shear fluke that cause the top digit to overflow, then shift back by one digit
 			if (result[Real.NumDigits - 1] > thisNum.valueLimit) {
-				carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, start: Real.NumDigits)
+				carryBits = Real.RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, start: Real.NumDigits)
 				thisNum.exponent++
 				if Double(carryBits) >= (Double(thisNum.radix) / 2.0) {
-					Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit, start: Real.NumDigits)
+					Real.AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit, start: Real.NumDigits)
 				}
 			}
 		}
@@ -1426,15 +1416,15 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		// Remove any trailing zeros in the decimal places by dividing by the radix until they go away
         carryBits = 0
 		while (thisNum.exponent < 0) && (result[Real.NumDigits] % Digit(thisNum.radix) == 0) {
-			carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, start: Real.NumDigits)
+			carryBits = Real.RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, start: Real.NumDigits)
 			thisNum.exponent++
 		}
 		if (Double(carryBits) >= (Double(thisNum.radix) / 2.0)) {
-			Real.BF_AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit, start: Real.NumDigits)
+			Real.AddToMantissa(&result, digit: 1, limit: thisNum.valueLimit, start: Real.NumDigits)
 		}
 		
 		// Create a user point, store all the values back in the class and we're done
-        Real.BF_AssignValues(&thisNum.digits, source: result, sstart: Real.NumDigits)
+        Real.AssignValues(&thisNum.digits, source: result, sstart: Real.NumDigits)
 		thisNum.createUserPoint()
 		return thisNum
 	}
@@ -1458,8 +1448,8 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         }
         
         // Get the numerical values
-        Real.BF_CopyValues(digits, destination: &values, dstart: Real.NumDigits)
-        Real.BF_CopyValues(otherNum.digits, destination: &otherNumValues, dstart: Real.NumDigits)
+        Real.CopyValues(digits, destination: &values, dstart: Real.NumDigits)
+        Real.CopyValues(otherNum.digits, destination: &otherNumValues, dstart: Real.NumDigits)
         
         // ignore invalid numbers
         if !otherNum.valid || !thisNum.valid {
@@ -1486,13 +1476,13 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         // Normalise this num
         // This involves multiplying through by the radix until the number runs up against the
         // left edge or MSD (most significant digit)
-        if Real.BF_ArrayIsNonZero(values) {
+        if Real.ArrayIsNonZero(values) {
             while(values[Real.NumDigits * 2 - 1] < (thisNum.valueLimit / Digit(thisNum.radix))) {
-                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
+                Real.AppendDigitToMantissa(&values, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
                 thisNum.exponent--
             }
         } else {
-            Real.BF_AssignValues(&thisNum.digits, source: values, sstart: Real.NumDigits)
+            Real.AssignValues(&thisNum.digits, source: values, sstart: Real.NumDigits)
             thisNum.exponent = 0
             thisNum.userPoint = 0
             thisNum.negative = false
@@ -1504,11 +1494,11 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         // against the left edge or MSD (most significant digit)
         // If the last multiply will make otherNum greater than this num, then we
         // don't do it. This ensures that the first division column will always be non-zero.
-        if Real.BF_ArrayIsNonZero(otherNumValues) {
+        if Real.ArrayIsNonZero(otherNumValues) {
             while (otherNumValues[Real.NumDigits * 2 - 1] < (otherNum.valueLimit / Digit(otherNum.radix))) &&
                 (otherNumValues[Real.NumDigits * 2 - 1] < (values[Real.NumDigits * 2 - 1] / Digit(otherNum.radix)))
             {
-                Real.BF_AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
+                Real.AppendDigitToMantissa(&otherNumValues, digit: 0, radix: thisNum.radix, limit: thisNum.valueLimit, scale:2)
                 otherNum.exponent--
             }
         } else {
@@ -1524,7 +1514,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         
         // Set the re-normalised values so that we can subtract from self later
         var nself = thisNum
-        Real.BF_AssignValues(&nself.digits, source:values, sstart:Real.NumDigits)
+        Real.AssignValues(&nself.digits, source:values, sstart:Real.NumDigits)
      
         // Begin the division
         // What we are doing here is lining the divisor up under the divisee and subtracting the largest multiple
@@ -1626,9 +1616,9 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         // We know that there must be a non-fractional part since the modulor was tested to
         // be less or equal to the modulee
         while divisionExponent < 0 {
-            carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, start: Real.NumDigits)
+            carryBits = Real.RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit, start: Real.NumDigits)
             result[Real.NumDigits - 1] += carryBits * thisNum.valueLimit;
-            carryBits = Real.BF_RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit)
+            carryBits = Real.RemoveDigitFromMantissa(&result, radix: thisNum.radix, limit: thisNum.valueLimit)
             divisionExponent++
         }
         
@@ -1642,15 +1632,15 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         
         // Remove any trailing zeros in the decimal places by dividing by the radix until they go away
         thisNum = nself
-        Real.BF_CopyValues(nself.digits, destination: &values)
+        Real.CopyValues(nself.digits, destination: &values)
         while (thisNum.exponent < 0) && (values[0] % Digit(thisNum.radix) == 0) {
-            carryBits = Real.BF_RemoveDigitFromMantissa(&values, radix: thisNum.radix, limit: thisNum.valueLimit)
+            carryBits = Real.RemoveDigitFromMantissa(&values, radix: thisNum.radix, limit: thisNum.valueLimit)
             nself.exponent++
         }
         
         // Create a user point, store all the values back in the class and we're done
         nself = thisNum
-        Real.BF_AssignValues(&nself.digits, source: values)
+        Real.AssignValues(&nself.digits, source: values)
         nself.createUserPoint()
         return nself
     }
@@ -1679,10 +1669,10 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             else { return .OrderedAscending }
         }
         
-        Real.BF_NormaliseNumbers(&values, otherNum: &otherNum)
+        Real.NormaliseNumbers(&values, otherNum: &otherNum)
         
-        let ownLength = Real.BF_NumDigitsInArray(values.digits, radix: radix, precision: valuePrecision)
-        let otherLength = Real.BF_NumDigitsInArray(otherNum.digits, radix: radix, precision: valuePrecision)
+        let ownLength = Real.NumDigitsInArray(values.digits, radix: radix, precision: valuePrecision)
+        let otherLength = Real.NumDigitsInArray(otherNum.digits, radix: radix, precision: valuePrecision)
         let maxLength = max(ownLength, otherLength)
         
         //
@@ -2034,7 +2024,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         
         // Normalise to remove built up error (makes a zero output possible)
         nextTerm = Real(10000, radix:radix)
-        Real.BF_NormaliseNumbers(&result, otherNum: &nextTerm)
+        Real.NormaliseNumbers(&result, otherNum: &nextTerm)
         result.createUserPoint()
         return result
     }
@@ -2089,7 +2079,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         
         // Normalise to remove built up error (makes a zero output possible)
         nextTerm = Real(10000, radix:radix)
-        Real.BF_NormaliseNumbers(&result, otherNum: &nextTerm)
+        Real.NormaliseNumbers(&result, otherNum: &nextTerm)
         result.createUserPoint()
         return result
     }
@@ -2106,7 +2096,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         
         // Normalise to remove built up error (makes a zero output possible)
         var nextTerm = Real(10000, radix:radix)
-        Real.BF_NormaliseNumbers(&result, otherNum: &nextTerm)
+        Real.NormaliseNumbers(&result, otherNum: &nextTerm)
         result.createUserPoint()
         return result
     }
@@ -2647,7 +2637,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         var digitsInNumber = self.mantissaLength
 		
         // Copy the values
-        Real.BF_CopyValues(digits, destination: &values)
+        Real.CopyValues(digits, destination: &values)
         var exponentCopy = exponent;
 		var userPointCopy = Int(userPoint)
         
@@ -2695,14 +2685,14 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             // Too many digits so strip them back
 			var carryBits : Digit = 0
             while exponentCopy < 0 {
-                carryBits = Real.BF_RemoveDigitFromMantissa(&values, radix: radix, limit: valueLimit)
+                carryBits = Real.RemoveDigitFromMantissa(&values, radix: radix, limit: valueLimit)
                 exponentCopy++
                 digitsInNumber--
             }
             
             // Apply round to nearest
             if Double(carryBits) >= (Double(radix) / 2.0) {
-                Real.BF_AddToMantissa(&values, digit: 1, limit: valueLimit)
+                Real.AddToMantissa(&values, digit: 1, limit: valueLimit)
                 
                 // In the incredibly unlikely case that this rounding increases the number of digits
                 // in the number past the precision, then bail out.
@@ -2715,7 +2705,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             
             // Not enough digits so pad them out
             while (exponentCopy > 0) {
-                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: radix, limit: valueLimit)
+                Real.AppendDigitToMantissa(&values, digit: 0, radix: radix, limit: valueLimit)
                 exponentCopy--
                 digitsInNumber++
             }
@@ -2734,7 +2724,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			// If we have more digits than we can display, truncate the values
 			var carryBits : Digit = 0
 			while digitsInNumber > lengthLimit || (userPointCopy + 1 > lengthLimit) {
-				carryBits = Real.BF_RemoveDigitFromMantissa(&values, radix: radix, limit: valueLimit)
+				carryBits = Real.RemoveDigitFromMantissa(&values, radix: radix, limit: valueLimit)
 				
 				digitsInNumber--
 				if userPointCopy > 0 {
@@ -2746,11 +2736,11 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			
             // Apply round to nearest
 			if Double(carryBits) >= (Double(radix) / 2.0) {
-				Real.BF_AddToMantissa(&values, digit: 1, limit: valueLimit)
+				Real.AddToMantissa(&values, digit: 1, limit: valueLimit)
 				
 				// If by shear fluke that cause the top digit to overflow, then shift back by one digit
 				if (values[Real.NumDigits - 1] / valueLimit != 0) {
-					Real.BF_RemoveDigitFromMantissa(&values, radix: radix, limit: valueLimit)
+					Real.RemoveDigitFromMantissa(&values, radix: radix, limit: valueLimit)
 					
 					if (userPointCopy > 0) {
 						userPointCopy--;
@@ -2760,7 +2750,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 				}
 				
                 // We may have changed the number of digits... recount
-                digitsInNumber = Int(Real.BF_NumDigitsInArray(values, radix: radix, precision: valuePrecision))
+                digitsInNumber = Int(Real.NumDigitsInArray(values, radix: radix, precision: valuePrecision))
             }
         }
         
@@ -2772,7 +2762,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             
             // Not enough digits so pad them out
             while (digitsInNumber < lengthLimit) {
-                Real.BF_AppendDigitToMantissa(&values, digit: 0, radix: radix, limit: valueLimit)
+                Real.AppendDigitToMantissa(&values, digit: 0, radix: radix, limit: valueLimit)
                 digitsInNumber++
                 userPointCopy++
             }
@@ -2787,7 +2777,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             
 			complementNumber = Real(mantissa: complementBits, exponent: 0, isNegative: false, radix: radix, userPointAt: 0)
             mantissaNumber = complementNumber
-            Real.BF_CopyValues(mantissaNumber.digits, destination: &values)
+            Real.CopyValues(mantissaNumber.digits, destination: &values)
             
 			var carryBits : Digit = 0
 			while (
@@ -2795,7 +2785,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 					(mantissaNumber.compareWith(complementNumber) == .OrderedSame  && !negative)) && !mantissaNumber.isZero
 				)
 			{
-				carryBits = Real.BF_RemoveDigitFromMantissa(&mantissaNumber.digits, radix: radix, limit: valueLimit)
+				carryBits = Real.RemoveDigitFromMantissa(&mantissaNumber.digits, radix: radix, limit: valueLimit)
 				
 				if (userPointCopy > 0) {
 					userPointCopy--;
@@ -2805,11 +2795,11 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			}
             // Apply round to nearest
             if (Double(carryBits) >= (Double(radix) / 2.0)) {
-                Real.BF_AddToMantissa(&mantissaNumber.digits, digit: 1, limit: valueLimit)
+                Real.AddToMantissa(&mantissaNumber.digits, digit: 1, limit: valueLimit)
                 
                 // If by shear fluke that cause the top digit to overflow, then shift back by one digit
                 if (values[Real.NumDigits - 1] / valueLimit != 0) {
-                    Real.BF_RemoveDigitFromMantissa(&mantissaNumber.digits, radix: radix, limit: valueLimit)
+                    Real.RemoveDigitFromMantissa(&mantissaNumber.digits, radix: radix, limit: valueLimit)
                     
 					if (userPointCopy > 0) {
 						userPointCopy--;
@@ -2829,10 +2819,10 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             if negative {
                 complementNumber = complementNumber.multiplyBy(two)
                 complementNumber = complementNumber.subtract(mantissaNumber)
-                Real.BF_CopyValues(complementNumber.digits, destination: &values)
+                Real.CopyValues(complementNumber.digits, destination: &values)
                 digitsInNumber = complementNumber.mantissaLength
             } else {
-                Real.BF_CopyValues(mantissaNumber.digits, destination: &values)
+                Real.CopyValues(mantissaNumber.digits, destination: &values)
                 digitsInNumber = mantissaNumber.mantissaLength
             }
             
@@ -2907,99 +2897,77 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     
     
     static func Test () {
+        
+        var pass = 0
+        var test = 1
+        
+        func testCase (n1: Real, n2: Real? = nil, op: ((Real,Real)->Real)? = nil, opstr: String = "", result: String) {
+            let lpass: String
+            if pass != 0 { return }
+            if let op = op, n2 = n2 {
+                let answer = "\(op(n1,n2))"
+                lpass = result == answer ? "Pass" : "FAIL!"
+                print("T\(test):a \(opstr) b \t= \(answer) -> \(lpass)")
+            } else {
+                let answer = "\(n1)"
+                lpass = result == answer ? "Pass" : "FAIL!"
+                print("T\(test):\(opstr) \t= \(answer) -> \(lpass)")
+            }
+            if lpass == "FAIL!" { pass = test }
+            test++
+        }
+        
         // Basic tests of the functionality
-        let a = Real(123456.78e10)
-        let a1 = BigFloat(double: 123456.78e10, radix: 10)
-        let b = Real("-1234567890.12345678901234567890e1000")
-        let b1 = BigFloat(string: "-1234567890.12345678901234567890e1000", radix: 10)
-        print("a  = \(a), b  = \(b)")
-        print("a1 = \(a1), b1 = \(b1)")
-        print("a+b   = \(a+b)")
-        let c = BigFloat(); c.assign(a1); c.add(b1)
-        print("a1+b1 = \(c)")
-        print("a-b   = \(a-b)")
-        c.assign(a1); c.subtract(b1)
-        print("a1-b1 = \(c)")
-        print("a*b   = \(a*b)")
-        c.assign(a1); c.multiplyBy(b1)
-        print("a1*b1 = \(c)")
-        print("a/b   = \(a/b)")
-        c.assign(a1); c.divideBy(b1)
-        print("a1/b1 = \(c)")
-        print("a%b   = \(a%b)")
-        c.assign(a1); c.moduloBy(b1)
-        print("a1%b1 = \(c)")
         let one = Real(1)
-        var one1 = BigFloat(int: 1, radix: 10)
-        one1.powerOfE()
-        print("exp1(1) = \(one1)")
-        let e = one.exp()
-        print("exp(1)  = \(e)")
         let two = Real(2)
-        let c32 = Real(32)
-        print("sqrt(2) = \(two.sqrt())")
-        print("ln(e) = \(e.ln())")
-        print("2**32 = \(two.pow(c32))")
-        print("2**32.5 = \(two.pow(c32+Real(0.5)))")
-        print("32! = \(c32.factorial())")
-		print("pi = \(two.pi)")
+        let c32 = Real(256)
+        let a = Real(123456.78e10)
+        let b = Real("-1234567890.12345678901234567890e1000")
+        testCase(a, opstr:"a", result: "12345678e8")
+        testCase(b, opstr:"b", result: "-1234567890.1234567890123456789e1000")
+        testCase(a, n2: b, op: +, opstr: "+", result: "-1234567890123456789012345678900000000000000000000000000000000000e946")
+        testCase(a, n2: b, op: -, opstr: "-", result: "1234567890123456789012345678900000000000000000000000000000000000e946")
+        testCase(a, n2: b, op: *, opstr: "*", result: "-1524157764060357776406035777639079420e988")
+        testCase(a, n2: b, op: /, opstr: "/", result: "-9.999999269999993438999940294909456682855055814063007907973381963e-995")
+        testCase(a, n2: b, op: %, opstr: "%", result: "-1234567800000000")
+        
+        testCase(one.exp(), opstr:"exp(1)", result: "2.718281828459045235360287471352662497757247093699959574966967633")
+        testCase(two.sqrt(), opstr:"sqrt(2)", result: "1.414213562373095048801688724209698078569671875376948073176679738")
+        testCase(one.exp().ln(), opstr:"ln(e)", result: "1.000000000000000000000000000000000000000000000000000000000000001")
+        testCase(two.pow(c32), opstr:"2**256", result: "1157920892373161954235709850086879078532699846656405640394575840e14")
+        testCase(two.pow(c32+Real(0.5)), opstr:"2**256.5", result: "1637547430149282552351024030859592566150148649424864741236437244e14")
+        testCase(c32.factorial(), opstr:"256!", result: "8578177753428426541190822716812326251577815202794856198596556556e443")
+        testCase(one.pi, opstr:"π", result: "3.141592653589793238462643383279502884197169399375105820974944666")
         
         var x = one.sinWithTrigMode(.radians)
-        one1 = BigFloat(int: 1, radix: 10)
-        one1.sinWithTrigMode(BFTrigMode.radians, inv: false, hyp: false)
-        print("sin(1)  = \(x)")
-        print("sin1(1) = \(one1)")
-        print("arcsin(sin(1))   = \(x.asin(.radians))")
-        one1.sinWithTrigMode(.radians, inv: true, hyp: false)
-        print("arcsin1(sin1(1)) = \(one1)")
-        one1 = BigFloat(int: 1, radix: 10)
+        testCase(x, opstr:"sin(1)", result: "0.84147098480789650665250232163029899962256306079837106567275")
+        testCase(x.asin(.radians), opstr:"arcsin(sin(1))", result: "0.999999999999999999999999999999999999999999999999999999999996872")
         x = one.cosWithTrigMode(.radians)
-        one1.cosWithTrigMode(BFTrigMode.radians, inv: false, hyp: false)
-        print("cos(1)  = \(x)")
-        print("cos1(1) = \(one1)")
-        print("arccos(cos(1))   = \(x.acos(.radians))")
-        one1.cosWithTrigMode(.radians, inv: true, hyp: false)
-        print("arccos1(cos1(1)) = \(one1)")
-        one1 = BigFloat(int: 1, radix: 10)
+        testCase(x, opstr:"cos(1)", result: "0.5403023058681397174009366074429766037323104206179222276701")
+        testCase(x.acos(.radians), opstr:"arccos(cos(1))", result: "0.999999999999999999999999999999999999999999999999999999999996737")
         x = one.tanWithTrigMode(.radians)
-        one1.tanWithTrigMode(BFTrigMode.radians, inv: false, hyp: false)
-        print("tan(1)  = \(x)")
-        print("tan1(1) = \(one1)")
-        print("arctan(tan(1))   = \(x.atan(.radians))")
-        one1.tanWithTrigMode(.radians, inv: true, hyp: false)
-        print("arctan1(tan1(1)) = \(one1)")
-        
+        testCase(x, opstr:"tan(1)", result: "1.55740772465490223050697480745836017308725077238152003838394")
+        testCase(x.atan(.radians), opstr:"arctan(tan(1))", result: "0.999999999999999999999999999999999999999999999999999999999998115")
         x = one.sinh()
-        one1 = BigFloat(int: 1, radix: 10)
-        one1.sinWithTrigMode(BFTrigMode.radians, inv: false, hyp: true)
-        print("sinh(1)  = \(x)")
-        print("sinh1(1) = \(one1)")
-        print("arcsinh(sinh(1))   = \(x.asinh())")
-        one1.sinWithTrigMode(.radians, inv: true, hyp: true)
-        print("arcsinh1(sinh1(1)) = \(one1)")
-        one1 = BigFloat(int: 1, radix: 10)
+        testCase(x, opstr:"sinh(1)", result: "1.175201193643801456882381850595600815155717981334095870229565416")
+        testCase(x.asinh(), opstr:"arcsinh(sinh(1))", result: "1.000000000000000000000000000000000000000000000000000000000000001")
         x = one.cosh()
-        one1.cosWithTrigMode(BFTrigMode.radians, inv: false, hyp: true)
-        print("cosh(1)  = \(x)")
-        print("cosh1(1) = \(one1)")
-        print("arccosh(cosh(1))   = \(x.acosh())")
-        one1.cosWithTrigMode(.radians, inv: true, hyp: true)
-        print("arccosh1(cosh1(1)) = \(one1)")
-        one1 = BigFloat(int: 1, radix: 10)
+        testCase(x, opstr:"cosh(1)", result: "1.543080634815243778477905620757061682601529112365863704737402217")
+        testCase(x.acosh(), opstr:"arccosh(cosh(1))", result: "1.000000000000000000000000000000000000000000000000000000000000001")
         x = one.tanh()
-        one1.tanWithTrigMode(BFTrigMode.radians, inv: false, hyp: true)
-        print("tanh(1)  = \(x)")
-        print("tanh1(1) = \(one1)")
-        print("arctanh(tanh(1))   = \(x.atanh())")
-        one1.tanWithTrigMode(.radians, inv: true, hyp: true)
-        print("arctanh1(tanh1(1)) = \(one1)")
+        testCase(x, opstr:"tanh(1)", result: "0.761594155955764888119458282604793590412768597257936551596810501")
+        testCase(x.atanh(), opstr:"arctanh(tanh(1))", result: "0.999999999999999999999999999999999999999999999999999999999999989")
         
         let n = Real("FFFF0FFFFF0F", radix: 16)
         let m = Real("FAAAAFF12F0F", radix: 16)
-        print("~\(n) = \(n.notUsingComplement(0))")
-        print("\(n) & \(m) = \(n.andWith(m, usingComplement:0))")
-        print("\(n) | \(m) = \(n.orWith(m, usingComplement:0))")
-        print("\(n) ^ \(m) = \(n.xorWith(m, usingComplement:0))")
+        testCase(n, opstr:"a", result: "FFFF0FFFFF0F")
+        testCase(m, opstr:"b", result: "FAAAAFF12F0F")
+        testCase(n.notUsingComplement(0), opstr:"~a", result: "F00000F0")
+        testCase(n, n2: m, op: &, opstr: "&", result: "FAAA0FF12F0F")
+        testCase(n, n2: m, op: |, opstr: "|", result: "FFFFAFFFFF0F")
+        testCase(n, n2: m, op: ^, opstr: "^", result: "555A00ED000")
+        if pass == 0 { print("Success! All tests passed!") }
+        else { print("*** Failed test case \(pass)! ***") }
     }
     
     //
