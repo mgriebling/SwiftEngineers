@@ -78,8 +78,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     private var digits = [Digit](count: Real.NumDigits, repeatedValue: 0)
     private var exponent: Int = 0
     private var userPoint: Int = 0
-    private var negative: Bool = false
-	private var valid: Bool = false
+	private var valid: FloatingPointClassification = .QuietNaN
     private var radix: Int = 10 {
         didSet {
             // update related variables
@@ -88,6 +87,23 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             valueLimit = Digit(Real.ipower(radix, n: Int(valuePrecision)))
         }
     }
+	private var negative: Bool {
+		get {
+			return valid == FloatingPointClassification.NegativeNormal
+		}
+		set {
+			if newValue {
+				// set negative status in valid
+				if valid == .PositiveNormal {
+					valid = .NegativeNormal
+				}
+			} else {
+				if valid == .NegativeNormal {
+					valid = .PositiveNormal
+				}
+			}
+		}
+	}
     
     // these are recalculated automatically when radix changes
     private var valuePrecision: Digit = 0
@@ -287,8 +303,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 	private mutating func setElements(radix: Int, negative isNegative:Bool, exp exponent:Int, valid isValid:Bool, userPoint:Int) {
 		// Set everything
 		self.exponent = exponent
-		negative = isNegative
-		valid = isValid
+		valid = isValid ? isNegative ? .NegativeNormal: .PositiveNormal : .QuietNaN
 		
 		// Set the radix (if it is valid), and update valuePrecision and valueLimit
         self.radix = radix < 2 || radix > 36 ? 10 : radix
@@ -321,7 +336,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		
 		// Standard check on the exponent
 		if Swift.abs(exponent) > Real.MaxExponent {
-			valid = false
+			valid = .QuietNaN
 		}
 	}
     
@@ -396,7 +411,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // returns op(receiver, num)
     //
     private func opWith(num: Real, usingComplement complement: Int, andOp op: (Digit, Digit) -> Digit) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         if !num.isValid { return num }
         
         var thisNum = self.preComplement(complement)
@@ -509,7 +524,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		if newValue.isNaN {
 			// Generate an NaN and return
 			self.init(0, radix: newRadix)
-			valid = false
+			valid = .QuietNaN
 			return
 		}
 		
@@ -623,7 +638,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 				if expNegative { appendExpDigit("-") }
 			}
 		}
-        setElements(radix, negative: negative, exp: exponent, valid: valid, userPoint: userPoint)
+        setElements(radix, negative: isNegative, exp: exponent, valid: isValid, userPoint: userPoint)
 	}
 	
 	// MARK: - Public utility functions
@@ -697,7 +712,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         if let mpi = Real.piArray[Int(radix)] {
             return mpi
         } else {
-            return self.calculatePi()
+            return calculatePi()
         }
     }
     public var π: Real { return pi }
@@ -711,7 +726,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     public var decimalPoint: Int {
         get { return Int(userPoint) }
-        set { setElements(radix, negative:negative, exp:exponent, valid:isValid, userPoint:newValue) }
+        set { setElements(radix, negative:isNegative, exp:exponent, valid:isValid, userPoint:newValue) }
     }
     
     //
@@ -730,7 +745,8 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Returns whether or not this number is valid (overflow or divide by zero make numbers
     // invalid).
     //
-    public var isValid: Bool { return valid }
+    public var isValid: Bool { return valid == .PositiveNormal || valid == .NegativeNormal }
+	public var floatingPointClass: FloatingPointClassification { return valid }
     
     //
     // Returns the sign of the current number.
@@ -780,7 +796,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		var values = [Digit](count: digits.count, repeatedValue: 0)
 		
 		if digit == "-" {
-			negative = (negative == false) ? true : false
+			negative = !isNegative ? true : false
 		} else if (digit >= "0" && digit <= "9") || (digit >= "A" && digit <= "Z") { // append a regular digit
 			// Do nothing if overflow could occur
 			if digits[Real.NumDigits - 1] >= (valueLimit / Digit(radix)) {
@@ -814,7 +830,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 				mantissaNumber = complementNumberHalf
 				Real.AssignValues(&mantissaNumber.digits, source: values)
 				
-				if !negative {
+				if !isNegative {
 					let relative = mantissaNumber.compareWith(complementNumberHalf)
 					
 					if (relative == .OrderedDescending || relative == .OrderedSame) {
@@ -881,7 +897,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         }
         
         // ignore invalid numbers
-        if !valid {
+        if !isValid {
             values.radix = newRadix
             return values
         }
@@ -986,14 +1002,14 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		}
 		
 		// ignore invalid numbers
-		if !otherNum.valid || !thisNum.valid {
-			thisNum.valid = false
+		if !otherNum.isValid || !thisNum.isValid {
+			thisNum.valid = thisNum.isValid ? otherNum.valid : thisNum.valid
 			return thisNum
 		}
 		
 		// Handle differences in sign by calling subtraction instead
-		if otherNum.negative != thisNum.negative {
-			thisNum.negative = !negative
+		if otherNum.isNegative != thisNum.isNegative {
+			thisNum.negative = !isNegative
 			thisNum = thisNum.subtract(num)
 			
 			if !thisNum.isZero {
@@ -1051,16 +1067,16 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		}
 		
 		// ignore invalid numbers
-		if !otherNum.valid || !thisNum.valid {
-			thisNum.valid = false
+		if !otherNum.isValid || !thisNum.isValid {
+			thisNum.valid = thisNum.isValid ? otherNum.valid : thisNum.valid
 			return thisNum
 		}
 		
 		// Handle differences in sign by calling addition instead
-		if otherNum.negative != thisNum.negative {
-			thisNum.negative = !negative
+		if otherNum.isNegative != thisNum.isNegative {
+			thisNum.negative = !isNegative
 			thisNum = thisNum.add(otherNum)
-			thisNum.negative = !thisNum.negative
+			thisNum.negative = !thisNum.isNegative
 			return thisNum
 		}
 		
@@ -1097,7 +1113,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			}
 		} else if compare == .OrderedAscending {
 			// Change the sign of this num
-			thisNum.negative = !thisNum.negative
+			thisNum.negative = !thisNum.isNegative
 			
 			// Perform the subtraction
 			for i in 0..<Real.NumDigits {
@@ -1145,8 +1161,8 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		}
 		
 		// ignore invalid numbers
-		if !otherNum.valid || !thisNum.valid {
-			thisNum.valid = false
+		if !otherNum.isValid || !thisNum.isValid {
+			thisNum.valid = thisNum.isValid ? otherNum.valid : thisNum.valid
 			return thisNum
 		}
 		
@@ -1160,7 +1176,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		thisNum.exponent += otherNum.exponent;
 		
 		// Two negatives make a positive
-		if otherNum.negative { thisNum.negative = thisNum.negative ? false : true }
+		if otherNum.isNegative { thisNum.negative = thisNum.isNegative ? false : true }
 		
 		// Now we do the multiplication. Basic stuff:
 		// Multiply each column of each of the otherNums by each other and sum all of the results
@@ -1225,8 +1241,8 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         Real.CopyValues(otherNum.digits, destination: &otherNumValues, dstart: Real.NumDigits)
 		
 		// ignore invalid numbers
-		if !otherNum.valid || !thisNum.valid {
-			thisNum.valid = false
+		if !otherNum.isValid || !thisNum.isValid {
+			thisNum.valid = thisNum.isValid ? otherNum.valid : thisNum.valid
 			return thisNum
 		}
 		
@@ -1237,7 +1253,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		otherNum.userPoint = 0
 		
 		// Two negatives make a positive
-		if otherNum.negative { thisNum.negative = thisNum.negative ? false : true }
+		if otherNum.isNegative { thisNum.negative = thisNum.isNegative ? false : true }
 		
 		// Normalise this num
 		// This involves multiplying through by the radix until the number runs up against the
@@ -1254,7 +1270,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			thisNum.negative = false
 			
 			if !Real.ArrayIsNonZero(otherNumValues) {
-				thisNum.valid = false
+				thisNum.valid = .PositiveInfinity
 			}
 			
 			return thisNum
@@ -1284,7 +1300,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 					otherNum.exponent--
 				}
 			} else {
-				thisNum.valid = false
+				thisNum.valid = .PositiveInfinity
 				return thisNum
 			}
 		}
@@ -1452,8 +1468,8 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         Real.CopyValues(otherNum.digits, destination: &otherNumValues, dstart: Real.NumDigits)
         
         // ignore invalid numbers
-        if !otherNum.valid || !thisNum.valid {
-            thisNum.valid = false
+        if !otherNum.isValid || !thisNum.isValid {
+			thisNum.valid = thisNum.isValid ? otherNum.valid : thisNum.valid
             return thisNum
         }
         
@@ -1471,7 +1487,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         otherNum.userPoint = 0
  
         // Two negatives make a positive
-        if otherNum.negative { thisNum.negative = thisNum.negative ? false : true }
+        if otherNum.negative { thisNum.negative = thisNum.isNegative ? false : true }
         
         // Normalise this num
         // This involves multiplying through by the radix until the number runs up against the
@@ -1502,7 +1518,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
                 otherNum.exponent--
             }
         } else {
-            thisNum.valid = false
+            thisNum.valid = .PositiveInfinity
             return thisNum
         }
         
@@ -1625,7 +1641,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         // Now create a number that is this dividend times the modulor and subtract it from the
         // modulee to obtain the result
         var subNum = zero
-        subNum.setElements(thisNum.radix, negative:thisNum.negative, exp:divisionExponent, valid:true, userPoint:0)
+        subNum.setElements(thisNum.radix, negative:thisNum.isNegative, exp:divisionExponent, valid:true, userPoint:0)
         subNum.digits = Array(result[Real.NumDigits..<result.count])
         subNum = subNum.multiplyBy(num)
         nself = nself.subtract(subNum)
@@ -1659,13 +1675,13 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         }
         
         // ignore invalid numbers
-        if (otherNum.valid == false || valid == false) {
+        if (otherNum.isValid == false || isValid == false) {
             return .OrderedAscending
         }
         
         // Handle differences in sign
-        if otherNum.negative != negative {
-            if otherNum.negative { return .OrderedDescending }
+        if otherNum.negative != isNegative {
+            if otherNum.isNegative { return .OrderedDescending }
             else { return .OrderedAscending }
         }
         
@@ -1689,10 +1705,10 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         // Now that we're normalised, do the actual comparison
         compare = .OrderedSame
         for i in (0..<Real.NumDigits).reverse() {
-            if (values.digits[i] > otherNum.digits[i] && !negative) || (values.digits[i] < otherNum.digits[i] && negative) {
+            if (values.digits[i] > otherNum.digits[i] && !isNegative) || (values.digits[i] < otherNum.digits[i] && isNegative) {
                 compare = .OrderedDescending
                 break
-            } else if (values.digits[i] < otherNum.digits[i] && !negative) || (values.digits[i] > otherNum.digits[i] && negative) {
+            } else if (values.digits[i] < otherNum.digits[i] && !isNegative) || (values.digits[i] > otherNum.digits[i] && isNegative) {
                 compare = .OrderedAscending
                 break
             }
@@ -1710,16 +1726,16 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         var numCopy = num
         var result = self
         
-        if !valid { return self }
+        if !isValid { return self }
         
         if !num.isValid {
-            result.valid = false
+            result.valid = num.valid
             return result
         }
         
         if self.isZero {
             // Zero raised to anything except zero is zero (provided exponent is valid)
-            numCopy.valid = num.isValid
+            numCopy.valid = num.valid
             if num.isZero { return one }
             return self
         }
@@ -1729,12 +1745,12 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             return self.raiseToIntPower(exp)
         }
         
-        if negative {
+        if isNegative {
             result.negative = false
         }
         
         result = (result.ln() * num).exp()
-        if negative {
+        if isNegative {
             if numCopy.isNegative {
                 numCopy = -numCopy
             }
@@ -1742,7 +1758,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             if numCopy == one {
                 result.negative = true
             } else if !numCopy.isZero {
-                result.valid = false
+                result.valid = .QuietNaN
             }
             
         }
@@ -1756,10 +1772,10 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         var squares = 0
         var result = self
         
-        if !valid { return result }
+        if !isValid { return result }
         
         // Pre-scale the number to aid convergeance
-        if negative {
+        if isNegative {
             result.negative = false
         }
 		
@@ -1807,7 +1823,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             squares--
         }
         
-        if negative {
+        if isNegative {
             return result.inverse
         }
         return result
@@ -1822,11 +1838,11 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     public func nRoot(n: Int) -> Real {
         var result = self
         
-        if !valid || self.isZero { return self }
+        if !isValid || self.isZero { return self }
         
         // oddly-numbered roots of negative numbers should work
         if self.isNegative && (n & 1) == 0 {
-            result.valid = false
+            result.valid = .QuietNaN
             return result
         }
         result.negative = false     // we'll fix this later
@@ -1881,7 +1897,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 		}
 		
         // fix the sign
-        result.negative = negative
+        result.negative = isNegative
         return result
     }
 
@@ -1890,7 +1906,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Returns the natural logarithm of the receiver.
     //
     public func ln() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         
         var prevIteration = zero
         var i = two
@@ -1901,7 +1917,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         
         // ln(x) for x <= 0 is inValid
         if self <= prevIteration {
-            result.valid = false
+            result.valid = .QuietNaN
             return result
         }
         
@@ -1967,7 +1983,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Takes the "base" log of the receiver.
     //
     public func logOfBase(base: Real) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         if !base.isValid { return base }
         return self.ln()/base.ln()
     }
@@ -1982,7 +1998,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // is interpreted as having *mode* angular units.
     //
     public func sinWithTrigMode(mode: TrigMode) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
 		
         var result = self.toRadiansFrom(mode)
         
@@ -2034,7 +2050,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // is interpreted as having *mode* angular units.
     //
     func cosWithTrigMode(mode: TrigMode) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         
         var result = self.toRadiansFrom(mode)
         
@@ -2089,7 +2105,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // is interpreted as having *mode* angular units.
     //
     public func tanWithTrigMode(mode: TrigMode) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         
         let original = self.toRadiansFrom(mode)
         var result = original.sinWithTrigMode(mode) / original.cosWithTrigMode(mode)
@@ -2102,7 +2118,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     }
 
     public func asin(mode: TrigMode) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         
         let half = Real(0.5, radix:radix)
         let minusHalf = Real(-0.5, radix:radix)
@@ -2173,14 +2189,14 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     
     public func acos(mode: TrigMode) -> Real {
         // arccos = π/2 - arcsin
-        if !valid { return self }
+        if !isValid { return self }
         var original = asin(.radians)
         original = π / two - original
         return original.radiansToMode(mode)
     }
     
     public func atan(mode: TrigMode) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         let minusOne = Real(-1, radix: radix)
         var original = self
         var powerCopy = original
@@ -2257,7 +2273,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     }
 
     public func sinh() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         var result = self
         var original = exp()
         result.appendDigit("-", useComplement:0)
@@ -2268,22 +2284,22 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     }
 
     public func cosh() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         var original = exp()
 		var result = self
-        result.negative = !negative ? true : false
+        result.negative = !isNegative ? true : false
         original += result.exp()
         original /= two
         return original
     }
 
     public func tanh() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         return self.sinh() / self.cosh()
     }
     
     public func asinh() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         var original = self
         let result = (self * self + one).sqrt()
         original += result
@@ -2291,7 +2307,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     }
     
     public func acosh() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         var original = self
 		let result = (self * self - one).sqrt()
         original += result
@@ -2299,7 +2315,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     }
     
     public func atanh() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         var result = (one + self) / (one - self)
         result = result.ln()
         return result / two
@@ -2315,7 +2331,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             if y.isZero {
                 // Actually an error
                 var x = zero
-                x.valid = false
+                x.valid = .QuietNaN
                 return x
             }
             return y.isNegative ? -π : π
@@ -2343,13 +2359,13 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Calculates a factorial in the most basic way.
     //
     public func factorial() -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         
         var result = self
         
         // Negative numbers have no factorial equivalent
-        if negative || !fractionalPart.isZero {
-            result.valid = false
+        if isNegative || !fractionalPart.isZero {
+            result.valid = .QuietNaN
             return result
         }
         
@@ -2361,7 +2377,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             var counter = self - one
             
             // Perform the basic factorial
-            while counter > zero && result.valid {
+            while counter > zero && result.isValid {
                 result *= counter
                 counter -= one
             }
@@ -2373,7 +2389,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Permutation of receiver samples made from a range of r options
     //
     public func nPr(r: Real) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         if !r.isValid { return r }
         
         var result = self.wholePart
@@ -2393,7 +2409,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Calculates receiver combinations of samples taken from a choice of r candidates.
     //
     public func nCr (r: Real) -> Real {
-        if !valid { return self }
+        if !isValid { return self }
         if !r.isValid { return r }
         
         var result = self.wholePart
@@ -2415,10 +2431,10 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Performs 1/receiver.
     //
     public var inverse: Real {
-		if !valid { return self }
+		if !isValid { return self }
         if isZero {
             var result = self
-            result.valid = false
+            result.valid = .PositiveInfinity
             return result
         }
         return one.divideBy(self)
@@ -2451,7 +2467,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Sets the receiver to the receiver modulo 1.
     //
     public var fractionalPart: Real {
-        if !valid { return self}
+        if !isValid { return self}
         return self.moduloBy(one)
     }
     
@@ -2459,9 +2475,8 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     // Sets the receiver to (receiver - (receiver modulo 1))
     //
     public var wholePart: Real {
-        if !valid { return self }
-        
-        let isNegative = negative
+        if !isValid { return self }
+		
         let numb = self.abs
         
         var whole = numb.subtract(numb.fractionalPart)
@@ -2474,7 +2489,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     public var doubleValue: Double {
         // Return NaN if number is not valid
-        if !valid {
+        if !isValid {
             return Double.NaN
         }
         
@@ -2490,7 +2505,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         }
         
         // Apply the sign
-        if negative {
+        if isNegative {
             retVal *= -1.0
         }
         
@@ -2552,7 +2567,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     public var exponentString : String {
         // Check to see if the exponent exists
-        if !valid {
+        if !isValid {
             // Return an empty string instead of nil because its a little safer
             return ""
         }
@@ -2615,7 +2630,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         let point = NSLocale.currentLocale().objectForKey(NSLocaleDecimalSeparator) as! String
         
         // Handle the "not-a-number" case
-        if !valid {
+        if !isValid {
             mantissaOut = "NaN"
             exponentOut = ""
             return
@@ -2782,7 +2797,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 			var carryBits : Digit = 0
 			while (
 				(mantissaNumber.compareWith(complementNumber) == .OrderedDescending  ||
-					(mantissaNumber.compareWith(complementNumber) == .OrderedSame  && !negative)) && !mantissaNumber.isZero
+					(mantissaNumber.compareWith(complementNumber) == .OrderedSame  && !isNegative)) && !mantissaNumber.isZero
 				)
 			{
 				carryBits = Real.RemoveDigitFromMantissa(&mantissaNumber.digits, radix: radix, limit: valueLimit)
@@ -2809,14 +2824,14 @@ public struct Real : CustomStringConvertible, BasicOperationType {
                 }
             }
             if (mantissaNumber.compareWith(complementNumber) == .OrderedDescending ||
-               (mantissaNumber.compareWith(complementNumber) == .OrderedSame && !negative))
+               (mantissaNumber.compareWith(complementNumber) == .OrderedSame && !isNegative))
             {
 				mantissaOut = "∞"
                 exponentOut = ""
                 return
             }
             
-            if negative {
+            if isNegative {
                 complementNumber = complementNumber.multiplyBy(two)
                 complementNumber = complementNumber.subtract(mantissaNumber)
                 Real.CopyValues(complementNumber.digits, destination: &values)
@@ -2826,7 +2841,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
                 digitsInNumber = mantissaNumber.mantissaLength
             }
             
-        } else if negative {
+        } else if isNegative {
             digitStr[currentChar] = "-"
             currentChar++
         }
@@ -3008,7 +3023,6 @@ extension Real : RealType {
 	init(_ value: Double) { self.init(value, radix:10) }
 	init(_ value: Float)  { self.init(Double(value), radix:10) }
 	
-	var floatingPointClass: FloatingPointClassification { return FloatingPointClassification.PositiveNormal }
 	var isSignMinus: Bool { return isNegative }
 	var isNormal: Bool { return isValid }
 	var isFinite: Bool { return isValid }
