@@ -475,7 +475,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // IntegerLiteralConvertible compliance
     //
-    public init (integerLiteral value: Int) { self.init(value) }
+	public init (integerLiteral value: Int) { self.init(value, radix: 10) }
 	
 	//
 	// Also good but not as fast as initWithInt.
@@ -628,7 +628,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 	
 	// MARK: - Public utility functions
     
-    public var isInteger: Bool { return abs().fractionalPart.isZero }
+    public var isInteger: Bool { return abs.fractionalPart.isZero }
     
     //
     // Calculate π for the current radix and cache it in the array
@@ -752,7 +752,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // Sets the sign of the number to positive.
     //
-    public func abs() -> Real {
+	public var abs: Real {
         var temp = self
         temp.negative = false
         return temp
@@ -1876,7 +1876,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         // within n * smallest digit size, then round to one.
         //
         let twoEpsilon = two * epsilon
-		if (result - one).abs() < twoEpsilon {
+		if (result - one).abs < twoEpsilon {
 			result = one
 		}
 		
@@ -2019,7 +2019,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         }
         
         // Check that accurracy hasn't caused something illegal
-        let value = result.abs()
+        let value = result.abs
         if value > one { result /= value }
         
         // Normalise to remove built up error (makes a zero output possible)
@@ -2074,7 +2074,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         }
         
         // Check that accurracy hasn't caused something illegal
-        let value = result.abs()
+        let value = result.abs
         if value > one { result /= value }
         
         // Normalise to remove built up error (makes a zero output possible)
@@ -2462,7 +2462,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         if !valid { return self }
         
         let isNegative = negative
-        let numb = self.abs()
+        let numb = self.abs
         
         var whole = numb.subtract(numb.fractionalPart)
         whole.negative = isNegative
@@ -2988,5 +2988,42 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     static let TWO = Real(2)
     static let TEN = Real(10)
     static let epsilon : Real = ONE.epsilon
+	
+}
+
+//
+// Extension to support RealType protocol
+extension Real : RealType {
+	
+	init(_ value: Int)    { self.init(value, radix:10) }
+	init(_ value: UInt8)  { self.init(Int(value), radix:10) }
+	init(_ value: Int8)   { self.init(Int(value), radix:10) }
+	init(_ value: UInt16) { self.init(Int(value), radix:10) }
+	init(_ value: Int16)  { self.init(Int(value), radix:10) }
+	init(_ value: UInt32) { self.init(Int(value), radix:10) }
+	init(_ value: Int32)  { self.init(Int(value), radix:10) }
+	init(_ value: UInt64) { self.init(Int(value), radix:10) }
+	init(_ value: Int64)  { self.init(Int(value), radix:10) }
+	init(_ value: UInt)   { self.init(Int(value), radix:10) }
+	init(_ value: Double) { self.init(value, radix:10) }
+	init(_ value: Float)  { self.init(Double(value), radix:10) }
+	
+	var floatingPointClass: FloatingPointClassification { return FloatingPointClassification.PositiveNormal }
+	var isSignMinus: Bool { return isNegative }
+	var isNormal: Bool { return isValid }
+	var isFinite: Bool { return isValid }
+	var isSubnormal: Bool { return !isValid }
+	var isInfinite: Bool { return description == "∞" }
+	var isNaN: Bool { return !isValid }
+	var isSignaling: Bool { return !isValid }
+	var hashValue: Int {
+		return 0  // TBD
+	}
+	
+	func cos()->Real { return cosWithTrigMode(.radians) }
+	func sin()->Real { return sinWithTrigMode(.radians) }
+
+	/// self * 1.0i
+	var i:Complex<Real>{ return Complex<Real>(0, self) }
 	
 }
