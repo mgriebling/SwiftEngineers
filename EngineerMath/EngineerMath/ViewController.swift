@@ -99,8 +99,8 @@ class ViewController: NSViewController {
 ////		print("1 \(c) = \(Units.convert(1, fromType:c, toType: kmphr)!) \(kmphr)")
 //        print("unsigned long size = \(sizeof(Int))")
 //        Real.Test()
-        let x : RComplex = 2.0
-        let y = Complex64(2)
+        let x = RComplex(2)
+        let y = RComplex(2, -2)
         print("x=\(x), y=\(y)")
 	}
 

@@ -8,7 +8,7 @@
 
 import Foundation
 // protocol RealType : FloatingPointType // sadly crashes as of Swift 1.1 :-(
-protocol RealType {
+public protocol RealType {
     // copied from FloatingPointType
     init(_ value: UInt8)
     init(_ value: Int8)
@@ -71,15 +71,15 @@ protocol RealType {
 }
 // Double is default since floating-point literals are Double by default
 extension Double : RealType {
-    var abs:Double { return Swift.abs(self) }
-    func cos()->Double { return Foundation.cos(self) }
-    func exp()->Double { return Foundation.exp(self) }
-    func log()->Double { return Foundation.log(self) }
-    func sin()->Double { return Foundation.sin(self) }
-    func sqrt()->Double { return Foundation.sqrt(self) }
-    func atan2(y:Double)->Double { return Foundation.atan2(self, y) }
-    func hypot(y:Double)->Double { return Foundation.hypot(self, y) }
-    func pow(y:Double)->Double { return Foundation.pow(self, y) }
+    public var abs:Double { return Swift.abs(self) }
+    public func cos()->Double { return Foundation.cos(self) }
+    public func exp()->Double { return Foundation.exp(self) }
+    public func log()->Double { return Foundation.log(self) }
+    public func sin()->Double { return Foundation.sin(self) }
+    public func sqrt()->Double { return Foundation.sqrt(self) }
+    public func atan2(y:Double)->Double { return Foundation.atan2(self, y) }
+    public func hypot(y:Double)->Double { return Foundation.hypot(self, y) }
+    public func pow(y:Double)->Double { return Foundation.pow(self, y) }
     // these ought to be static let
     // but give users a chance to overwrite it
     static var PI = 3.14159265358979323846264338327950288419716939937510
@@ -101,15 +101,15 @@ extension Double : RealType {
 }
 // But when explicitly typed you can use Float
 extension Float : RealType {
-    var abs:Float { return Swift.abs(self) }
-    func cos()->Float { return Foundation.cos(self) }
-    func exp()->Float { return Foundation.exp(self) }
-    func log()->Float { return Foundation.log(self) }
-    func sin()->Float { return Foundation.sin(self) }
-    func sqrt()->Float { return Foundation.sqrt(self) }
-    func hypot(y:Float)->Float { return Foundation.hypot(self, y) }
-    func atan2(y:Float)->Float { return Foundation.atan2(self, y) }
-    func pow(y:Float)->Float { return Foundation.pow(self, y) }
+    public var abs:Float { return Swift.abs(self) }
+    public func cos()->Float { return Foundation.cos(self) }
+    public func exp()->Float { return Foundation.exp(self) }
+    public func log()->Float { return Foundation.log(self) }
+    public func sin()->Float { return Foundation.sin(self) }
+    public func sqrt()->Float { return Foundation.sqrt(self) }
+    public func hypot(y:Float)->Float { return Foundation.hypot(self, y) }
+    public func atan2(y:Float)->Float { return Foundation.atan2(self, y) }
+    public func pow(y:Float)->Float { return Foundation.pow(self, y) }
     // these ought to be static let
     // but give users a chance to overwrite it
     static var PI:Float = 3.14159265358979323846264338327950288419716939937510
@@ -131,7 +131,7 @@ extension Float : RealType {
 }
 // el corazon
 typealias Printable = CustomStringConvertible
-struct Complex<T:RealType> : Equatable, Printable, Hashable {
+struct Complex<T:RealType> : Equatable, /* Printable, */ Hashable {
 	var re:T
 	var im:T
 	
@@ -180,10 +180,10 @@ struct Complex<T:RealType> : Equatable, Printable, Hashable {
     /// z * i
     var i:Complex { return Complex(-im, re) }
     /// .description -- conforms to Printable
-    var description:String {
-        let plus = im.isSignMinus ? "" : "+"
-        return "(\(re)\(plus)\(im).i)"
-    }
+//    var description:String {
+//        let plus = im.isSignMinus ? "" : "+"
+//        return "(\(re)\(plus)\(im).i)"
+//    }
     /// .hashvalue -- conforms to Hashable
     var hashValue:Int { // take most significant halves and join
         let bits = sizeof(Int) * 4
@@ -458,4 +458,5 @@ func !~ <T>(lhs:T, rhs:Complex<T>) -> Bool {
 // typealiases
 typealias Complex64 = Complex<Double>
 typealias Complex32 = Complex<Float>
+
 

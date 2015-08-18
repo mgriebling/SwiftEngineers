@@ -735,7 +735,13 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     public var mantissaLength: Int {
         return Int(Real.NumDigitsInArray(digits, radix: radix, precision: valuePrecision))
     }
-    
+	
+	public var hashValue: Int {
+		var hash = valid.hashValue ^ exponent.hashValue
+		for digit in digits { hash ^= digit.hashValue }
+		return hash
+	}
+	
     //
     // Returns the radix or base of the current number
     //
@@ -2349,7 +2355,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         return (y/x).atan(.radians)
     }
     
-    func hypot(y:Real) -> Real {
+    public func hypot(y:Real) -> Real {
         var x = self
         x = x*x + y*y
         return x.sqrt()
@@ -2948,7 +2954,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         
         testCase(one.exp(),              opstr:"exp(1)",   result: "2.718281828459045235360287471352662497757247093699959574966967633")
         testCase(two.sqrt(),             opstr:"sqrt(2)",  result: "1.414213562373095048801688724209698078569671875376948073176679738")
-        testCase(one.exp().log(),         opstr:"ln(e)",    result: "1.000000000000000000000000000000000000000000000000000000000000001")
+        testCase(one.exp().log(),        opstr:"ln(e)",    result: "1.000000000000000000000000000000000000000000000000000000000000001")
         testCase(two.pow(c32),           opstr:"2**256",   result: "1157920892373161954235709850086879078532699846656405640394575840e14")
         testCase(two.pow(c32+Real(0.5)), opstr:"2**256.5", result: "1637547430149282552351024030859592566150148649424864741236437244e14")
         testCase(c32.factorial(),        opstr:"256!",     result: "8578177753428426541190822716812326251577815202794856198596556556e443")
