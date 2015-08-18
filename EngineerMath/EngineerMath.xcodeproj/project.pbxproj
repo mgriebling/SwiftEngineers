@@ -16,6 +16,7 @@
 		2FD25D2D1B1F3EEA0043E9A1 /* Bag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */; };
 		2FDCAF5A1B8202F10000DA5F /* complex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FDCAF591B8202F10000DA5F /* complex.swift */; };
 		47357B5A1B7205930044B498 /* Real.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47357B591B7205930044B498 /* Real.swift */; };
+		478D21981B83412000CE325B /* RComplex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478D21971B83412000CE325B /* RComplex.swift */; };
 		47D0F3231B205435002C1213 /* Units.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D0F3221B205435002C1213 /* Units.swift */; };
 		47F601561B7CA7A400C67789 /* Equations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A75B1B0FA385007C273A /* Equations.swift */; };
 		47F601571B7CA7B200C67789 /* MatrixVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F53A7571B0FA221007C273A /* MatrixVector.swift */; };
@@ -48,6 +49,7 @@
 		2FD25D2C1B1F3EEA0043E9A1 /* Bag.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Bag.swift; sourceTree = "<group>"; };
 		2FDCAF591B8202F10000DA5F /* complex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = complex.swift; sourceTree = "<group>"; };
 		47357B591B7205930044B498 /* Real.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Real.swift; sourceTree = "<group>"; };
+		478D21971B83412000CE325B /* RComplex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RComplex.swift; sourceTree = "<group>"; };
 		47D0F3221B205435002C1213 /* Units.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Units.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -97,6 +99,7 @@
 				2F53A72F1B0F79B4007C273A /* Supporting Files */,
 				2F53A7571B0FA221007C273A /* MatrixVector.swift */,
 				47357B591B7205930044B498 /* Real.swift */,
+				478D21971B83412000CE325B /* RComplex.swift */,
 				2F53A75B1B0FA385007C273A /* Equations.swift */,
 				47D0F3221B205435002C1213 /* Units.swift */,
 			);
@@ -234,6 +237,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F53A7341B0F79B4007C273A /* ViewController.swift in Sources */,
+				478D21981B83412000CE325B /* RComplex.swift in Sources */,
 				47357B5A1B7205930044B498 /* Real.swift in Sources */,
 				2FD25D2D1B1F3EEA0043E9A1 /* Bag.swift in Sources */,
 				2FDCAF5A1B8202F10000DA5F /* complex.swift in Sources */,

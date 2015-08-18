@@ -1749,7 +1749,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
             result.negative = false
         }
         
-        result = (result.ln() * num).exp()
+        result = (result.log() * num).exp()
         if isNegative {
             if numCopy.isNegative {
                 numCopy = -numCopy
@@ -1905,7 +1905,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     //
     // Returns the natural logarithm of the receiver.
     //
-    public func ln() -> Real {
+    public func log() -> Real {
         if !isValid { return self }
         
         var prevIteration = zero
@@ -1985,13 +1985,13 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     public func logOfBase(base: Real) -> Real {
         if !isValid { return self }
         if !base.isValid { return base }
-        return self.ln()/base.ln()
+        return self.log()/base.log()
     }
     
     //
     // Takes the base 10 log of the receiver.
     //
-    public func log() -> Real { return logOfBase(Real(10, radix:radix)) }
+    public func log10() -> Real { return logOfBase(Real(10, radix:radix)) }
     
     //
     // Returns the sine of the receiver where the receiver
@@ -2303,7 +2303,7 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         var original = self
         let result = (self * self + one).sqrt()
         original += result
-        return original.ln()
+        return original.log()
     }
     
     public func acosh() -> Real {
@@ -2311,13 +2311,13 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         var original = self
 		let result = (self * self - one).sqrt()
         original += result
-		return original.ln()
+		return original.log()
     }
     
     public func atanh() -> Real {
         if !isValid { return self }
         var result = (one + self) / (one - self)
-        result = result.ln()
+        result = result.log()
         return result / two
     }
     
@@ -2946,41 +2946,42 @@ public struct Real : CustomStringConvertible, BasicOperationType {
         testCase(a, n2: b, op: /, opstr: "/", result: "-9.999999269999993438999940294909456682855055814063007907973381963e-995")
         testCase(a, n2: b, op: %, opstr: "%", result: "-1234567800000000")
         
-        testCase(one.exp(), opstr:"exp(1)", result: "2.718281828459045235360287471352662497757247093699959574966967633")
-        testCase(two.sqrt(), opstr:"sqrt(2)", result: "1.414213562373095048801688724209698078569671875376948073176679738")
-        testCase(one.exp().ln(), opstr:"ln(e)", result: "1.000000000000000000000000000000000000000000000000000000000000001")
-        testCase(two.pow(c32), opstr:"2**256", result: "1157920892373161954235709850086879078532699846656405640394575840e14")
+        testCase(one.exp(),              opstr:"exp(1)",   result: "2.718281828459045235360287471352662497757247093699959574966967633")
+        testCase(two.sqrt(),             opstr:"sqrt(2)",  result: "1.414213562373095048801688724209698078569671875376948073176679738")
+        testCase(one.exp().log(),         opstr:"ln(e)",    result: "1.000000000000000000000000000000000000000000000000000000000000001")
+        testCase(two.pow(c32),           opstr:"2**256",   result: "1157920892373161954235709850086879078532699846656405640394575840e14")
         testCase(two.pow(c32+Real(0.5)), opstr:"2**256.5", result: "1637547430149282552351024030859592566150148649424864741236437244e14")
-        testCase(c32.factorial(), opstr:"256!", result: "8578177753428426541190822716812326251577815202794856198596556556e443")
-        testCase(one.pi, opstr:"π", result: "3.141592653589793238462643383279502884197169399375105820974944666")
+        testCase(c32.factorial(),        opstr:"256!",     result: "8578177753428426541190822716812326251577815202794856198596556556e443")
+        testCase(one.pi,                 opstr:"π",        result: "3.141592653589793238462643383279502884197169399375105820974944666")
         
         var x = one.sinWithTrigMode(.radians)
-        testCase(x, opstr:"sin(1)", result: "0.84147098480789650665250232163029899962256306079837106567275")
-        testCase(x.asin(.radians), opstr:"arcsin(sin(1))", result: "0.999999999999999999999999999999999999999999999999999999999996872")
+        testCase(x,                opstr:"sin(1)",           result: "0.84147098480789650665250232163029899962256306079837106567275")
+        testCase(x.asin(.radians), opstr:"arcsin(sin(1))",   result: "0.999999999999999999999999999999999999999999999999999999999996872")
         x = one.cosWithTrigMode(.radians)
-        testCase(x, opstr:"cos(1)", result: "0.5403023058681397174009366074429766037323104206179222276701")
-        testCase(x.acos(.radians), opstr:"arccos(cos(1))", result: "0.999999999999999999999999999999999999999999999999999999999996737")
+        testCase(x,                opstr:"cos(1)",           result: "0.5403023058681397174009366074429766037323104206179222276701")
+        testCase(x.acos(.radians), opstr:"arccos(cos(1))",   result: "0.999999999999999999999999999999999999999999999999999999999996737")
         x = one.tanWithTrigMode(.radians)
-        testCase(x, opstr:"tan(1)", result: "1.55740772465490223050697480745836017308725077238152003838394")
-        testCase(x.atan(.radians), opstr:"arctan(tan(1))", result: "0.999999999999999999999999999999999999999999999999999999999998115")
+        testCase(x,                opstr:"tan(1)",           result: "1.55740772465490223050697480745836017308725077238152003838394")
+        testCase(x.atan(.radians), opstr:"arctan(tan(1))",   result: "0.999999999999999999999999999999999999999999999999999999999998115")
         x = one.sinh()
-        testCase(x, opstr:"sinh(1)", result: "1.175201193643801456882381850595600815155717981334095870229565416")
-        testCase(x.asinh(), opstr:"arcsinh(sinh(1))", result: "1.000000000000000000000000000000000000000000000000000000000000001")
+        testCase(x,                opstr:"sinh(1)",          result: "1.175201193643801456882381850595600815155717981334095870229565416")
+        testCase(x.asinh(),        opstr:"arcsinh(sinh(1))", result: "1.000000000000000000000000000000000000000000000000000000000000001")
         x = one.cosh()
-        testCase(x, opstr:"cosh(1)", result: "1.543080634815243778477905620757061682601529112365863704737402217")
-        testCase(x.acosh(), opstr:"arccosh(cosh(1))", result: "1.000000000000000000000000000000000000000000000000000000000000001")
+        testCase(x,                opstr:"cosh(1)",          result: "1.543080634815243778477905620757061682601529112365863704737402217")
+        testCase(x.acosh(),        opstr:"arccosh(cosh(1))", result: "1.000000000000000000000000000000000000000000000000000000000000001")
         x = one.tanh()
-        testCase(x, opstr:"tanh(1)", result: "0.761594155955764888119458282604793590412768597257936551596810501")
-        testCase(x.atanh(), opstr:"arctanh(tanh(1))", result: "0.999999999999999999999999999999999999999999999999999999999999989")
+        testCase(x,                opstr:"tanh(1)",          result: "0.761594155955764888119458282604793590412768597257936551596810501")
+        testCase(x.atanh(),        opstr:"arctanh(tanh(1))", result: "0.999999999999999999999999999999999999999999999999999999999999989")
         
         let n = Real("FFFF0FFFFF0F", radix: 16)
         let m = Real("FAAAAFF12F0F", radix: 16)
-        testCase(n, opstr:"a", result: "FFFF0FFFFF0F")
-        testCase(m, opstr:"b", result: "FAAAAFF12F0F")
+        testCase(n,                       opstr:"a",  result: "FFFF0FFFFF0F")
+        testCase(m,                       opstr:"b",  result: "FAAAAFF12F0F")
         testCase(n.notUsingComplement(0), opstr:"~a", result: "F00000F0")
-        testCase(n, n2: m, op: &, opstr: "&", result: "FAAA0FF12F0F")
-        testCase(n, n2: m, op: |, opstr: "|", result: "FFFFAFFFFF0F")
-        testCase(n, n2: m, op: ^, opstr: "^", result: "555A00ED000")
+        testCase(n, n2: m, op: &,         opstr: "&", result: "FAAA0FF12F0F")
+        testCase(n, n2: m, op: |,         opstr: "|", result: "FFFFAFFFFF0F")
+        testCase(n, n2: m, op: ^,         opstr: "^", result: "555A00ED000")
+        
         if pass == 0 { print("Success! All tests passed!") }
         else { print("*** Failed test case \(pass)! ***") }
     }
@@ -2992,10 +2993,10 @@ public struct Real : CustomStringConvertible, BasicOperationType {
     static let π = PI
     static let E = ONE.exp()
     static let e = E
-    static let LN2 = TWO.ln()
+    static let LN2 = TWO.log()
     static let LOG2E = ONE / LN2
-    static let LN10 = TEN.ln()
-    static let LOG10E = E.log()
+    static let LN10 = TEN.log()
+    static let LOG10E = E.log10()
     static let SQRT2 = TWO.sqrt()
     static let SQRT1_2 = ONE/SQRT2
     static let ZERO = Real(0)
@@ -3006,38 +3007,3 @@ public struct Real : CustomStringConvertible, BasicOperationType {
 	
 }
 
-//
-// Extension to support RealType protocol
-extension Real : RealType {
-	
-	init(_ value: Int)    { self.init(value, radix:10) }
-	init(_ value: UInt8)  { self.init(Int(value), radix:10) }
-	init(_ value: Int8)   { self.init(Int(value), radix:10) }
-	init(_ value: UInt16) { self.init(Int(value), radix:10) }
-	init(_ value: Int16)  { self.init(Int(value), radix:10) }
-	init(_ value: UInt32) { self.init(Int(value), radix:10) }
-	init(_ value: Int32)  { self.init(Int(value), radix:10) }
-	init(_ value: UInt64) { self.init(Int(value), radix:10) }
-	init(_ value: Int64)  { self.init(Int(value), radix:10) }
-	init(_ value: UInt)   { self.init(Int(value), radix:10) }
-	init(_ value: Double) { self.init(value, radix:10) }
-	init(_ value: Float)  { self.init(Double(value), radix:10) }
-	
-	var isSignMinus: Bool { return isNegative }
-	var isNormal: Bool { return isValid }
-	var isFinite: Bool { return isValid }
-	var isSubnormal: Bool { return !isValid }
-	var isInfinite: Bool { return description == "∞" }
-	var isNaN: Bool { return !isValid }
-	var isSignaling: Bool { return !isValid }
-	var hashValue: Int {
-		return 0  // TBD
-	}
-	
-	func cos()->Real { return cosWithTrigMode(.radians) }
-	func sin()->Real { return sinWithTrigMode(.radians) }
-
-	/// self * 1.0i
-	var i:Complex<Real>{ return Complex<Real>(0, self) }
-	
-}
