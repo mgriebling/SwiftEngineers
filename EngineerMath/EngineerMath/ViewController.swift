@@ -99,9 +99,9 @@ class ViewController: NSViewController {
 ////		print("1 \(c) = \(Units.convert(1, fromType:c, toType: kmphr)!) \(kmphr)")
 //        print("unsigned long size = \(sizeof(Int))")
 //        Real.Test()
-        let x = RComplex(2)
-        let y = RComplex(2, -2)
-        print("x=\(x), y=\(y)")
+        let x : RComplex = "1+2i"
+        let y = RComplex("2 - 10.5i")
+        print("x=\(x), y=\(y), x+y=\(x+y), x*y=\(x*y),\nx/y = \(x/y)")
 	}
 
 	override var representedObject: AnyObject? {

@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 //
 // Extension to support RealType protocol for Complex generic instance
 //
@@ -26,7 +25,7 @@ extension Real : RealType {
     public init(_ value: UInt)   { self.init(Int(value), radix:10) }
     public init(_ value: Double) { self.init(value, radix:10) }
     public init(_ value: Float)  { self.init(Double(value), radix:10) }
-	public init(string value: String) { self.init(value, radix:10) }
+	public init(_ value: String) { self.init(value, radix:10) }
     
     public var isSignMinus: Bool { return isNegative }
     public var isNormal: Bool { return isValid }
@@ -48,6 +47,7 @@ typealias RComplex = Complex<Real>
 extension Complex : IntegerLiteralConvertible, FloatLiteralConvertible, CustomStringConvertible, StringLiteralConvertible {
     
     init(_ real: Double, _ imag: Double = 0) { self.init(T(real), T(imag)) }
+    init(_ string: String) { self.init(stringLiteral:string) }
     
     //
     // IntegerLiteralConvertible compliance
@@ -67,16 +67,26 @@ extension Complex : IntegerLiteralConvertible, FloatLiteralConvertible, CustomSt
 	init(extendedGraphemeClusterLiteral value: ExtendedGraphemeClusterLiteralType) { self.init(stringLiteral: value) }
 	init(unicodeScalarLiteral value: UnicodeScalarLiteralType) { self.init(stringLiteral: "\(value)") }
 	init(stringLiteral s: String) {
-		var vs = s.stringByReplacingOccurrencesOfString(" ", withString: "").lowercaseString  // remove all spaces & make lowercase
+        let imaginary = "i"
+        var vs = s.stringByReplacingOccurrencesOfString(" ", withString: "").lowercaseString  // remove all spaces & make lowercase
+        var number = ""
+        var inumber = ""
+        
+        func processNumber() {
+            if let _ = vs.rangeOfString(imaginary) {
+                inumber = number + vs 	// transfer the sign
+                number = ""				// clear the real part
+            } else {
+                number += vs			// copy the number
+            }
+        }
+
+        self.init()
 		if !vs.isEmpty {
 			// break apart the string into real and imaginary pieces
 			let signChars = NSCharacterSet(charactersInString: "+-")
 			let exponent = "e"
-			let imaginary = "i"
-			var number = ""
-			var inumber = ""
 			var ch = vs[vs.startIndex]
-			var iPresent = false
 			
 			// remove leading sign -- if any
 			if signChars.characterIsMember(ch.toUnichar()) { number.append(ch); ch = vs.removeAtIndex(vs.startIndex) }
@@ -91,12 +101,7 @@ extension Complex : IntegerLiteralConvertible, FloatLiteralConvertible, CustomSt
 						inumber = vs.substringFromIndex(range.startIndex)
 					} else {
 						// Only one number exists
-						if let _ = vs.rangeOfString(imaginary) {
-							inumber = number + vs 	// transfer the sign
-							number = ""				// clear the real part
-						} else {
-							number += vs			// copy the number
-						}
+                        processNumber()
 					}
 				} else {
 					// This is the start of the second number
@@ -105,15 +110,10 @@ extension Complex : IntegerLiteralConvertible, FloatLiteralConvertible, CustomSt
 				}
 			} else {
 				// only one number exists
-				if let _ = vs.rangeOfString(imaginary) {
-					inumber = number + vs 	// transfer the sign
-					number = ""				// clear the real part
-				} else {
-					number += vs			// copy the number
-				}
+                processNumber()
 			}
-			re = T(string: number)
-			iPresent = !inumber.isEmpty
+			re = T(number)!
+			let iPresent = !inumber.isEmpty
 			inumber = inumber.stringByReplacingOccurrencesOfString(imaginary, withString: "") // remove the "i"
 			
 			// account for solitary "i"
@@ -121,10 +121,7 @@ extension Complex : IntegerLiteralConvertible, FloatLiteralConvertible, CustomSt
 				if inumber.isEmpty { inumber = "1" }
 				else if inumber == "+" || inumber == "-" { inumber += "1" }
 			}
-			self.init(rPart, Real(string:inumber))
-//			im = T(inumber)
-		} else {
-			self.init()
+			im = T(inumber)!
 		}
 	}
 	

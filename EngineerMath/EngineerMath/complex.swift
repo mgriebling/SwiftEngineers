@@ -22,12 +22,17 @@ public protocol RealType {
     init(_ value: Int)
     init(_ value: Double)
     init(_ value: Float)
+    
+    // for StringLiteralConvertible support
+    init?(_ value: String)
+    
     // class vars are now gone 
     // because they will be static vars in Swift 1.2, 
     // making them incompatible to one another
-    //class var infinity: Self { get }
-    //class var NaN: Self { get }
-    //class var quietNaN: Self { get }
+//    static var infinity: Self { get }
+//    static var NaN: Self { get }
+//    static var quietNaN: Self { get }
+    
     var floatingPointClass: FloatingPointClassification { get }
     var isSignMinus: Bool { get }
     var isNormal: Bool { get }
@@ -66,8 +71,9 @@ public protocol RealType {
     func hypot(_: Self)->Self
     func atan2(_: Self)->Self
     func pow(_: Self)->Self
-    //class var LN10:Self { get }
-    //class var epsilon:Self { get }
+    
+//    static var LN10:Self { get }
+//    static var epsilon:Self { get }
 }
 // Double is default since floating-point literals are Double by default
 extension Double : RealType {
@@ -86,14 +92,11 @@ extension Double : RealType {
     static var π = PI
     static var E =  2.718281828459045235360287471352662497757247093699
     static var e = E
-    static var LN2 =
-    0.6931471805599453094172321214581765680755001343602552
+    static var LN2 = 0.6931471805599453094172321214581765680755001343602552
     static var LOG2E = 1 / LN2
-    static var LN10 =
-    2.3025850929940456840179914546843642076011014886287729
+    static var LN10 = 2.3025850929940456840179914546843642076011014886287729
     static var LOG10E = 1/LN10
-    static var SQRT2 =
-    1.4142135623730950488016887242096980785696718753769480
+    static var SQRT2 = 1.4142135623730950488016887242096980785696718753769480
     static var SQRT1_2 = 1/SQRT2
     static var epsilon = 0x1p-52
     /// self * 1.0i
@@ -116,21 +119,17 @@ extension Float : RealType {
     static var π:Float = PI
     static var E:Float =  2.718281828459045235360287471352662497757247093699
     static var e:Float = E
-    static var LN2:Float =
-    0.6931471805599453094172321214581765680755001343602552
+    static var LN2:Float = 0.6931471805599453094172321214581765680755001343602552
     static var LOG2E:Float = 1 / LN2
-    static var LN10:Float =
-    2.3025850929940456840179914546843642076011014886287729
+    static var LN10:Float = 2.3025850929940456840179914546843642076011014886287729
     static var LOG10E:Float = 1/LN10
-    static var SQRT2:Float =
-    1.4142135623730950488016887242096980785696718753769480
+    static var SQRT2:Float = 1.4142135623730950488016887242096980785696718753769480
     static var SQRT1_2:Float = 1/SQRT2
     static var epsilon:Float = 0x1p-23
     /// self * 1.0i
     var i:Complex<Float>{ return Complex<Float>(0.0 as Float, self) }
 }
 // el corazon
-typealias Printable = CustomStringConvertible
 struct Complex<T:RealType> : Equatable, /* Printable, */ Hashable {
 	var re:T
 	var im:T
